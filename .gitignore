@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+CMakeUserPresets.json
+build/
+vcpkg_installed/
+
 # User-specific files
 *.rsuser
 *.suo

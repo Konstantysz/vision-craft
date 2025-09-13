@@ -1,0 +1,14 @@
+{
+  "name": "vision-craft",
+  "version": "0.1.0",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": [ "glfw-binding", "opengl3-binding" ]
+    },
+    "glfw3",
+    "glad",
+    "spdlog"
+  ],
+  "builtin-baseline": "7213cf8135c329c37c7e2778e40774489a0583a8"
+}

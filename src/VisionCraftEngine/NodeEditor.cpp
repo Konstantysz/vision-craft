@@ -11,12 +11,7 @@ namespace vc
     NodeId NodeEditor::AddNode(NodePtr node)
     {
         NodeId id = node->GetId();
-        if (id == 0)
-        {
-            id = nextId++;
-            node->SetId(id);
-        }
-        else if (id >= nextId)
+        if (id >= nextId)
         {
             nextId = id + 1;
         }

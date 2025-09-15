@@ -8,7 +8,8 @@
     },
     "glfw3",
     "glad",
-    "spdlog"
+    "spdlog",
+    "opencv"
   ],
   "builtin-baseline": "7213cf8135c329c37c7e2778e40774489a0583a8"
 }

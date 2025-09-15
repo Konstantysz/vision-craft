@@ -1,0 +1,2 @@
+add_subdirectory(VisionCraftEngine)
+add_subdirectory(VisionCraftApp)

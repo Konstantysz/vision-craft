@@ -17,4 +17,4 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic -Wconversion)
 endif()
 
-add_subdirectory(app)
+add_subdirectory(src)

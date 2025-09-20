@@ -9,6 +9,16 @@
 #include <imgui_internal.h>
 #include <spdlog/spdlog.h>
 
+#include "Application.h"
+
+#include "Layers/ImGuiBeginLayer.h"
+#include "Layers/ImGuiEndLayer.h"
+#include "Layers/DockSpaceLayer.h"
+#include "Layers/CanvasLayer.h"
+#include "Layers/NodeEditorLayer.h"
+#include "Layers/PropertyPanelLayer.h"
+#include "Layers/GraphExecutionLayer.h"
+
 GLFWwindow *CreateMainWindow(int width, int height, const char *title)
 {
     if (!glfwInit())
@@ -153,29 +163,63 @@ void RenderFrame(GLFWwindow *window)
     glfwSwapBuffers(window);
 }
 
+//int main()
+//{
+//    GLFWwindow *window = CreateMainWindow(1280, 720, "Vision Craft");
+//    if (!window)
+//    {
+//        return -1;
+//    }
+//
+//    if (!InitOpenGLLoader())
+//    {
+//        ShutdownGLFW(window);
+//        return -1;
+//    }
+//
+//    InitImGui(window);
+//    while (!glfwWindowShouldClose(window))
+//    {
+//        glfwPollEvents();
+//        RenderFrame(window);
+//    }
+//
+//    ShutdownImGui();
+//    ShutdownGLFW(window);
+//
+//    return 0;
+//}
+
 int main()
 {
-    GLFWwindow *window = CreateMainWindow(1280, 720, "Vision Craft");
-    if (!window)
-    {
-        return -1;
-    }
+    // Create application specification
+    Core::ApplicationSpecification appSpec;
+    appSpec.name = "VisionCraft";
+    appSpec.windowSpecification.title = "VisionCraft - Computer Vision Node Editor";
+    appSpec.windowSpecification.width = 1920;
+    appSpec.windowSpecification.height = 1080;
 
-    if (!InitOpenGLLoader())
-    {
-        ShutdownGLFW(window);
-        return -1;
-    }
+    // Create application
+    Core::Application app(appSpec);
 
-    InitImGui(window);
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-        RenderFrame(window);
-    }
+    // Add layers in order
+    // 1. ImGuiBeginLayer must be first to begin ImGui frame
+    app.PushLayer<VisionCraft::ImGuiBeginLayer>();
 
-    ShutdownImGui();
-    ShutdownGLFW(window);
+    // 2. DockSpaceLayer creates the main docking area
+    app.PushLayer<VisionCraft::DockSpaceLayer>();
+
+    // 3. Add UI layers that will dock into the DockSpace
+    app.PushLayer<VisionCraft::CanvasLayer>();
+    app.PushLayer<VisionCraft::NodeEditorLayer>();
+    app.PushLayer<VisionCraft::PropertyPanelLayer>();
+    app.PushLayer<VisionCraft::GraphExecutionLayer>();
+
+    // 4. ImGuiEndLayer must be last to end ImGui frame
+    app.PushLayer<VisionCraft::ImGuiEndLayer>();
+
+    // Run the application
+    app.Run();
 
     return 0;
 }

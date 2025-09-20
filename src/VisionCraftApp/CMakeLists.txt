@@ -2,8 +2,15 @@ cmake_minimum_required(VERSION 3.26)
 project(vision_craft_app LANGUAGES CXX)
 
 add_executable(VisionCraftApp
-    main.cpp
-)
+    VisionCraftApp.cpp
+    VisionCraftAppLayer.cpp
+    Layers/ImGuiBeginLayer.cpp
+    Layers/ImGuiEndLayer.cpp
+    Layers/DockSpaceLayer.cpp
+    Layers/CanvasLayer.cpp
+    Layers/NodeEditorLayer.cpp
+    Layers/PropertyPanelLayer.cpp
+    Layers/GraphExecutionLayer.cpp)
 
 target_compile_features(VisionCraftApp PRIVATE cxx_std_20)
 
@@ -15,14 +22,13 @@ target_compile_definitions(VisionCraftApp PUBLIC
 find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
 
 target_link_libraries(VisionCraftApp 
     PRIVATE 
     glad::glad 
     glfw 
     imgui::imgui
-    spdlog::spdlog
+    Core
     VisionCraftEngine
 )
 

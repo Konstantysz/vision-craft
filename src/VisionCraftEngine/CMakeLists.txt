@@ -18,7 +18,9 @@ target_include_directories(VisionCraftEngine PUBLIC
 target_link_libraries(VisionCraftEngine PUBLIC 
     opencv_core 
     opencv_imgcodecs 
-    opencv_imgproc
-    spdlog::spdlog)
+    opencv_imgproc)
+
+target_link_libraries(VisionCraftEngine PRIVATE 
+    Core)
 
 target_compile_features(VisionCraftEngine PUBLIC cxx_std_20)

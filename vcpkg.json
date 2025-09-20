@@ -2,14 +2,16 @@
   "name": "vision-craft",
   "version": "0.1.0",
   "dependencies": [
+    "glad",
+    "glfw3",
+    "glm",
+    "gtest",
     {
       "name": "imgui",
       "features": [ "docking-experimental", "glfw-binding", "opengl3-binding" ]
     },
-    "glfw3",
-    "glad",
-    "spdlog",
-    "opencv"
+    "opencv",
+    "spdlog"
   ],
   "builtin-baseline": "7213cf8135c329c37c7e2778e40774489a0583a8"
 }

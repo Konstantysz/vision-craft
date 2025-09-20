@@ -8,13 +8,16 @@ namespace VisionCraft
     {
     public:
         DockSpaceLayer() = default;
+
         virtual ~DockSpaceLayer() = default;
 
-        void OnEvent(Core::Event& event) override;
+        void OnEvent(Core::Event &event) override;
+
         void OnUpdate(float deltaTime) override;
+
         void OnRender() override;
 
     private:
         bool dockspaceOpen = true;
     };
-}
+} // namespace VisionCraft

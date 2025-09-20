@@ -4,7 +4,7 @@
 
 namespace VisionCraft
 {
-    void PropertyPanelLayer::OnEvent(Core::Event& event)
+    void PropertyPanelLayer::OnEvent(Core::Event &event)
     {
     }
 
@@ -24,4 +24,4 @@ namespace VisionCraft
 
         ImGui::End();
     }
-}
+} // namespace VisionCraft

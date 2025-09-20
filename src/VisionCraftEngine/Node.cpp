@@ -32,8 +32,11 @@ namespace VisionCraft::Engine
         for (const auto &param : params)
         {
             if (param.name == paramName)
+            {
                 return param.value;
+            }
         }
+
         return std::nullopt;
     }
 
@@ -47,6 +50,7 @@ namespace VisionCraft::Engine
                 return;
             }
         }
+
         params.push_back({ paramName, value });
     }
 

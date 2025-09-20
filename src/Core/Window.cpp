@@ -53,6 +53,7 @@ namespace Core
     {
         int width, height;
         glfwGetFramebufferSize(handle, &width, &height);
+
         return { width, height };
     }
 

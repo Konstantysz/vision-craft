@@ -4,7 +4,6 @@ project(vision_craft_app LANGUAGES CXX)
 add_executable(VisionCraftApp
     VisionCraftGUI.cpp
     VisionCraftApplication.cpp
-    VisionCraftAppLayer.cpp
     Layers/DockSpaceLayer.cpp
     Layers/CanvasLayer.cpp
     Layers/NodeEditorLayer.cpp

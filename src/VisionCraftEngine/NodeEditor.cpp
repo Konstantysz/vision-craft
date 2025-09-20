@@ -15,7 +15,9 @@ namespace VisionCraft::Engine
         {
             nextId = id + 1;
         }
+
         nodes[id] = std::move(node);
+
         return id;
     }
 
@@ -26,11 +28,13 @@ namespace VisionCraft::Engine
         {
             return false;
         }
+
         nodes.erase(it);
         connections.erase(std::remove_if(connections.begin(),
                               connections.end(),
                               [id](const Connection &c) { return c.from == id || c.to == id; }),
             connections.end());
+
         return true;
     }
 
@@ -54,6 +58,7 @@ namespace VisionCraft::Engine
         {
             ids.push_back(id);
         }
+
         return ids;
     }
 
@@ -74,7 +79,7 @@ namespace VisionCraft::Engine
         }
 
         connections.erase(it, connections.end());
-        
+
         return true;
     }
 

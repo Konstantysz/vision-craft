@@ -1,8 +1,9 @@
 #include "Application.h"
 
+#include <cassert>
+
 #include <GLFW/glfw3.h>
 #include <glm/gtc/constants.hpp>
-#include <cassert>
 
 #include "Logger.h"
 
@@ -15,8 +16,7 @@ namespace Core
         LOG_ERROR("[GLFW Error] ({}): {}.", error, description);
     }
 
-    Application::Application(const ApplicationSpecification &spec)
-        : specification(spec)
+    Application::Application(const ApplicationSpecification &spec) : specification(spec)
     {
         instance = this;
 
@@ -61,14 +61,14 @@ namespace Core
             const auto timestep = glm::clamp(currentTime - lastTime, 0.001f, 0.1f);
             lastTime = currentTime;
 
-            for (auto& layer : layerStack)
+            for (auto &layer : layerStack)
             {
                 layer->OnUpdate(timestep);
             }
 
             BeginFrame();
 
-            for (auto& layer : layerStack)
+            for (auto &layer : layerStack)
             {
                 layer->OnRender();
             }

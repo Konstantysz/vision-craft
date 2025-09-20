@@ -26,10 +26,6 @@ namespace Core
         void Stop();
 
     protected:
-        virtual void BeginFrame() {}
-        
-        virtual void EndFrame() {}
-
         template<typename TLayer>
             requires std::is_base_of_v<Layer, TLayer>
         void PushLayer()
@@ -39,6 +35,14 @@ namespace Core
         }
 
         glm::vec2 GetFramebufferSize() const;
+
+        virtual void BeginFrame()
+        {
+        }
+
+        virtual void EndFrame()
+        {
+        }
 
         static Application &Get();
 

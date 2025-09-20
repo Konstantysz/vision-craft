@@ -1,16 +1,27 @@
 #include "VisionCraftApplication.h"
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glad/glad.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include "Layers/CanvasLayer.h"
+#include "Layers/DockSpaceLayer.h"
+#include "Layers/GraphExecutionLayer.h"
+#include "Layers/NodeEditorLayer.h"
+#include "Layers/PropertyPanelLayer.h"
+
 namespace VisionCraft
 {
-    VisionCraftApplication::VisionCraftApplication(const Core::ApplicationSpecification& specification)
+    VisionCraftApplication::VisionCraftApplication(const Core::ApplicationSpecification &specification)
         : Core::Application(specification)
     {
+        PushLayer<DockSpaceLayer>();
+        PushLayer<CanvasLayer>();
+        PushLayer<NodeEditorLayer>();
+        PushLayer<PropertyPanelLayer>();
+        PushLayer<GraphExecutionLayer>();
     }
 
     VisionCraftApplication::~VisionCraftApplication()
@@ -38,7 +49,7 @@ namespace VisionCraft
     {
         if (imguiInitialized)
         {
-            ImGuiIO& io = ImGui::GetIO();
+            ImGuiIO &io = ImGui::GetIO();
             auto framebufferSize = GetFramebufferSize();
             io.DisplaySize = ImVec2(framebufferSize.x, framebufferSize.y);
 
@@ -47,7 +58,7 @@ namespace VisionCraft
 
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
-                GLFWwindow* backup_current_context = glfwGetCurrentContext();
+                GLFWwindow *backup_current_context = glfwGetCurrentContext();
                 ImGui::UpdatePlatformWindows();
                 ImGui::RenderPlatformWindowsDefault();
                 glfwMakeContextCurrent(backup_current_context);
@@ -59,22 +70,22 @@ namespace VisionCraft
     {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
+        ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
         ImGui::StyleColorsDark();
 
-        ImGuiStyle& style = ImGui::GetStyle();
+        ImGuiStyle &style = ImGui::GetStyle();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
         {
             style.WindowRounding = 0.0f;
             style.Colors[ImGuiCol_WindowBg].w = 1.0f;
         }
 
-        GLFWwindow* window = glfwGetCurrentContext();
-        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        GLFWwindow *glfwWindow = glfwGetCurrentContext();
+        ImGui_ImplGlfw_InitForOpenGL(glfwWindow, true);
         ImGui_ImplOpenGL3_Init("#version 410");
     }
 
@@ -87,4 +98,4 @@ namespace VisionCraft
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
-}
+} // namespace VisionCraft

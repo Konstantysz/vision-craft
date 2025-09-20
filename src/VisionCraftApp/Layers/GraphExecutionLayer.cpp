@@ -4,7 +4,7 @@
 
 namespace VisionCraft
 {
-    void GraphExecutionLayer::OnEvent(Core::Event& event)
+    void GraphExecutionLayer::OnEvent(Core::Event &event)
     {
     }
 
@@ -37,7 +37,6 @@ namespace VisionCraft
 
         ImGui::End();
 
-        // Results window
         if (showResultsWindow)
         {
             ImGui::Begin("Results", &showResultsWindow);
@@ -51,4 +50,4 @@ namespace VisionCraft
             ImGui::End();
         }
     }
-}
+} // namespace VisionCraft

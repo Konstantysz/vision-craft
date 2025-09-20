@@ -8,10 +8,13 @@ namespace VisionCraft
     {
     public:
         CanvasLayer() = default;
+
         virtual ~CanvasLayer() = default;
 
-        void OnEvent(Core::Event& event) override;
+        void OnEvent(Core::Event &event) override;
+
         void OnUpdate(float deltaTime) override;
+
         void OnRender() override;
 
     private:
@@ -21,4 +24,4 @@ namespace VisionCraft
         float gridSize = 20.0f;
         bool showGrid = true;
     };
-}
+} // namespace VisionCraft

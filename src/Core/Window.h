@@ -39,4 +39,4 @@ namespace Core
         WindowSpecification specification;
         GLFWwindow *handle;
     };
-}
+} // namespace Core

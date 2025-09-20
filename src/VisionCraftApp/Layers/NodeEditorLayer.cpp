@@ -4,7 +4,7 @@
 
 namespace VisionCraft
 {
-    void NodeEditorLayer::OnEvent(Core::Event& event)
+    void NodeEditorLayer::OnEvent(Core::Event &event)
     {
     }
 
@@ -27,4 +27,4 @@ namespace VisionCraft
 
         ImGui::End();
     }
-}
+} // namespace VisionCraft

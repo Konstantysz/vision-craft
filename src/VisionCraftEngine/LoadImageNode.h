@@ -5,7 +5,7 @@
 
 #include <opencv2/core.hpp>
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     /**
@@ -41,4 +41,4 @@ namespace vc
         cv::Mat image;
     };
 
-} // namespace vc
+} // namespace VisionCraft::Engine

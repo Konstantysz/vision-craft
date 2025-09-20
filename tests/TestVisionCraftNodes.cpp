@@ -3,10 +3,10 @@
 #include <gtest/gtest.h>
 
 // Dummy derived Node for testing abstract Process()
-class DummyNode : public vc::Node
+class DummyNode : public VisionCraft::Engine::Node
 {
 public:
-    DummyNode(vc::NodeId id, std::string name) : Node(id, std::move(name))
+    DummyNode(VisionCraft::Engine::NodeId id, std::string name) : Node(id, std::move(name))
     {
     }
 

@@ -4,7 +4,7 @@
 
 #include <opencv2/imgproc.hpp>
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     GrayscaleNode::GrayscaleNode(NodeId id) : Node(id, "Grayscale")
@@ -32,4 +32,4 @@ namespace vc
     {
         return outputImage;
     }
-} // namespace vc
+} // namespace VisionCraft::Engine

@@ -4,7 +4,7 @@
 
 #include <opencv2/imgcodecs.hpp>
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     LoadImageNode::LoadImageNode(NodeId id, const std::string &filePath) : Node(id, "Load Image")
@@ -31,4 +31,4 @@ namespace vc
         LOG_INFO("[LoadImageNode] Loaded image: {} ({}x{})", *filePath, image.cols, image.rows);
     }
 
-} // namespace vc
+} // namespace VisionCraft::Engine

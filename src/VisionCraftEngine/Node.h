@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace vc
+namespace VisionCraft::Engine
 {
     /**
      * @brief Alias for a Node ID.
@@ -99,4 +99,4 @@ namespace vc
      */
     using NodePtr = std::unique_ptr<Node>;
 
-} // namespace vc
+} // namespace VisionCraft::Engine

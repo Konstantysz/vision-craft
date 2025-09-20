@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     /**
@@ -98,4 +98,4 @@ namespace vc
         NodeId nextId;                             ///< Next available node ID
     };
 
-} // namespace vc
+} // namespace VisionCraft::Engine

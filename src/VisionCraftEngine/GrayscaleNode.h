@@ -3,7 +3,7 @@
 
 #include <opencv2/core.hpp>
 
-namespace vc
+namespace VisionCraft::Engine
 {
     /**
      * @brief Node that converts an image to grayscale.
@@ -39,4 +39,4 @@ namespace vc
         cv::Mat outputImage;
     };
 
-} // namespace vc
+} // namespace VisionCraft::Engine

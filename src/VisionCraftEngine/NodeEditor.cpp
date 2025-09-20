@@ -1,7 +1,7 @@
 #include "NodeEditor.h"
 #include <algorithm>
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     NodeEditor::NodeEditor() : nextId(1)
@@ -90,4 +90,4 @@ namespace vc
         nextId = 1;
     }
 
-} // namespace vc
+} // namespace VisionCraft::Engine

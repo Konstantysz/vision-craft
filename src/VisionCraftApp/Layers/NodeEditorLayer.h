@@ -18,8 +18,8 @@ namespace VisionCraft
         void OnRender() override;
 
     private:
-        std::vector<std::unique_ptr<vc::Node>> nodes;
-        vc::Node* selectedNode = nullptr;
+        std::vector<std::unique_ptr<Engine::Node>> nodes;
+        Engine::Node* selectedNode = nullptr;
         bool isDragging = false;
         float dragOffsetX = 0.0f;
         float dragOffsetY = 0.0f;

@@ -1,6 +1,6 @@
 #include "Node.h"
 
-namespace vc
+namespace VisionCraft::Engine
 {
 
     Node::Node(NodeId id, std::string name) : id(id), name(std::move(name))
@@ -50,4 +50,4 @@ namespace vc
         params.push_back({ paramName, value });
     }
 
-} // namespace vc
+} // namespace VisionCraft::Engine

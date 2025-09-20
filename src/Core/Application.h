@@ -19,11 +19,16 @@ namespace Core
     public:
         Application(const ApplicationSpecification &specification = ApplicationSpecification());
 
-        ~Application();
+        virtual ~Application();
 
         void Run();
 
         void Stop();
+
+    protected:
+        virtual void BeginFrame() {}
+        
+        virtual void EndFrame() {}
 
         template<typename TLayer>
             requires std::is_base_of_v<Layer, TLayer>

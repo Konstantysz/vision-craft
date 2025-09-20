@@ -66,10 +66,14 @@ namespace Core
                 layer->OnUpdate(timestep);
             }
 
+            BeginFrame();
+
             for (auto& layer : layerStack)
             {
                 layer->OnRender();
             }
+
+            EndFrame();
 
             window->Update();
         }

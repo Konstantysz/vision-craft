@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 3.26)
 project(vision_craft_app LANGUAGES CXX)
 
 add_executable(VisionCraftApp
-    VisionCraftApp.cpp
+    VisionCraftGUI.cpp
+    VisionCraftApplication.cpp
     VisionCraftAppLayer.cpp
-    Layers/ImGuiBeginLayer.cpp
-    Layers/ImGuiEndLayer.cpp
     Layers/DockSpaceLayer.cpp
     Layers/CanvasLayer.cpp
     Layers/NodeEditorLayer.cpp

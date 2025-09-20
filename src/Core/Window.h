@@ -1,8 +1,10 @@
 #pragma once
 #include <string>
 
+// clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+// clang-format on
 #include <glm/glm.hpp>
 
 namespace Core

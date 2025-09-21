@@ -8,7 +8,6 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "Layers/CanvasLayer.h"
 #include "Layers/DockSpaceLayer.h"
 #include "Layers/GraphExecutionLayer.h"
 #include "Layers/NodeEditorLayer.h"
@@ -20,7 +19,6 @@ namespace VisionCraft
         : Core::Application(specification)
     {
         PushLayer<DockSpaceLayer>();
-        PushLayer<CanvasLayer>();
         PushLayer<NodeEditorLayer>();
         PushLayer<PropertyPanelLayer>();
         PushLayer<GraphExecutionLayer>();

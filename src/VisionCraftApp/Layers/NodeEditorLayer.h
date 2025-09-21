@@ -2,20 +2,14 @@
 
 #include "Layer.h"
 
-#include <memory>
-#include <vector>
-
-#include "Node.h"
-
 namespace VisionCraft
 {
     /**
-     * @brief Layer that manages the node editor interface and interactions.
+     * @brief Node editor layer.
      *
-     * NodeEditorLayer handles the creation, manipulation, and rendering of nodes
-     * within the canvas. It manages node selection, dragging, connection creation,
-     * and other node-specific interactions. This layer works in conjunction with
-     * the CanvasLayer to provide a complete node editing experience.
+     * NodeEditorLayer implements the complete node editing experience combining
+     * canvas management (pan/zoom/grid) with node rendering and interactions.
+     * Similar to UE Blueprints, everything is contained in a single unified interface.
      */
     class NodeEditorLayer : public Core::Layer
     {
@@ -31,34 +25,32 @@ namespace VisionCraft
         virtual ~NodeEditorLayer() = default;
 
         /**
-         * @brief Handles node editor events.
-         * @param event The event to handle
+         * @brief Handles canvas input events.
+         * @param event The event to handle (mouse, keyboard, etc.)
          *
-         * Processes mouse events for node selection, dragging, and connection creation.
+         * Processes mouse wheel events for zooming and mouse drag events for panning.
          */
         void OnEvent(Core::Event &event) override;
 
         /**
-         * @brief Updates the node editor state.
+         * @brief Updates the canvas state.
          * @param deltaTime Time elapsed since the last update
-         *
-         * Updates node positions during dragging and handles animation states.
          */
         void OnUpdate(float deltaTime) override;
 
         /**
-         * @brief Renders all nodes and their connections.
+         * @brief Renders the canvas and grid.
          *
-         * Draws all nodes in the editor, their input/output pins, connections
-         * between nodes, and selection indicators.
+         * Draws the infinite grid background and provides the drawing surface
+         * for the node editor. Uses ImGui's draw list for custom rendering.
          */
         void OnRender() override;
 
     private:
-        std::vector<std::unique_ptr<Engine::Node>> nodes; ///< Collection of nodes in the editor
-        Engine::Node *selectedNode = nullptr;             ///< Currently selected node
-        bool isDragging = false;                          ///< Whether a node is being dragged
-        float dragOffsetX = 0.0f;                         ///< X offset from mouse to node center during drag
-        float dragOffsetY = 0.0f;                         ///< Y offset from mouse to node center during drag
+        float zoomLevel = 1.0f;    ///< Current zoom level (1.0 = 100%)
+        float panX = 0.0f;         ///< Horizontal pan offset in pixels
+        float panY = 0.0f;         ///< Vertical pan offset in pixels
+        float gridSize = 20.0f;    ///< Size of grid cells in pixels
+        bool showGrid = true;      ///< Whether to display the grid background
     };
 } // namespace VisionCraft

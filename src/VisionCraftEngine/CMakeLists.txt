@@ -7,8 +7,12 @@ find_package(spdlog CONFIG REQUIRED)
 add_library(VisionCraftEngine STATIC
     Node.cpp
     NodeEditor.cpp
-    LoadImageNode.cpp
-    GrayscaleNode.cpp
+    Nodes/LoadImageNode.cpp
+    Nodes/GrayscaleNode.cpp
+    Nodes/ImageInputNode.cpp
+    Nodes/CannyEdgeNode.cpp
+    Nodes/ThresholdNode.cpp
+    Nodes/ImageOutputNode.cpp
 )
 
 target_include_directories(VisionCraftEngine PUBLIC

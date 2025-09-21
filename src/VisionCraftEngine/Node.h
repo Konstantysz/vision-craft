@@ -89,6 +89,57 @@ namespace VisionCraft::Engine
         virtual void Process() = 0;
 
     protected:
+        /**
+         * @brief Gets a parameter value as a double with validation.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist or is invalid
+         * @param minValue Minimum allowed value (optional)
+         * @param maxValue Maximum allowed value (optional)
+         * @return Validated double value
+         */
+        double GetValidatedDoubleParam(const std::string& paramName, double defaultValue,
+                                       std::optional<double> minValue = std::nullopt,
+                                       std::optional<double> maxValue = std::nullopt) const;
+
+        /**
+         * @brief Gets a parameter value as an integer with validation.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist or is invalid
+         * @param minValue Minimum allowed value (optional)
+         * @param maxValue Maximum allowed value (optional)
+         * @return Validated integer value
+         */
+        int GetValidatedIntParam(const std::string& paramName, int defaultValue,
+                                 std::optional<int> minValue = std::nullopt,
+                                 std::optional<int> maxValue = std::nullopt) const;
+
+        /**
+         * @brief Gets a parameter value as a boolean.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist or is invalid
+         * @return Boolean value (true for "true", "1", "yes", false otherwise)
+         */
+        bool GetBoolParam(const std::string& paramName, bool defaultValue = false) const;
+
+        /**
+         * @brief Gets a parameter value as a string with validation.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist
+         * @param allowedValues Optional set of allowed values for validation
+         * @return Validated string value
+         */
+        std::string GetValidatedStringParam(const std::string& paramName,
+                                            const std::string& defaultValue,
+                                            const std::vector<std::string>& allowedValues = {}) const;
+
+        /**
+         * @brief Validates that a file path parameter exists and is accessible.
+         * @param paramName Name of the parameter containing the file path
+         * @param requireExistence Whether the file must exist (true) or just be a valid path (false)
+         * @return True if path is valid, false otherwise
+         */
+        bool ValidateFilePath(const std::string& paramName, bool requireExistence = true) const;
+
         NodeId id;                     ///< Unique identifier of the node
         std::string name;              ///< Name of the node
         std::vector<NodeParam> params; ///< Parameters of the node

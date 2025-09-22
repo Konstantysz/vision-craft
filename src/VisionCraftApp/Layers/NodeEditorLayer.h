@@ -20,6 +20,28 @@ namespace VisionCraft
     };
 
     /**
+     * @brief Enum for different data types in the node editor.
+     */
+    enum class PinDataType
+    {
+        Image,  // cv::Mat - Green
+        String, // std::string - Magenta
+        Float,  // double - Light Blue
+        Int,    // int - Cyan
+        Bool    // bool - Red
+    };
+
+    /**
+     * @brief Structure representing an input or output pin on a node.
+     */
+    struct NodePin
+    {
+        std::string name;
+        PinDataType dataType;
+        bool isInput;
+    };
+
+    /**
      * @brief Node editor layer.
      *
      * NodeEditorLayer implements the complete node editing experience combining
@@ -73,14 +95,14 @@ namespace VisionCraft
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 
         // Selection and dragging state
-        Engine::NodeId selectedNodeId = -1;                             ///< Currently selected node ID (-1 = none)
-        bool isDragging = false;                                         ///< Whether a node is being dragged
-        ImVec2 dragOffset = ImVec2(0.0f, 0.0f);                        ///< Mouse offset from node position during drag
+        Engine::NodeId selectedNodeId = -1;     ///< Currently selected node ID (-1 = none)
+        bool isDragging = false;                ///< Whether a node is being dragged
+        ImVec2 dragOffset = ImVec2(0.0f, 0.0f); ///< Mouse offset from node position during drag
 
         // Context menu state
-        bool showContextMenu = false;                                    ///< Whether to show the context menu
-        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);                    ///< Position where context menu was opened
-        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f);                  ///< Current canvas position for coordinate calculations
+        bool showContextMenu = false;                 ///< Whether to show the context menu
+        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);   ///< Position where context menu was opened
+        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f); ///< Current canvas position for coordinate calculations
 
         /**
          * @brief Renders all nodes in the editor.
@@ -101,7 +123,7 @@ namespace VisionCraft
          * @param nodeSize Node size in pixels
          * @return True if mouse hits the node
          */
-        bool IsMouseOverNode(const ImVec2& mousePos, const NodePosition& nodePos, const ImVec2& nodeSize) const;
+        bool IsMouseOverNode(const ImVec2 &mousePos, const NodePosition &nodePos, const ImVec2 &nodeSize) const;
 
         /**
          * @brief Handles mouse interactions for node selection and dragging.
@@ -118,6 +140,50 @@ namespace VisionCraft
          * @param nodeType Type of node to create
          * @param position Position to place the node
          */
-        void CreateNodeAtPosition(const std::string& nodeType, const ImVec2& position);
+        void CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position);
+
+        /**
+         * @brief Gets the pins for a specific node type.
+         * @param nodeType Type of node
+         * @return Vector of pins for the node
+         */
+        static std::vector<NodePin> GetNodePins(const std::string &nodeType);
+
+        /**
+         * @brief Gets the color for a specific data type.
+         * @param dataType The data type
+         * @return ImU32 color value
+         */
+        ImU32 GetDataTypeColor(PinDataType dataType) const;
+
+        /**
+         * @brief Renders a single pin (input or output).
+         * @param pin The pin to render
+         * @param position Screen position for the pin
+         * @param radius Radius of the pin circle
+         */
+        void RenderPin(const NodePin &pin, const ImVec2 &position, float radius) const;
+
+        /**
+         * @brief Gets the editable parameters for a specific node type.
+         * @param nodeName Name of the node
+         * @return Vector of parameter definitions
+         */
+        std::vector<NodePin> GetNodeParameters(const std::string &nodeName) const;
+
+        /**
+         * @brief Renders inline parameter editors for a node.
+         * @param node Pointer to the node
+         * @param startPos Starting position for parameter rendering
+         * @param nodeSize Size of the node
+         */
+        void RenderNodeParameters(Engine::Node *node, const ImVec2 &startPos, const ImVec2 &nodeSize);
+
+        /**
+         * @brief Converts camelCase parameter names to Title Case for display.
+         * @param paramName The parameter name in camelCase (e.g., "lowThreshold")
+         * @return User-friendly display name (e.g., "Low Threshold")
+         */
+        static std::string FormatParameterName(const std::string &paramName);
     };
 } // namespace VisionCraft

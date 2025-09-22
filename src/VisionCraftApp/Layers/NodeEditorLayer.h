@@ -6,6 +6,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <imgui.h>
+
 namespace VisionCraft
 {
     /**
@@ -70,6 +72,16 @@ namespace VisionCraft
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 
+        // Selection and dragging state
+        Engine::NodeId selectedNodeId = -1;                             ///< Currently selected node ID (-1 = none)
+        bool isDragging = false;                                         ///< Whether a node is being dragged
+        ImVec2 dragOffset = ImVec2(0.0f, 0.0f);                        ///< Mouse offset from node position during drag
+
+        // Context menu state
+        bool showContextMenu = false;                                    ///< Whether to show the context menu
+        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);                    ///< Position where context menu was opened
+        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f);                  ///< Current canvas position for coordinate calculations
+
         /**
          * @brief Renders all nodes in the editor.
          */
@@ -81,5 +93,31 @@ namespace VisionCraft
          * @param nodePos Position of the node
          */
         void RenderNode(Engine::Node *node, const NodePosition &nodePos);
+
+        /**
+         * @brief Tests if a mouse position hits a node.
+         * @param mousePos Mouse position in screen coordinates
+         * @param nodePos Node position in world coordinates
+         * @param nodeSize Node size in pixels
+         * @return True if mouse hits the node
+         */
+        bool IsMouseOverNode(const ImVec2& mousePos, const NodePosition& nodePos, const ImVec2& nodeSize) const;
+
+        /**
+         * @brief Handles mouse interactions for node selection and dragging.
+         */
+        void HandleMouseInteractions();
+
+        /**
+         * @brief Renders the context menu for creating nodes.
+         */
+        void RenderContextMenu();
+
+        /**
+         * @brief Creates a new node of the specified type at the given position.
+         * @param nodeType Type of node to create
+         * @param position Position to place the node
+         */
+        void CreateNodeAtPosition(const std::string& nodeType, const ImVec2& position);
     };
 } // namespace VisionCraft

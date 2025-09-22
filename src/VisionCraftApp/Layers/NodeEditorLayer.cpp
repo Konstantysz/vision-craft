@@ -5,6 +5,13 @@
 
 #include <imgui.h>
 
+#include "Nodes/CannyEdgeNode.h"
+#include "Nodes/GrayscaleNode.h"
+#include "Nodes/ImageInputNode.h"
+#include "Nodes/ImageOutputNode.h"
+#include "Nodes/LoadImageNode.h"
+#include "Nodes/ThresholdNode.h"
+
 namespace VisionCraft
 {
     void NodeEditorLayer::OnEvent(Core::Event &event)
@@ -69,6 +76,69 @@ namespace VisionCraft
             }
         }
 
+        if (nodeEditor.GetNodeIds().empty())
+        {
+            auto testNode = std::make_unique<Engine::LoadImageNode>(nextNodeId++, "Test Image");
+            Engine::NodeId nodeId = testNode->GetId();
+            nodeEditor.AddNode(std::move(testNode));
+            nodePositions[nodeId] = { 100.0f, 100.0f };
+        }
+
+        RenderNodes();
+
         ImGui::End();
+    }
+
+    void NodeEditorLayer::RenderNodes()
+    {
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+
+        for (Engine::NodeId nodeId : nodeEditor.GetNodeIds())
+        {
+            Engine::Node *node = nodeEditor.GetNode(nodeId);
+            if (node && nodePositions.find(nodeId) != nodePositions.end())
+            {
+                RenderNode(node, nodePositions[nodeId]);
+            }
+        }
+    }
+
+    void NodeEditorLayer::RenderNode(Engine::Node *node, const NodePosition &nodePos)
+    {
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+
+        ImVec2 worldPos =
+            ImVec2(canvasPos.x + (nodePos.x + panX) * zoomLevel, canvasPos.y + (nodePos.y + panY) * zoomLevel);
+
+        ImVec2 nodeSize = ImVec2(150.0f * zoomLevel, 80.0f * zoomLevel);
+
+        ImU32 nodeColor = IM_COL32(60, 60, 60, 255);
+        ImU32 borderColor = IM_COL32(100, 100, 100, 255);
+        ImU32 titleColor = IM_COL32(80, 80, 120, 255);
+
+        drawList->AddRectFilled(
+            worldPos, ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y), nodeColor, 8.0f * zoomLevel);
+
+        drawList->AddRect(worldPos,
+            ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y),
+            borderColor,
+            8.0f * zoomLevel,
+            0,
+            2.0f * zoomLevel);
+
+        float titleHeight = 25.0f * zoomLevel;
+        drawList->AddRectFilled(worldPos,
+            ImVec2(worldPos.x + nodeSize.x, worldPos.y + titleHeight),
+            titleColor,
+            8.0f * zoomLevel,
+            ImDrawFlags_RoundCornersTop);
+
+        if (zoomLevel > 0.5f)
+        {
+            ImVec2 textPos = ImVec2(worldPos.x + 8.0f * zoomLevel, worldPos.y + 4.0f * zoomLevel);
+            drawList->AddText(textPos, IM_COL32(255, 255, 255, 255), node->GetName().c_str());
+        }
     }
 } // namespace VisionCraft

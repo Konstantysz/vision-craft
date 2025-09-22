@@ -9,7 +9,6 @@
 #include "Nodes/GrayscaleNode.h"
 #include "Nodes/ImageInputNode.h"
 #include "Nodes/ImageOutputNode.h"
-#include "Nodes/LoadImageNode.h"
 #include "Nodes/ThresholdNode.h"
 
 namespace VisionCraft
@@ -78,7 +77,7 @@ namespace VisionCraft
 
         if (nodeEditor.GetNodeIds().empty())
         {
-            auto testNode = std::make_unique<Engine::LoadImageNode>(nextNodeId++, "Test Image");
+            auto testNode = std::make_unique<Engine::ImageInputNode>(nextNodeId++, "Test Image Input");
             Engine::NodeId nodeId = testNode->GetId();
             nodeEditor.AddNode(std::move(testNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };

@@ -11,6 +11,93 @@
 #include "Nodes/ImageOutputNode.h"
 #include "Nodes/ThresholdNode.h"
 
+namespace
+{
+    // UI Constants
+    constexpr float kDefaultZoomLevel = 1.0f;
+    constexpr float kMinZoomLevel = 0.1f;
+    constexpr float kMaxZoomLevel = 5.0f;
+    constexpr float kZoomStep = 0.1f;
+    constexpr float kMinCanvasSize = 50.0f;
+
+    // Node Visual Constants
+    constexpr float kNodeWidth = 220.0f;
+    constexpr float kMinNodeHeight = 100.0f;
+    constexpr float kTitleHeight = 25.0f;
+    constexpr float kPinHeight = 18.0f;
+    constexpr float kParamHeight = 22.0f;
+    constexpr float kPinSpacing = 3.0f;
+    constexpr float kNodePadding = 8.0f;
+    constexpr float kPinRadius = 5.0f;
+    constexpr float kNodeRounding = 8.0f;
+    constexpr float kBorderThicknessNormal = 2.0f;
+    constexpr float kBorderThicknessSelected = 3.0f;
+    constexpr float kPinBorderThickness = 1.5f;
+    constexpr float kTextOffset = 4.0f;
+    constexpr float kMinZoomForText = 0.5f;
+
+    // Node Creation Offset
+    constexpr float kNodeCreationOffsetX = 100.0f;
+    constexpr float kNodeCreationOffsetY = 40.0f;
+
+    // Grid Transparency
+    constexpr int kGridAlpha = 40;
+
+    // Invalid Node ID
+    constexpr VisionCraft::Engine::NodeId kInvalidNodeId = -1;
+
+    // Color Constants
+    constexpr ImU32 kNodeColor = IM_COL32(60, 60, 60, 255);
+    constexpr ImU32 kBorderColorNormal = IM_COL32(100, 100, 100, 255);
+    constexpr ImU32 kBorderColorSelected = IM_COL32(255, 165, 0, 255);
+    constexpr ImU32 kTitleColor = IM_COL32(80, 80, 120, 255);
+    constexpr ImU32 kTextColor = IM_COL32(255, 255, 255, 255);
+    constexpr ImU32 kPinLabelColor = IM_COL32(200, 200, 200, 255);
+    constexpr ImU32 kPinBorderColor = IM_COL32(255, 255, 255, 255);
+    constexpr ImU32 kGridColor = IM_COL32(200, 200, 200, kGridAlpha);
+
+    VisionCraft::NodeDimensions CalculateNodeDimensions(const std::vector<VisionCraft::NodePin> &pins, float zoomLevel)
+    {
+        std::vector<VisionCraft::NodePin> inputPins, outputPins, parameterPins;
+
+        for (const auto &pin : pins)
+        {
+            if (pin.isInput)
+            {
+                if (pin.dataType == VisionCraft::PinDataType::Image)
+                {
+                    inputPins.push_back(pin);
+                }
+                else
+                {
+                    parameterPins.push_back(pin);
+                }
+            }
+            else
+            {
+                outputPins.push_back(pin);
+            }
+        }
+
+        const auto titleHeight = kTitleHeight * zoomLevel;
+        const auto pinHeight = kPinHeight * zoomLevel;
+        const auto paramHeight = kParamHeight * zoomLevel;
+        const auto pinSpacing = kPinSpacing * zoomLevel;
+        const auto padding = kNodePadding * zoomLevel;
+
+        const auto maxPins = std::max(inputPins.size(), outputPins.size());
+        const auto pinsHeight = maxPins * (pinHeight + pinSpacing);
+        const auto parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
+        const auto contentHeight = pinsHeight + parametersHeight + padding * 2;
+        const auto totalHeight = titleHeight + contentHeight + padding;
+
+        return { ImVec2(kNodeWidth * zoomLevel, std::max(kMinNodeHeight * zoomLevel, totalHeight)),
+            inputPins.size(),
+            outputPins.size(),
+            parameterPins.size() };
+    }
+} // namespace
+
 namespace VisionCraft
 {
     void NodeEditorLayer::OnEvent(Core::Event &event)
@@ -31,33 +118,32 @@ namespace VisionCraft
 
         currentCanvasPos = canvas_pos;
 
-        if (canvas_size.x < 50.0f)
+        if (canvas_size.x < kMinCanvasSize)
         {
-            canvas_size.x = 50.0f;
+            canvas_size.x = kMinCanvasSize;
         }
 
-        if (canvas_size.y < 50.0f)
+        if (canvas_size.y < kMinCanvasSize)
         {
-            canvas_size.y = 50.0f;
+            canvas_size.y = kMinCanvasSize;
         }
 
         if (showGrid)
         {
-            ImU32 grid_color = IM_COL32(200, 200, 200, 40);
-            float grid_step = gridSize * zoomLevel;
+            const auto grid_step = gridSize * zoomLevel;
 
             for (float x = fmodf(panX, grid_step); x < canvas_size.x; x += grid_step)
             {
                 draw_list->AddLine(ImVec2(canvas_pos.x + x, canvas_pos.y),
                     ImVec2(canvas_pos.x + x, canvas_pos.y + canvas_size.y),
-                    grid_color);
+                    kGridColor);
             }
 
             for (float y = fmodf(panY, grid_step); y < canvas_size.y; y += grid_step)
             {
                 draw_list->AddLine(ImVec2(canvas_pos.x, canvas_pos.y + y),
                     ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + y),
-                    grid_color);
+                    kGridColor);
             }
         }
 
@@ -72,8 +158,8 @@ namespace VisionCraft
         {
             if (io.MouseWheel != 0.0f)
             {
-                zoomLevel += io.MouseWheel * 0.1f;
-                zoomLevel = std::clamp(zoomLevel, 0.1f, 5.0f);
+                zoomLevel += io.MouseWheel * kZoomStep;
+                zoomLevel = std::clamp(zoomLevel, kMinZoomLevel, kMaxZoomLevel);
             }
         }
 
@@ -115,122 +201,58 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderNode(Engine::Node *node, const NodePosition &nodePos)
     {
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        ImVec2 canvasPos = currentCanvasPos;
+        auto *drawList = ImGui::GetWindowDrawList();
+        const auto canvasPos = currentCanvasPos;
 
-        ImVec2 worldPos =
+        const auto worldPos =
             ImVec2(canvasPos.x + (nodePos.x * zoomLevel + panX), canvasPos.y + (nodePos.y * zoomLevel + panY));
 
-        auto pins = GetNodePins(node->GetName());
+        const auto pins = GetNodePins(node->GetName());
+        const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
 
-        std::vector<NodePin> inputPins;
-        std::vector<NodePin> outputPins;
-        std::vector<NodePin> parameterPins;
-        for (const auto &pin : pins)
-        {
-            if (pin.isInput)
-            {
-                if (pin.dataType == PinDataType::Image)
-                {
-                    inputPins.push_back(pin);
-                }
-                else
-                {
-                    parameterPins.push_back(pin);
-                }
-            }
-            else
-            {
-                outputPins.push_back(pin);
-            }
-        }
+        const auto isSelected = (node->GetId() == selectedNodeId);
+        const auto borderColor = isSelected ? kBorderColorSelected : kBorderColorNormal;
+        const auto borderThickness = isSelected ? kBorderThicknessSelected : kBorderThicknessNormal;
+        const auto nodeRounding = kNodeRounding * zoomLevel;
 
-        float titleHeight = 25.0f * zoomLevel;
-        float pinHeight = 18.0f * zoomLevel;
-        float paramHeight = 22.0f * zoomLevel;
-        float pinSpacing = 3.0f * zoomLevel;
-        float padding = 8.0f * zoomLevel;
-
-        size_t maxPins = std::max(inputPins.size(), outputPins.size());
-        float pinsHeight = maxPins * (pinHeight + pinSpacing);
-        float parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
-        float contentHeight = pinsHeight + parametersHeight + padding * 2;
-        float totalHeight = titleHeight + contentHeight + padding;
-
-        ImVec2 nodeSize = ImVec2(220.0f * zoomLevel, std::max(100.0f * zoomLevel, totalHeight));
-
-        bool isSelected = (node->GetId() == selectedNodeId);
-
-        ImU32 nodeColor = IM_COL32(60, 60, 60, 255);
-        ImU32 borderColor = isSelected ? IM_COL32(255, 165, 0, 255) : IM_COL32(100, 100, 100, 255);
-        ImU32 titleColor = IM_COL32(80, 80, 120, 255);
-
+        // Draw node background
         drawList->AddRectFilled(
-            worldPos, ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y), nodeColor, 8.0f * zoomLevel);
+            worldPos, ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y), kNodeColor, nodeRounding);
 
+        // Draw node border
         drawList->AddRect(worldPos,
-            ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y),
+            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y),
             borderColor,
-            8.0f * zoomLevel,
+            nodeRounding,
             0,
-            isSelected ? 3.0f * zoomLevel : 2.0f * zoomLevel);
+            borderThickness * zoomLevel);
 
+        // Draw title background
+        const auto titleHeight = kTitleHeight * zoomLevel;
         drawList->AddRectFilled(worldPos,
-            ImVec2(worldPos.x + nodeSize.x, worldPos.y + titleHeight),
-            titleColor,
-            8.0f * zoomLevel,
+            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + titleHeight),
+            kTitleColor,
+            nodeRounding,
             ImDrawFlags_RoundCornersTop);
 
-        if (zoomLevel > 0.5f)
+        // Draw title text
+        if (zoomLevel > kMinZoomForText)
         {
-            ImVec2 textPos = ImVec2(worldPos.x + 8.0f * zoomLevel, worldPos.y + 4.0f * zoomLevel);
-            drawList->AddText(textPos, IM_COL32(255, 255, 255, 255), node->GetName().c_str());
+            const auto textPos = ImVec2(worldPos.x + kNodePadding * zoomLevel, worldPos.y + kTextOffset * zoomLevel);
+            drawList->AddText(textPos, kTextColor, node->GetName().c_str());
         }
 
-        float pinRadius = 5.0f * zoomLevel;
-        float leftColumnX = worldPos.x + 8.0f * zoomLevel;
-        float rightColumnX = worldPos.x + nodeSize.x - 8.0f * zoomLevel;
+        // Render pins
+        RenderNodePins(pins, worldPos, dimensions, zoomLevel);
 
-        float inputY = worldPos.y + titleHeight + padding;
-        for (size_t i = 0; i < inputPins.size(); ++i)
+        // Render parameters if needed
+        if (dimensions.parameterPinCount > 0 && zoomLevel > kMinZoomForText)
         {
-            const auto &pin = inputPins[i];
-
-            ImVec2 pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            ImVec2 labelPos = ImVec2(leftColumnX + pinRadius + 4.0f * zoomLevel, inputY + i * (pinHeight + pinSpacing));
-
-            RenderPin(pin, pinPos, pinRadius);
-
-            if (zoomLevel > 0.5f)
-            {
-                std::string displayName = FormatParameterName(pin.name);
-                drawList->AddText(labelPos, IM_COL32(200, 200, 200, 255), displayName.c_str());
-            }
-        }
-
-        float outputY = worldPos.y + titleHeight + padding;
-        for (size_t i = 0; i < outputPins.size(); ++i)
-        {
-            const auto &pin = outputPins[i];
-
-            std::string displayName = FormatParameterName(pin.name);
-            ImVec2 textSize = ImGui::CalcTextSize(displayName.c_str());
-            ImVec2 pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            ImVec2 labelPos = ImVec2(
-                rightColumnX - pinRadius - textSize.x - 4.0f * zoomLevel, outputY + i * (pinHeight + pinSpacing));
-
-            RenderPin(pin, pinPos, pinRadius);
-
-            if (zoomLevel > 0.5f)
-            {
-                drawList->AddText(labelPos, IM_COL32(200, 200, 200, 255), displayName.c_str());
-            }
-        }
-
-        if (!parameterPins.empty() && zoomLevel > 0.5f)
-        {
-            float parametersStartY = worldPos.y + titleHeight + padding + pinsHeight + padding;
-            RenderNodeParameters(node, ImVec2(worldPos.x, parametersStartY), nodeSize);
+            const auto parametersStartY = worldPos.y + titleHeight + (kNodePadding * zoomLevel)
+                                          + (std::max(dimensions.inputPinCount, dimensions.outputPinCount)
+                                              * (kPinHeight + kPinSpacing) * zoomLevel)
+                                          + (kNodePadding * zoomLevel);
+            RenderNodeParameters(node, ImVec2(worldPos.x, parametersStartY), dimensions.size);
         }
     }
 
@@ -259,59 +281,8 @@ namespace VisionCraft
 
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
-            Engine::NodeId clickedNodeId = -1;
-
-            auto nodeIds = nodeEditor.GetNodeIds();
-            for (auto it = nodeIds.rbegin(); it != nodeIds.rend(); ++it)
-            {
-                Engine::NodeId nodeId = *it;
-                Engine::Node *node = nodeEditor.GetNode(nodeId);
-                if (node && nodePositions.find(nodeId) != nodePositions.end())
-                {
-                    auto pins = GetNodePins(node->GetName());
-                    std::vector<NodePin> inputPins, outputPins, parameterPins;
-                    for (const auto &pin : pins)
-                    {
-                        if (pin.isInput)
-                        {
-                            if (pin.dataType == PinDataType::Image)
-                            {
-                                inputPins.push_back(pin);
-                            }
-                            else
-                            {
-                                parameterPins.push_back(pin);
-                            }
-                        }
-                        else
-                        {
-                            outputPins.push_back(pin);
-                        }
-                    }
-
-                    float titleHeight = 25.0f * zoomLevel;
-                    float pinHeight = 18.0f * zoomLevel;
-                    float paramHeight = 22.0f * zoomLevel;
-                    float pinSpacing = 3.0f * zoomLevel;
-                    float padding = 8.0f * zoomLevel;
-
-                    size_t maxPins = std::max(inputPins.size(), outputPins.size());
-                    float pinsHeight = maxPins * (pinHeight + pinSpacing);
-                    float parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
-                    float contentHeight = pinsHeight + parametersHeight + padding * 2;
-                    float totalHeight = titleHeight + contentHeight + padding;
-
-                    ImVec2 nodeSize = ImVec2(220.0f * zoomLevel, std::max(100.0f * zoomLevel, totalHeight));
-
-                    if (IsMouseOverNode(mousePos, nodePositions[nodeId], nodeSize))
-                    {
-                        clickedNodeId = nodeId;
-                        break;
-                    }
-                }
-            }
-
-            if (clickedNodeId == -1)
+            const auto clickedNodeId = FindNodeAtPosition(mousePos);
+            if (clickedNodeId == kInvalidNodeId)
             {
                 showContextMenu = true;
                 contextMenuPos = mousePos;
@@ -326,71 +297,21 @@ namespace VisionCraft
                 return;
             }
 
-            Engine::NodeId clickedNodeId = -1;
+            const auto clickedNodeId = FindNodeAtPosition(mousePos);
 
-            auto nodeIds = nodeEditor.GetNodeIds();
-            for (auto it = nodeIds.rbegin(); it != nodeIds.rend(); ++it)
-            {
-                Engine::NodeId nodeId = *it;
-                Engine::Node *node = nodeEditor.GetNode(nodeId);
-                if (node && nodePositions.find(nodeId) != nodePositions.end())
-                {
-                    auto pins = GetNodePins(node->GetName());
-                    std::vector<NodePin> inputPins, outputPins, parameterPins;
-                    for (const auto &pin : pins)
-                    {
-                        if (pin.isInput)
-                        {
-                            if (pin.dataType == PinDataType::Image)
-                            {
-                                inputPins.push_back(pin);
-                            }
-                            else
-                            {
-                                parameterPins.push_back(pin);
-                            }
-                        }
-                        else
-                        {
-                            outputPins.push_back(pin);
-                        }
-                    }
-
-                    float titleHeight = 25.0f * zoomLevel;
-                    float pinHeight = 18.0f * zoomLevel;
-                    float paramHeight = 22.0f * zoomLevel;
-                    float pinSpacing = 3.0f * zoomLevel;
-                    float padding = 8.0f * zoomLevel;
-
-                    size_t maxPins = std::max(inputPins.size(), outputPins.size());
-                    float pinsHeight = maxPins * (pinHeight + pinSpacing);
-                    float parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
-                    float contentHeight = pinsHeight + parametersHeight + padding * 2;
-                    float totalHeight = titleHeight + contentHeight + padding;
-
-                    ImVec2 nodeSize = ImVec2(220.0f * zoomLevel, std::max(100.0f * zoomLevel, totalHeight));
-
-                    if (IsMouseOverNode(mousePos, nodePositions[nodeId], nodeSize))
-                    {
-                        clickedNodeId = nodeId;
-                        break;
-                    }
-                }
-            }
-
-            if (clickedNodeId != -1)
+            if (clickedNodeId != kInvalidNodeId)
             {
                 selectedNodeId = clickedNodeId;
                 isDragging = true;
 
-                const NodePosition &nodePos = nodePositions[clickedNodeId];
-                ImVec2 worldPos =
+                const auto &nodePos = nodePositions[clickedNodeId];
+                const auto worldPos =
                     ImVec2(canvasPos.x + (nodePos.x * zoomLevel + panX), canvasPos.y + (nodePos.y * zoomLevel + panY));
                 dragOffset = ImVec2(mousePos.x - worldPos.x, mousePos.y - worldPos.y);
             }
             else
             {
-                selectedNodeId = -1;
+                selectedNodeId = kInvalidNodeId;
                 isDragging = false;
             }
         }
@@ -571,11 +492,78 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderPin(const NodePin &pin, const ImVec2 &position, float radius) const
     {
-        ImDrawList *drawList = ImGui::GetWindowDrawList();
-        ImU32 pinColor = GetDataTypeColor(pin.dataType);
+        auto *drawList = ImGui::GetWindowDrawList();
+        const auto pinColor = GetDataTypeColor(pin.dataType);
 
         drawList->AddCircleFilled(position, radius, pinColor);
-        drawList->AddCircle(position, radius, IM_COL32(255, 255, 255, 255), 0, 1.5f);
+        drawList->AddCircle(position, radius, kPinBorderColor, 0, kPinBorderThickness);
+    }
+
+    void NodeEditorLayer::RenderNodePins(const std::vector<NodePin> &pins,
+        const ImVec2 &nodeWorldPos,
+        const NodeDimensions &dimensions,
+        float zoomLevel)
+    {
+        auto *drawList = ImGui::GetWindowDrawList();
+
+        std::vector<NodePin> inputPins, outputPins;
+        for (const auto &pin : pins)
+        {
+            if (pin.isInput && pin.dataType == PinDataType::Image)
+            {
+                inputPins.push_back(pin);
+            }
+            else if (!pin.isInput)
+            {
+                outputPins.push_back(pin);
+            }
+        }
+
+        const auto titleHeight = kTitleHeight * zoomLevel;
+        const auto pinHeight = kPinHeight * zoomLevel;
+        const auto pinSpacing = kPinSpacing * zoomLevel;
+        const auto padding = kNodePadding * zoomLevel;
+        const auto pinRadius = kPinRadius * zoomLevel;
+        const auto textOffset = kTextOffset * zoomLevel;
+
+        const auto leftColumnX = nodeWorldPos.x + padding;
+        const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
+
+        // Render input pins
+        const auto inputY = nodeWorldPos.y + titleHeight + padding;
+        for (size_t i = 0; i < inputPins.size(); ++i)
+        {
+            const auto &pin = inputPins[i];
+            const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+            const auto labelPos = ImVec2(leftColumnX + pinRadius + textOffset, inputY + i * (pinHeight + pinSpacing));
+
+            RenderPin(pin, pinPos, pinRadius);
+
+            if (zoomLevel > kMinZoomForText)
+            {
+                const auto displayName = FormatParameterName(pin.name);
+                drawList->AddText(labelPos, kPinLabelColor, displayName.c_str());
+            }
+        }
+
+        // Render output pins
+        const auto outputY = nodeWorldPos.y + titleHeight + padding;
+        for (size_t i = 0; i < outputPins.size(); ++i)
+        {
+            const auto &pin = outputPins[i];
+            const auto displayName = FormatParameterName(pin.name);
+            const auto textSize = ImGui::CalcTextSize(displayName.c_str());
+            const auto pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+            const auto labelPos =
+                ImVec2(rightColumnX - pinRadius - textSize.x - textOffset, outputY + i * (pinHeight + pinSpacing));
+
+            RenderPin(pin, pinPos, pinRadius);
+
+            if (zoomLevel > kMinZoomForText)
+            {
+                drawList->AddText(labelPos, kPinLabelColor, displayName.c_str());
+            }
+        }
     }
 
     std::string NodeEditorLayer::FormatParameterName(const std::string &paramName)
@@ -743,7 +731,7 @@ namespace VisionCraft
 
     std::vector<NodePin> NodeEditorLayer::GetNodeParameters(const std::string &nodeName) const
     {
-        auto allPins = GetNodePins(nodeName);
+        const auto allPins = GetNodePins(nodeName);
         std::vector<NodePin> parameterPins;
 
         for (const auto &pin : allPins)
@@ -755,5 +743,30 @@ namespace VisionCraft
         }
 
         return parameterPins;
+    }
+
+    Engine::NodeId NodeEditorLayer::FindNodeAtPosition(const ImVec2 &mousePos) const
+    {
+        const auto nodeIds = nodeEditor.GetNodeIds();
+
+        // Iterate in reverse order to find topmost node
+        for (auto it = nodeIds.rbegin(); it != nodeIds.rend(); ++it)
+        {
+            const auto nodeId = *it;
+            const auto *node = nodeEditor.GetNode(nodeId);
+
+            if (!node || nodePositions.find(nodeId) == nodePositions.end())
+                continue;
+
+            const auto pins = GetNodePins(node->GetName());
+            const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+
+            if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))
+            {
+                return nodeId;
+            }
+        }
+
+        return kInvalidNodeId;
     }
 } // namespace VisionCraft

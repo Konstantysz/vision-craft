@@ -42,6 +42,17 @@ namespace VisionCraft
     };
 
     /**
+     * @brief Structure containing pre-calculated node dimensions.
+     */
+    struct NodeDimensions
+    {
+        ImVec2 size;
+        size_t inputPinCount;
+        size_t outputPinCount;
+        size_t parameterPinCount;
+    };
+
+    /**
      * @brief Node editor layer.
      *
      * NodeEditorLayer implements the complete node editing experience combining
@@ -165,6 +176,18 @@ namespace VisionCraft
         void RenderPin(const NodePin &pin, const ImVec2 &position, float radius) const;
 
         /**
+         * @brief Renders all pins for a node.
+         * @param pins Vector of all pins for the node
+         * @param nodeWorldPos World position of the node
+         * @param dimensions Pre-calculated node dimensions
+         * @param zoomLevel Current zoom level
+         */
+        void RenderNodePins(const std::vector<NodePin> &pins,
+            const ImVec2 &nodeWorldPos,
+            const NodeDimensions &dimensions,
+            float zoomLevel);
+
+        /**
          * @brief Gets the editable parameters for a specific node type.
          * @param nodeName Name of the node
          * @return Vector of parameter definitions
@@ -185,5 +208,12 @@ namespace VisionCraft
          * @return User-friendly display name (e.g., "Low Threshold")
          */
         static std::string FormatParameterName(const std::string &paramName);
+
+        /**
+         * @brief Finds the topmost node at the given mouse position.
+         * @param mousePos Mouse position in screen coordinates
+         * @return Node ID if found, or -1 if no node at position
+         */
+        Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
     };
 } // namespace VisionCraft

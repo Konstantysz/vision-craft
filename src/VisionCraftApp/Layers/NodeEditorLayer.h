@@ -2,6 +2,7 @@
 
 #include "Layer.h"
 #include "NodeEditor.h"
+#include "CanvasController.h"
 
 #include <memory>
 #include <unordered_map>
@@ -294,25 +295,20 @@ namespace VisionCraft
          */
         void RenderConnection(const NodeConnection &connection);
 
-        float zoomLevel = 1.0f; ///< Current zoom level (1.0 = 100%)
-        float panX = 0.0f;      ///< Horizontal pan offset in pixels
-        float panY = 0.0f;      ///< Vertical pan offset in pixels
-        float gridSize = 20.0f; ///< Size of grid cells in pixels
-        bool showGrid = true;   ///< Whether to display the grid background
-
+        // Core components
+        CanvasController canvas;                                         ///< Canvas management component
         Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 
         // Selection and dragging state
-        Engine::NodeId selectedNodeId = -1;     ///< Currently selected node ID (-1 = none)
+        Engine::NodeId selectedNodeId = Constants::Special::kInvalidNodeId; ///< Currently selected node ID
         bool isDragging = false;                ///< Whether a node is being dragged
         ImVec2 dragOffset = ImVec2(0.0f, 0.0f); ///< Mouse offset from node position during drag
 
         // Context menu state
         bool showContextMenu = false;                 ///< Whether to show the context menu
         ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);   ///< Position where context menu was opened
-        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f); ///< Current canvas position for coordinate calculations
 
         // Connection state
         std::vector<NodeConnection> connections; ///< All active connections

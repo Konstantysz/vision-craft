@@ -6,6 +6,7 @@ add_executable(VisionCraftApp
     VisionCraftApplication.cpp
     Layers/DockSpaceLayer.cpp
     Layers/NodeEditorLayer.cpp
+    Layers/CanvasController.cpp
     Layers/PropertyPanelLayer.cpp
     Layers/GraphExecutionLayer.cpp)
 

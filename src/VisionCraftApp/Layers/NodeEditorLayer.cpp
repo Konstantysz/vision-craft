@@ -72,61 +72,22 @@ namespace VisionCraft
     {
         ImGui::Begin("Node Editor");
 
-        ImDrawList *draw_list = ImGui::GetWindowDrawList();
-        ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
-        ImVec2 canvas_size = ImGui::GetContentRegionAvail();
+        auto* drawList = ImGui::GetWindowDrawList();
+        const auto canvasPos = ImGui::GetCursorScreenPos();
+        const auto canvasSize = ImGui::GetContentRegionAvail();
 
-        currentCanvasPos = canvas_pos;
+        // Begin canvas rendering with integrated pan/zoom/grid
+        canvas.BeginCanvas(drawList, canvasPos, canvasSize);
 
-        if (canvas_size.x < Constants::Canvas::kMinSize)
-        {
-            canvas_size.x = Constants::Canvas::kMinSize;
-        }
+        // Handle canvas input (zoom, pan)
+        const auto& io = ImGui::GetIO();
+        canvas.HandleImGuiInput(io, ImGui::IsWindowHovered());
 
-        if (canvas_size.y < Constants::Canvas::kMinSize)
-        {
-            canvas_size.y = Constants::Canvas::kMinSize;
-        }
-
-        if (showGrid)
-        {
-            const auto grid_step = gridSize * zoomLevel;
-
-            for (float x = fmodf(panX, grid_step); x < canvas_size.x; x += grid_step)
-            {
-                draw_list->AddLine(ImVec2(canvas_pos.x + x, canvas_pos.y),
-                    ImVec2(canvas_pos.x + x, canvas_pos.y + canvas_size.y),
-                    Constants::Colors::Grid::kLines);
-            }
-
-            for (float y = fmodf(panY, grid_step); y < canvas_size.y; y += grid_step)
-            {
-                draw_list->AddLine(ImVec2(canvas_pos.x, canvas_pos.y + y),
-                    ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + y),
-                    Constants::Colors::Grid::kLines);
-            }
-        }
-
-        ImGuiIO &io = ImGui::GetIO();
-        if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
-        {
-            panX += io.MouseDelta.x;
-            panY += io.MouseDelta.y;
-        }
-
-        if (ImGui::IsWindowHovered())
-        {
-            if (io.MouseWheel != 0.0f)
-            {
-                zoomLevel += io.MouseWheel * Constants::Zoom::kStep;
-                zoomLevel = std::clamp(zoomLevel, Constants::Zoom::kMin, Constants::Zoom::kMax);
-            }
-        }
-
+        // Initialize with a starter node if empty
         if (nodeEditor.GetNodeIds().empty())
         {
             auto starterNode = std::make_unique<Engine::ImageInputNode>(nextNodeId++);
-            Engine::NodeId nodeId = starterNode->GetId();
+            const auto nodeId = starterNode->GetId();
             nodeEditor.AddNode(std::move(starterNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };
 
@@ -135,13 +96,19 @@ namespace VisionCraft
             dragOffset = ImVec2(0.0f, 0.0f);
         }
 
+        // Handle interactions
         HandleMouseInteractions();
         HandleConnectionInteractions();
 
+        // Render world-space content
         RenderConnections();
         RenderNodes();
 
+        // Render UI overlays
         RenderContextMenu();
+
+        // End canvas rendering
+        canvas.EndCanvas();
 
         ImGui::End();
     }
@@ -164,18 +131,16 @@ namespace VisionCraft
     void NodeEditorLayer::RenderNode(Engine::Node *node, const NodePosition &nodePos)
     {
         auto *drawList = ImGui::GetWindowDrawList();
-        const auto canvasPos = currentCanvasPos;
 
-        const auto worldPos =
-            ImVec2(canvasPos.x + (nodePos.x * zoomLevel + panX), canvasPos.y + (nodePos.y * zoomLevel + panY));
+        const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
 
         const auto isSelected = (node->GetId() == selectedNodeId);
         const auto borderColor = isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
         const auto borderThickness = isSelected ? Constants::Node::Border::kThicknessSelected : Constants::Node::Border::kThicknessNormal;
-        const auto nodeRounding = Constants::Node::kRounding * zoomLevel;
+        const auto nodeRounding = Constants::Node::kRounding * canvas.GetZoomLevel();
 
         // Draw node background
         drawList->AddRectFilled(
@@ -187,10 +152,10 @@ namespace VisionCraft
             borderColor,
             nodeRounding,
             0,
-            borderThickness * zoomLevel);
+            borderThickness * canvas.GetZoomLevel());
 
         // Draw title background
-        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
         drawList->AddRectFilled(worldPos,
             ImVec2(worldPos.x + dimensions.size.x, worldPos.y + titleHeight),
             Constants::Colors::Node::kTitle,
@@ -198,22 +163,22 @@ namespace VisionCraft
             ImDrawFlags_RoundCornersTop);
 
         // Draw title text
-        if (zoomLevel > Constants::Zoom::kMinForText)
+        if (canvas.GetZoomLevel() > Constants::Zoom::kMinForText)
         {
-            const auto textPos = ImVec2(worldPos.x + Constants::Node::kPadding * zoomLevel, worldPos.y + Constants::Node::Text::kOffset * zoomLevel);
+            const auto textPos = ImVec2(worldPos.x + Constants::Node::kPadding * canvas.GetZoomLevel(), worldPos.y + Constants::Node::Text::kOffset * canvas.GetZoomLevel());
             drawList->AddText(textPos, Constants::Colors::Node::kText, node->GetName().c_str());
         }
 
         // Render pins
-        RenderNodePins(pins, worldPos, dimensions, zoomLevel);
+        RenderNodePins(pins, worldPos, dimensions, canvas.GetZoomLevel());
 
         // Render parameters if needed
-        if (dimensions.parameterPinCount > 0 && zoomLevel > Constants::Zoom::kMinForText)
+        if (dimensions.parameterPinCount > 0 && canvas.GetZoomLevel() > Constants::Zoom::kMinForText)
         {
-            const auto parametersStartY = worldPos.y + titleHeight + (Constants::Node::kPadding * zoomLevel)
+            const auto parametersStartY = worldPos.y + titleHeight + (Constants::Node::kPadding * canvas.GetZoomLevel())
                                           + (std::max(dimensions.inputPinCount, dimensions.outputPinCount)
-                                              * (Constants::Pin::kHeight + Constants::Pin::kSpacing) * zoomLevel)
-                                          + (Constants::Node::kPadding * zoomLevel);
+                                              * (Constants::Pin::kHeight + Constants::Pin::kSpacing) * canvas.GetZoomLevel())
+                                          + (Constants::Node::kPadding * canvas.GetZoomLevel());
             RenderNodeParameters(node, ImVec2(worldPos.x, parametersStartY), dimensions.size);
         }
     }
@@ -222,9 +187,7 @@ namespace VisionCraft
         const NodePosition &nodePos,
         const ImVec2 &nodeSize) const
     {
-        ImVec2 canvasPos = currentCanvasPos;
-        ImVec2 worldPos =
-            ImVec2(canvasPos.x + (nodePos.x * zoomLevel + panX), canvasPos.y + (nodePos.y * zoomLevel + panY));
+        ImVec2 worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
         return mousePos.x >= worldPos.x && mousePos.x <= worldPos.x + nodeSize.x && mousePos.y >= worldPos.y
                && mousePos.y <= worldPos.y + nodeSize.y;
@@ -267,8 +230,7 @@ namespace VisionCraft
                 isDragging = true;
 
                 const auto &nodePos = nodePositions[clickedNodeId];
-                const auto worldPos =
-                    ImVec2(canvasPos.x + (nodePos.x * zoomLevel + panX), canvasPos.y + (nodePos.y * zoomLevel + panY));
+                const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
                 dragOffset = ImVec2(mousePos.x - worldPos.x, mousePos.y - worldPos.y);
             }
             else
@@ -284,8 +246,8 @@ namespace VisionCraft
 
             float oldX = nodePositions[selectedNodeId].x;
             float oldY = nodePositions[selectedNodeId].y;
-            nodePositions[selectedNodeId].x = (newWorldPos.x - canvasPos.x - panX) / zoomLevel;
-            nodePositions[selectedNodeId].y = (newWorldPos.y - canvasPos.y - panY) / zoomLevel;
+            const auto newNodePos = canvas.ScreenToWorld(newWorldPos);
+            nodePositions[selectedNodeId] = NodePosition{newNodePos.x, newNodePos.y};
         }
 
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
@@ -339,10 +301,11 @@ namespace VisionCraft
 
     void NodeEditorLayer::CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position)
     {
-        ImVec2 canvasPos = currentCanvasPos;
+        ImVec2 canvasPos = canvas.GetCanvasPosition();
 
-        float worldX = (position.x - canvasPos.x - panX) / zoomLevel;
-        float worldY = (position.y - canvasPos.y - panY) / zoomLevel;
+        const auto worldPos = canvas.ScreenToWorld(position);
+        float worldX = worldPos.x;
+        float worldY = worldPos.y;
 
         worldX -= Constants::Node::Creation::kOffsetX;
         worldY -= Constants::Node::Creation::kOffsetY;
@@ -481,7 +444,7 @@ namespace VisionCraft
             }
         }
 
-        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
         const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
         const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
         const auto padding = Constants::Node::kPadding * zoomLevel;
@@ -581,18 +544,18 @@ namespace VisionCraft
             return;
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
-        float paramHeight = Constants::Parameter::kHeight * zoomLevel;
-        float pinSpacing = Constants::Pin::kSpacing * zoomLevel;
-        float padding = Constants::Node::kPadding * zoomLevel;
-        float pinRadius = Constants::Pin::kRadius * zoomLevel;
+        float paramHeight = Constants::Parameter::kHeight * canvas.GetZoomLevel();
+        float pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+        float padding = Constants::Node::kPadding * canvas.GetZoomLevel();
+        float pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
 
         for (size_t i = 0; i < parameterPins.size(); ++i)
         {
             const auto &pin = parameterPins[i];
             float currentY = startPos.y + i * (paramHeight + pinSpacing);
             ImVec2 pinPos = ImVec2(startPos.x + padding, currentY + pinSpacing * 0.5f);
-            ImVec2 labelPos = ImVec2(pinPos.x + pinRadius + Constants::Pin::kTextOffset * zoomLevel, currentY - Constants::Parameter::kLabelOffset * zoomLevel);
-            ImVec2 inputPos = ImVec2(startPos.x + padding, currentY + Constants::Parameter::kInputOffset * zoomLevel);
+            ImVec2 labelPos = ImVec2(pinPos.x + pinRadius + Constants::Pin::kTextOffset * canvas.GetZoomLevel(), currentY - Constants::Parameter::kLabelOffset * canvas.GetZoomLevel());
+            ImVec2 inputPos = ImVec2(startPos.x + padding, currentY + Constants::Parameter::kInputOffset * canvas.GetZoomLevel());
 
             RenderPin(pin, pinPos, pinRadius);
 
@@ -606,7 +569,7 @@ namespace VisionCraft
             std::string widgetId = "##" + std::to_string(node->GetId()) + "_" + pin.name;
 
             float availableWidth = nodeSize.x - padding * 2;
-            float inputWidth = std::max(Constants::Parameter::kMinInputWidth * zoomLevel, availableWidth);
+            float inputWidth = std::max(Constants::Parameter::kMinInputWidth * canvas.GetZoomLevel(), availableWidth);
 
             switch (pin.dataType)
             {
@@ -721,7 +684,7 @@ namespace VisionCraft
                 continue;
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+            const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
 
             if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))
             {
@@ -744,11 +707,10 @@ namespace VisionCraft
                 continue;
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+            const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
             const auto& nodePos = nodePositions.at(nodeId);
 
-            const auto nodeWorldPos = ImVec2(currentCanvasPos.x + (nodePos.x * zoomLevel + panX),
-                                           currentCanvasPos.y + (nodePos.y * zoomLevel + panY));
+            const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
             // Check input pins (Image pins only for connections)
             std::vector<NodePin> inputPins;
@@ -760,11 +722,11 @@ namespace VisionCraft
                 }
             }
 
-            const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
-            const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
-            const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
-            const auto padding = Constants::Node::kPadding * zoomLevel;
-            const auto pinRadius = Constants::Pin::kRadius * zoomLevel;
+            const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
+            const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
+            const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+            const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
+            const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
 
             const auto leftColumnX = nodeWorldPos.x + padding;
             const auto inputY = nodeWorldPos.y + titleHeight + padding;
@@ -824,17 +786,16 @@ namespace VisionCraft
             return ImVec2(0, 0);
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
         const auto& nodePos = nodePositions.at(pinId.nodeId);
 
-        const auto nodeWorldPos = ImVec2(currentCanvasPos.x + (nodePos.x * zoomLevel + panX),
-                                       currentCanvasPos.y + (nodePos.y * zoomLevel + panY));
+        const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
         // Find the specific pin
-        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
-        const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
-        const auto padding = Constants::Node::kPadding * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
+        const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
+        const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+        const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
 
         // Check input pins first
         std::vector<NodePin> inputPins;
@@ -1102,7 +1063,7 @@ namespace VisionCraft
 
         // Calculate bezier control points for a nice curve
         const auto distance = std::abs(endPos.x - startPos.x);
-        const auto tension = std::min(distance * 0.5f, bezierTension * zoomLevel);
+        const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
 
         const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
         const auto cp2 = ImVec2(endPos.x - tension, endPos.y);

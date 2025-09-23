@@ -1,4 +1,5 @@
 #include "NodeEditorLayer.h"
+#include "NodeEditorConstants.h"
 
 #include <algorithm>
 #include <cmath>
@@ -13,48 +14,6 @@
 
 namespace
 {
-    // UI Constants
-    constexpr float kDefaultZoomLevel = 1.0f;
-    constexpr float kMinZoomLevel = 0.1f;
-    constexpr float kMaxZoomLevel = 5.0f;
-    constexpr float kZoomStep = 0.1f;
-    constexpr float kMinCanvasSize = 50.0f;
-
-    // Node Visual Constants
-    constexpr float kNodeWidth = 220.0f;
-    constexpr float kMinNodeHeight = 100.0f;
-    constexpr float kTitleHeight = 25.0f;
-    constexpr float kPinHeight = 18.0f;
-    constexpr float kParamHeight = 22.0f;
-    constexpr float kPinSpacing = 3.0f;
-    constexpr float kNodePadding = 8.0f;
-    constexpr float kPinRadius = 5.0f;
-    constexpr float kNodeRounding = 8.0f;
-    constexpr float kBorderThicknessNormal = 2.0f;
-    constexpr float kBorderThicknessSelected = 3.0f;
-    constexpr float kPinBorderThickness = 1.5f;
-    constexpr float kTextOffset = 4.0f;
-    constexpr float kMinZoomForText = 0.5f;
-
-    // Node Creation Offset
-    constexpr float kNodeCreationOffsetX = 100.0f;
-    constexpr float kNodeCreationOffsetY = 40.0f;
-
-    // Grid Transparency
-    constexpr int kGridAlpha = 40;
-
-    // Invalid Node ID
-    constexpr VisionCraft::Engine::NodeId kInvalidNodeId = -1;
-
-    // Color Constants
-    constexpr ImU32 kNodeColor = IM_COL32(60, 60, 60, 255);
-    constexpr ImU32 kBorderColorNormal = IM_COL32(100, 100, 100, 255);
-    constexpr ImU32 kBorderColorSelected = IM_COL32(255, 165, 0, 255);
-    constexpr ImU32 kTitleColor = IM_COL32(80, 80, 120, 255);
-    constexpr ImU32 kTextColor = IM_COL32(255, 255, 255, 255);
-    constexpr ImU32 kPinLabelColor = IM_COL32(200, 200, 200, 255);
-    constexpr ImU32 kPinBorderColor = IM_COL32(255, 255, 255, 255);
-    constexpr ImU32 kGridColor = IM_COL32(200, 200, 200, kGridAlpha);
 
     VisionCraft::NodeDimensions CalculateNodeDimensions(const std::vector<VisionCraft::NodePin> &pins, float zoomLevel)
     {
@@ -79,11 +38,11 @@ namespace
             }
         }
 
-        const auto titleHeight = kTitleHeight * zoomLevel;
-        const auto pinHeight = kPinHeight * zoomLevel;
-        const auto paramHeight = kParamHeight * zoomLevel;
-        const auto pinSpacing = kPinSpacing * zoomLevel;
-        const auto padding = kNodePadding * zoomLevel;
+        const auto titleHeight = VisionCraft::Constants::Node::kTitleHeight * zoomLevel;
+        const auto pinHeight = VisionCraft::Constants::Pin::kHeight * zoomLevel;
+        const auto paramHeight = VisionCraft::Constants::Parameter::kHeight * zoomLevel;
+        const auto pinSpacing = VisionCraft::Constants::Pin::kSpacing * zoomLevel;
+        const auto padding = VisionCraft::Constants::Node::kPadding * zoomLevel;
 
         const auto maxPins = std::max(inputPins.size(), outputPins.size());
         const auto pinsHeight = maxPins * (pinHeight + pinSpacing);
@@ -91,7 +50,8 @@ namespace
         const auto contentHeight = pinsHeight + parametersHeight + padding * 2;
         const auto totalHeight = titleHeight + contentHeight + padding;
 
-        return { ImVec2(kNodeWidth * zoomLevel, std::max(kMinNodeHeight * zoomLevel, totalHeight)),
+        return { ImVec2(VisionCraft::Constants::Node::kWidth * zoomLevel,
+                       std::max(VisionCraft::Constants::Node::kMinHeight * zoomLevel, totalHeight)),
             inputPins.size(),
             outputPins.size(),
             parameterPins.size() };
@@ -118,14 +78,14 @@ namespace VisionCraft
 
         currentCanvasPos = canvas_pos;
 
-        if (canvas_size.x < kMinCanvasSize)
+        if (canvas_size.x < Constants::Canvas::kMinSize)
         {
-            canvas_size.x = kMinCanvasSize;
+            canvas_size.x = Constants::Canvas::kMinSize;
         }
 
-        if (canvas_size.y < kMinCanvasSize)
+        if (canvas_size.y < Constants::Canvas::kMinSize)
         {
-            canvas_size.y = kMinCanvasSize;
+            canvas_size.y = Constants::Canvas::kMinSize;
         }
 
         if (showGrid)
@@ -136,14 +96,14 @@ namespace VisionCraft
             {
                 draw_list->AddLine(ImVec2(canvas_pos.x + x, canvas_pos.y),
                     ImVec2(canvas_pos.x + x, canvas_pos.y + canvas_size.y),
-                    kGridColor);
+                    Constants::Colors::Grid::kLines);
             }
 
             for (float y = fmodf(panY, grid_step); y < canvas_size.y; y += grid_step)
             {
                 draw_list->AddLine(ImVec2(canvas_pos.x, canvas_pos.y + y),
                     ImVec2(canvas_pos.x + canvas_size.x, canvas_pos.y + y),
-                    kGridColor);
+                    Constants::Colors::Grid::kLines);
             }
         }
 
@@ -158,8 +118,8 @@ namespace VisionCraft
         {
             if (io.MouseWheel != 0.0f)
             {
-                zoomLevel += io.MouseWheel * kZoomStep;
-                zoomLevel = std::clamp(zoomLevel, kMinZoomLevel, kMaxZoomLevel);
+                zoomLevel += io.MouseWheel * Constants::Zoom::kStep;
+                zoomLevel = std::clamp(zoomLevel, Constants::Zoom::kMin, Constants::Zoom::kMax);
             }
         }
 
@@ -170,7 +130,7 @@ namespace VisionCraft
             nodeEditor.AddNode(std::move(starterNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };
 
-            selectedNodeId = -1;
+            selectedNodeId = Constants::Special::kInvalidNodeId;
             isDragging = false;
             dragOffset = ImVec2(0.0f, 0.0f);
         }
@@ -213,13 +173,13 @@ namespace VisionCraft
         const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
 
         const auto isSelected = (node->GetId() == selectedNodeId);
-        const auto borderColor = isSelected ? kBorderColorSelected : kBorderColorNormal;
-        const auto borderThickness = isSelected ? kBorderThicknessSelected : kBorderThicknessNormal;
-        const auto nodeRounding = kNodeRounding * zoomLevel;
+        const auto borderColor = isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
+        const auto borderThickness = isSelected ? Constants::Node::Border::kThicknessSelected : Constants::Node::Border::kThicknessNormal;
+        const auto nodeRounding = Constants::Node::kRounding * zoomLevel;
 
         // Draw node background
         drawList->AddRectFilled(
-            worldPos, ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y), kNodeColor, nodeRounding);
+            worldPos, ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y), Constants::Colors::Node::kBackground, nodeRounding);
 
         // Draw node border
         drawList->AddRect(worldPos,
@@ -230,30 +190,30 @@ namespace VisionCraft
             borderThickness * zoomLevel);
 
         // Draw title background
-        const auto titleHeight = kTitleHeight * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
         drawList->AddRectFilled(worldPos,
             ImVec2(worldPos.x + dimensions.size.x, worldPos.y + titleHeight),
-            kTitleColor,
+            Constants::Colors::Node::kTitle,
             nodeRounding,
             ImDrawFlags_RoundCornersTop);
 
         // Draw title text
-        if (zoomLevel > kMinZoomForText)
+        if (zoomLevel > Constants::Zoom::kMinForText)
         {
-            const auto textPos = ImVec2(worldPos.x + kNodePadding * zoomLevel, worldPos.y + kTextOffset * zoomLevel);
-            drawList->AddText(textPos, kTextColor, node->GetName().c_str());
+            const auto textPos = ImVec2(worldPos.x + Constants::Node::kPadding * zoomLevel, worldPos.y + Constants::Node::Text::kOffset * zoomLevel);
+            drawList->AddText(textPos, Constants::Colors::Node::kText, node->GetName().c_str());
         }
 
         // Render pins
         RenderNodePins(pins, worldPos, dimensions, zoomLevel);
 
         // Render parameters if needed
-        if (dimensions.parameterPinCount > 0 && zoomLevel > kMinZoomForText)
+        if (dimensions.parameterPinCount > 0 && zoomLevel > Constants::Zoom::kMinForText)
         {
-            const auto parametersStartY = worldPos.y + titleHeight + (kNodePadding * zoomLevel)
+            const auto parametersStartY = worldPos.y + titleHeight + (Constants::Node::kPadding * zoomLevel)
                                           + (std::max(dimensions.inputPinCount, dimensions.outputPinCount)
-                                              * (kPinHeight + kPinSpacing) * zoomLevel)
-                                          + (kNodePadding * zoomLevel);
+                                              * (Constants::Pin::kHeight + Constants::Pin::kSpacing) * zoomLevel)
+                                          + (Constants::Node::kPadding * zoomLevel);
             RenderNodeParameters(node, ImVec2(worldPos.x, parametersStartY), dimensions.size);
         }
     }
@@ -284,7 +244,7 @@ namespace VisionCraft
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
             const auto clickedNodeId = FindNodeAtPosition(mousePos);
-            if (clickedNodeId == kInvalidNodeId)
+            if (clickedNodeId == Constants::Special::kInvalidNodeId)
             {
                 showContextMenu = true;
                 contextMenuPos = mousePos;
@@ -301,7 +261,7 @@ namespace VisionCraft
 
             const auto clickedNodeId = FindNodeAtPosition(mousePos);
 
-            if (clickedNodeId != kInvalidNodeId)
+            if (clickedNodeId != Constants::Special::kInvalidNodeId)
             {
                 selectedNodeId = clickedNodeId;
                 isDragging = true;
@@ -313,7 +273,7 @@ namespace VisionCraft
             }
             else
             {
-                selectedNodeId = kInvalidNodeId;
+                selectedNodeId = Constants::Special::kInvalidNodeId;
                 isDragging = false;
             }
         }
@@ -384,8 +344,8 @@ namespace VisionCraft
         float worldX = (position.x - canvasPos.x - panX) / zoomLevel;
         float worldY = (position.y - canvasPos.y - panY) / zoomLevel;
 
-        worldX -= 100.0f;
-        worldY -= 40.0f;
+        worldX -= Constants::Node::Creation::kOffsetX;
+        worldY -= Constants::Node::Creation::kOffsetY;
 
         Engine::NodeId nodeId = nextNodeId++;
         std::unique_ptr<Engine::Node> newNode;
@@ -417,7 +377,7 @@ namespace VisionCraft
             nodeEditor.AddNode(std::move(newNode));
             nodePositions[actualNodeId] = { worldX, worldY };
 
-            selectedNodeId = -1;
+            selectedNodeId = Constants::Special::kInvalidNodeId;
             isDragging = false;
             dragOffset = ImVec2(0.0f, 0.0f);
         }
@@ -478,17 +438,17 @@ namespace VisionCraft
         switch (dataType)
         {
         case PinDataType::Image:
-            return IM_COL32(100, 200, 100, 255);
+            return Constants::Colors::Pin::kImage;
         case PinDataType::String:
-            return IM_COL32(200, 100, 200, 255);
+            return Constants::Colors::Pin::kString;
         case PinDataType::Float:
-            return IM_COL32(100, 150, 255, 255);
+            return Constants::Colors::Pin::kFloat;
         case PinDataType::Int:
-            return IM_COL32(100, 255, 255, 255);
+            return Constants::Colors::Pin::kInt;
         case PinDataType::Bool:
-            return IM_COL32(255, 100, 100, 255);
+            return Constants::Colors::Pin::kBool;
         default:
-            return IM_COL32(128, 128, 128, 255);
+            return Constants::Colors::Pin::kDefault;
         }
     }
 
@@ -498,7 +458,7 @@ namespace VisionCraft
         const auto pinColor = GetDataTypeColor(pin.dataType);
 
         drawList->AddCircleFilled(position, radius, pinColor);
-        drawList->AddCircle(position, radius, kPinBorderColor, 0, kPinBorderThickness);
+        drawList->AddCircle(position, radius, Constants::Colors::Pin::kBorder, 0, Constants::Pin::kBorderThickness);
     }
 
     void NodeEditorLayer::RenderNodePins(const std::vector<NodePin> &pins,
@@ -521,12 +481,12 @@ namespace VisionCraft
             }
         }
 
-        const auto titleHeight = kTitleHeight * zoomLevel;
-        const auto pinHeight = kPinHeight * zoomLevel;
-        const auto pinSpacing = kPinSpacing * zoomLevel;
-        const auto padding = kNodePadding * zoomLevel;
-        const auto pinRadius = kPinRadius * zoomLevel;
-        const auto textOffset = kTextOffset * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
+        const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
+        const auto padding = Constants::Node::kPadding * zoomLevel;
+        const auto pinRadius = Constants::Pin::kRadius * zoomLevel;
+        const auto textOffset = Constants::Pin::kTextOffset * zoomLevel;
 
         const auto leftColumnX = nodeWorldPos.x + padding;
         const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
@@ -541,10 +501,10 @@ namespace VisionCraft
 
             RenderPin(pin, pinPos, pinRadius);
 
-            if (zoomLevel > kMinZoomForText)
+            if (zoomLevel > Constants::Zoom::kMinForText)
             {
                 const auto displayName = FormatParameterName(pin.name);
-                drawList->AddText(labelPos, kPinLabelColor, displayName.c_str());
+                drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
             }
         }
 
@@ -561,9 +521,9 @@ namespace VisionCraft
 
             RenderPin(pin, pinPos, pinRadius);
 
-            if (zoomLevel > kMinZoomForText)
+            if (zoomLevel > Constants::Zoom::kMinForText)
             {
-                drawList->AddText(labelPos, kPinLabelColor, displayName.c_str());
+                drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
             }
         }
     }
@@ -621,23 +581,23 @@ namespace VisionCraft
             return;
 
         ImDrawList *drawList = ImGui::GetWindowDrawList();
-        float paramHeight = 22.0f * zoomLevel;
-        float pinSpacing = 3.0f * zoomLevel;
-        float padding = 8.0f * zoomLevel;
-        float pinRadius = 5.0f * zoomLevel;
+        float paramHeight = Constants::Parameter::kHeight * zoomLevel;
+        float pinSpacing = Constants::Pin::kSpacing * zoomLevel;
+        float padding = Constants::Node::kPadding * zoomLevel;
+        float pinRadius = Constants::Pin::kRadius * zoomLevel;
 
         for (size_t i = 0; i < parameterPins.size(); ++i)
         {
             const auto &pin = parameterPins[i];
             float currentY = startPos.y + i * (paramHeight + pinSpacing);
             ImVec2 pinPos = ImVec2(startPos.x + padding, currentY + pinSpacing * 0.5f);
-            ImVec2 labelPos = ImVec2(pinPos.x + pinRadius + 4.0f * zoomLevel, currentY - 2.0f * zoomLevel);
-            ImVec2 inputPos = ImVec2(startPos.x + padding, currentY + 12.0f * zoomLevel);
+            ImVec2 labelPos = ImVec2(pinPos.x + pinRadius + Constants::Pin::kTextOffset * zoomLevel, currentY - Constants::Parameter::kLabelOffset * zoomLevel);
+            ImVec2 inputPos = ImVec2(startPos.x + padding, currentY + Constants::Parameter::kInputOffset * zoomLevel);
 
             RenderPin(pin, pinPos, pinRadius);
 
             std::string displayName = FormatParameterName(pin.name);
-            drawList->AddText(labelPos, IM_COL32(200, 200, 200, 255), displayName.c_str());
+            drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
 
             ImGui::SetCursorScreenPos(inputPos);
 
@@ -646,12 +606,12 @@ namespace VisionCraft
             std::string widgetId = "##" + std::to_string(node->GetId()) + "_" + pin.name;
 
             float availableWidth = nodeSize.x - padding * 2;
-            float inputWidth = std::max(80.0f * zoomLevel, availableWidth);
+            float inputWidth = std::max(Constants::Parameter::kMinInputWidth * zoomLevel, availableWidth);
 
             switch (pin.dataType)
             {
             case PinDataType::String: {
-                char buffer[256];
+                char buffer[Constants::Special::kStringBufferSize];
                 strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
                 buffer[sizeof(buffer) - 1] = '\0';
 
@@ -679,7 +639,7 @@ namespace VisionCraft
                 }
 
                 ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputFloat(widgetId.c_str(), &value, 0.1f, 1.0f, "%.2f"))
+                if (ImGui::InputFloat(widgetId.c_str(), &value, Constants::Input::Float::kStep, Constants::Input::Float::kFastStep, Constants::Input::Float::kFormat))
                 {
                     node->SetParamValue(pin.name, std::to_string(value));
                 }
@@ -769,7 +729,7 @@ namespace VisionCraft
             }
         }
 
-        return kInvalidNodeId;
+        return Constants::Special::kInvalidNodeId;
     }
 
     PinId NodeEditorLayer::FindPinAtPosition(const ImVec2 &mousePos) const
@@ -800,11 +760,11 @@ namespace VisionCraft
                 }
             }
 
-            const auto titleHeight = kTitleHeight * zoomLevel;
-            const auto pinHeight = kPinHeight * zoomLevel;
-            const auto pinSpacing = kPinSpacing * zoomLevel;
-            const auto padding = kNodePadding * zoomLevel;
-            const auto pinRadius = kPinRadius * zoomLevel;
+            const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+            const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
+            const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
+            const auto padding = Constants::Node::kPadding * zoomLevel;
+            const auto pinRadius = Constants::Pin::kRadius * zoomLevel;
 
             const auto leftColumnX = nodeWorldPos.x + padding;
             const auto inputY = nodeWorldPos.y + titleHeight + padding;
@@ -851,12 +811,12 @@ namespace VisionCraft
             }
         }
 
-        return { kInvalidNodeId, "" }; // No pin found
+        return { Constants::Special::kInvalidNodeId, "" }; // No pin found
     }
 
     ImVec2 NodeEditorLayer::GetPinWorldPosition(const PinId &pinId) const
     {
-        if (pinId.nodeId == kInvalidNodeId || nodePositions.find(pinId.nodeId) == nodePositions.end())
+        if (pinId.nodeId == Constants::Special::kInvalidNodeId || nodePositions.find(pinId.nodeId) == nodePositions.end())
             return ImVec2(0, 0);
 
         const auto* node = nodeEditor.GetNode(pinId.nodeId);
@@ -871,10 +831,10 @@ namespace VisionCraft
                                        currentCanvasPos.y + (nodePos.y * zoomLevel + panY));
 
         // Find the specific pin
-        const auto titleHeight = kTitleHeight * zoomLevel;
-        const auto pinHeight = kPinHeight * zoomLevel;
-        const auto pinSpacing = kPinSpacing * zoomLevel;
-        const auto padding = kNodePadding * zoomLevel;
+        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
+        const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
+        const auto padding = Constants::Node::kPadding * zoomLevel;
 
         // Check input pins first
         std::vector<NodePin> inputPins;
@@ -1014,7 +974,7 @@ namespace VisionCraft
 
             const auto clickedPin = FindPinAtPosition(mousePos);
 
-            if (clickedPin.nodeId != kInvalidNodeId)
+            if (clickedPin.nodeId != Constants::Special::kInvalidNodeId)
             {
                 if (!connectionState.isCreating)
                 {
@@ -1114,11 +1074,11 @@ namespace VisionCraft
             const auto endPos = connectionState.endPosition;
 
             // Add constants for connection rendering
-            constexpr auto kConnectionColor = IM_COL32(200, 200, 200, 255);
-            constexpr auto kConnectionThickness = 3.0f;
+            const auto connectionColor = Constants::Colors::Connection::kCreating;
+            const auto connectionThickness = Constants::Connection::kThickness;
 
             // Simple line for now (will be improved to bezier curve)
-            drawList->AddLine(startPos, endPos, kConnectionColor, kConnectionThickness);
+            drawList->AddLine(startPos, endPos, connectionColor, connectionThickness);
         }
     }
 
@@ -1136,18 +1096,18 @@ namespace VisionCraft
             return;
 
         // Add constants for connection rendering
-        constexpr auto kConnectionColor = IM_COL32(150, 150, 150, 255);
-        constexpr auto kConnectionThickness = 3.0f;
-        constexpr auto kBezierTension = 100.0f;
+        const auto connectionColor = Constants::Colors::Connection::kActive;
+        const auto connectionThickness = Constants::Connection::kThickness;
+        const auto bezierTension = Constants::Connection::kBezierTension;
 
         // Calculate bezier control points for a nice curve
         const auto distance = std::abs(endPos.x - startPos.x);
-        const auto tension = std::min(distance * 0.5f, kBezierTension * zoomLevel);
+        const auto tension = std::min(distance * 0.5f, bezierTension * zoomLevel);
 
         const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
         const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
 
         // Render bezier curve
-        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, kConnectionColor, kConnectionThickness);
+        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
     }
 } // namespace VisionCraft

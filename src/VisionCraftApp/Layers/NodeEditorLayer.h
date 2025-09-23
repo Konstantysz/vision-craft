@@ -53,6 +53,52 @@ namespace VisionCraft
     };
 
     /**
+     * @brief Unique identifier for a pin on a node.
+     */
+    struct PinId
+    {
+        Engine::NodeId nodeId;
+        std::string pinName;
+
+        bool operator==(const PinId &other) const
+        {
+            return nodeId == other.nodeId && pinName == other.pinName;
+        }
+
+        bool operator<(const PinId &other) const
+        {
+            if (nodeId != other.nodeId)
+                return nodeId < other.nodeId;
+            return pinName < other.pinName;
+        }
+    };
+
+    /**
+     * @brief Represents a connection between two pins.
+     * Note: Each input pin can only have ONE connection, but output pins can have multiple connections.
+     */
+    struct NodeConnection
+    {
+        PinId outputPin; // Source pin (must be output)
+        PinId inputPin;  // Target pin (must be input, can only have one connection)
+
+        bool operator==(const NodeConnection &other) const
+        {
+            return outputPin == other.outputPin && inputPin == other.inputPin;
+        }
+    };
+
+    /**
+     * @brief Connection creation state.
+     */
+    struct ConnectionState
+    {
+        bool isCreating = false;
+        PinId startPin;
+        ImVec2 endPosition;
+    };
+
+    /**
      * @brief Node editor layer.
      *
      * NodeEditorLayer implements the complete node editing experience combining
@@ -95,26 +141,6 @@ namespace VisionCraft
         void OnRender() override;
 
     private:
-        float zoomLevel = 1.0f; ///< Current zoom level (1.0 = 100%)
-        float panX = 0.0f;      ///< Horizontal pan offset in pixels
-        float panY = 0.0f;      ///< Vertical pan offset in pixels
-        float gridSize = 20.0f; ///< Size of grid cells in pixels
-        bool showGrid = true;   ///< Whether to display the grid background
-
-        Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
-        std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
-        Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
-
-        // Selection and dragging state
-        Engine::NodeId selectedNodeId = -1;     ///< Currently selected node ID (-1 = none)
-        bool isDragging = false;                ///< Whether a node is being dragged
-        ImVec2 dragOffset = ImVec2(0.0f, 0.0f); ///< Mouse offset from node position during drag
-
-        // Context menu state
-        bool showContextMenu = false;                 ///< Whether to show the context menu
-        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);   ///< Position where context menu was opened
-        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f); ///< Current canvas position for coordinate calculations
-
         /**
          * @brief Renders all nodes in the editor.
          */
@@ -215,5 +241,81 @@ namespace VisionCraft
          * @return Node ID if found, or -1 if no node at position
          */
         Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
+
+        /**
+         * @brief Finds a pin at the given mouse position.
+         * @param mousePos Mouse position in screen coordinates
+         * @return PinId if found, otherwise invalid PinId (nodeId = -1)
+         */
+        PinId FindPinAtPosition(const ImVec2 &mousePos) const;
+
+        /**
+         * @brief Gets the world position of a specific pin.
+         * @param pinId The pin to locate
+         * @return World position of the pin center
+         */
+        ImVec2 GetPinWorldPosition(const PinId &pinId) const;
+
+        /**
+         * @brief Validates if a connection between two pins is allowed.
+         * @param outputPin Source pin (must be output)
+         * @param inputPin Target pin (must be input)
+         * @return True if connection is valid
+         */
+        bool IsConnectionValid(const PinId &outputPin, const PinId &inputPin) const;
+
+        /**
+         * @brief Creates a connection between two pins.
+         * @param outputPin Source pin (must be output)
+         * @param inputPin Target pin (must be input)
+         * @return True if connection was created successfully
+         */
+        bool CreateConnection(const PinId &outputPin, const PinId &inputPin);
+
+        /**
+         * @brief Removes any existing connection to the given input pin.
+         * @param inputPin The input pin to disconnect
+         */
+        void RemoveConnectionToInput(const PinId &inputPin);
+
+        /**
+         * @brief Handles mouse interactions for connection creation.
+         */
+        void HandleConnectionInteractions();
+
+        /**
+         * @brief Renders all connections.
+         */
+        void RenderConnections();
+
+        /**
+         * @brief Renders a single connection as a bezier curve.
+         * @param connection The connection to render
+         */
+        void RenderConnection(const NodeConnection &connection);
+
+        float zoomLevel = 1.0f; ///< Current zoom level (1.0 = 100%)
+        float panX = 0.0f;      ///< Horizontal pan offset in pixels
+        float panY = 0.0f;      ///< Vertical pan offset in pixels
+        float gridSize = 20.0f; ///< Size of grid cells in pixels
+        bool showGrid = true;   ///< Whether to display the grid background
+
+        Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
+        std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
+        Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
+
+        // Selection and dragging state
+        Engine::NodeId selectedNodeId = -1;     ///< Currently selected node ID (-1 = none)
+        bool isDragging = false;                ///< Whether a node is being dragged
+        ImVec2 dragOffset = ImVec2(0.0f, 0.0f); ///< Mouse offset from node position during drag
+
+        // Context menu state
+        bool showContextMenu = false;                 ///< Whether to show the context menu
+        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);   ///< Position where context menu was opened
+        ImVec2 currentCanvasPos = ImVec2(0.0f, 0.0f); ///< Current canvas position for coordinate calculations
+
+        // Connection state
+        std::vector<NodeConnection> connections; ///< All active connections
+        ConnectionState connectionState;         ///< Current connection creation state
     };
 } // namespace VisionCraft

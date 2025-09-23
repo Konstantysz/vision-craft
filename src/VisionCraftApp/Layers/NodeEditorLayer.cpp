@@ -176,7 +176,9 @@ namespace VisionCraft
         }
 
         HandleMouseInteractions();
+        HandleConnectionInteractions();
 
+        RenderConnections();
         RenderNodes();
 
         RenderContextMenu();
@@ -768,5 +770,384 @@ namespace VisionCraft
         }
 
         return kInvalidNodeId;
+    }
+
+    PinId NodeEditorLayer::FindPinAtPosition(const ImVec2 &mousePos) const
+    {
+        const auto nodeIds = nodeEditor.GetNodeIds();
+
+        // Check all nodes for pin hits
+        for (const auto nodeId : nodeIds)
+        {
+            const auto* node = nodeEditor.GetNode(nodeId);
+            if (!node || nodePositions.find(nodeId) == nodePositions.end())
+                continue;
+
+            const auto pins = GetNodePins(node->GetName());
+            const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+            const auto& nodePos = nodePositions.at(nodeId);
+
+            const auto nodeWorldPos = ImVec2(currentCanvasPos.x + (nodePos.x * zoomLevel + panX),
+                                           currentCanvasPos.y + (nodePos.y * zoomLevel + panY));
+
+            // Check input pins (Image pins only for connections)
+            std::vector<NodePin> inputPins;
+            for (const auto& pin : pins)
+            {
+                if (pin.isInput && pin.dataType == PinDataType::Image)
+                {
+                    inputPins.push_back(pin);
+                }
+            }
+
+            const auto titleHeight = kTitleHeight * zoomLevel;
+            const auto pinHeight = kPinHeight * zoomLevel;
+            const auto pinSpacing = kPinSpacing * zoomLevel;
+            const auto padding = kNodePadding * zoomLevel;
+            const auto pinRadius = kPinRadius * zoomLevel;
+
+            const auto leftColumnX = nodeWorldPos.x + padding;
+            const auto inputY = nodeWorldPos.y + titleHeight + padding;
+
+            for (size_t i = 0; i < inputPins.size(); ++i)
+            {
+                const auto& pin = inputPins[i];
+                const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+
+                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+
+                if (distanceSquared <= pinRadius * pinRadius)
+                {
+                    return { nodeId, pin.name };
+                }
+            }
+
+            // Check output pins
+            std::vector<NodePin> outputPins;
+            for (const auto& pin : pins)
+            {
+                if (!pin.isInput)
+                {
+                    outputPins.push_back(pin);
+                }
+            }
+
+            const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
+            const auto outputY = nodeWorldPos.y + titleHeight + padding;
+
+            for (size_t i = 0; i < outputPins.size(); ++i)
+            {
+                const auto& pin = outputPins[i];
+                const auto pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+
+                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+
+                if (distanceSquared <= pinRadius * pinRadius)
+                {
+                    return { nodeId, pin.name };
+                }
+            }
+        }
+
+        return { kInvalidNodeId, "" }; // No pin found
+    }
+
+    ImVec2 NodeEditorLayer::GetPinWorldPosition(const PinId &pinId) const
+    {
+        if (pinId.nodeId == kInvalidNodeId || nodePositions.find(pinId.nodeId) == nodePositions.end())
+            return ImVec2(0, 0);
+
+        const auto* node = nodeEditor.GetNode(pinId.nodeId);
+        if (!node)
+            return ImVec2(0, 0);
+
+        const auto pins = GetNodePins(node->GetName());
+        const auto dimensions = CalculateNodeDimensions(pins, zoomLevel);
+        const auto& nodePos = nodePositions.at(pinId.nodeId);
+
+        const auto nodeWorldPos = ImVec2(currentCanvasPos.x + (nodePos.x * zoomLevel + panX),
+                                       currentCanvasPos.y + (nodePos.y * zoomLevel + panY));
+
+        // Find the specific pin
+        const auto titleHeight = kTitleHeight * zoomLevel;
+        const auto pinHeight = kPinHeight * zoomLevel;
+        const auto pinSpacing = kPinSpacing * zoomLevel;
+        const auto padding = kNodePadding * zoomLevel;
+
+        // Check input pins first
+        std::vector<NodePin> inputPins;
+        for (const auto& pin : pins)
+        {
+            if (pin.isInput && pin.dataType == PinDataType::Image)
+            {
+                inputPins.push_back(pin);
+            }
+        }
+
+        const auto leftColumnX = nodeWorldPos.x + padding;
+        const auto inputY = nodeWorldPos.y + titleHeight + padding;
+
+        for (size_t i = 0; i < inputPins.size(); ++i)
+        {
+            if (inputPins[i].name == pinId.pinName)
+            {
+                return ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+            }
+        }
+
+        // Check output pins
+        std::vector<NodePin> outputPins;
+        for (const auto& pin : pins)
+        {
+            if (!pin.isInput)
+            {
+                outputPins.push_back(pin);
+            }
+        }
+
+        const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
+        const auto outputY = nodeWorldPos.y + titleHeight + padding;
+
+        for (size_t i = 0; i < outputPins.size(); ++i)
+        {
+            if (outputPins[i].name == pinId.pinName)
+            {
+                return ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+            }
+        }
+
+        return ImVec2(0, 0); // Pin not found
+    }
+
+    bool NodeEditorLayer::IsConnectionValid(const PinId &outputPin, const PinId &inputPin) const
+    {
+        // Can't connect to same node
+        if (outputPin.nodeId == inputPin.nodeId)
+            return false;
+
+        // Get pin information
+        const auto* outputNode = nodeEditor.GetNode(outputPin.nodeId);
+        const auto* inputNode = nodeEditor.GetNode(inputPin.nodeId);
+
+        if (!outputNode || !inputNode)
+            return false;
+
+        const auto outputPins = GetNodePins(outputNode->GetName());
+        const auto inputPins = GetNodePins(inputNode->GetName());
+
+        // Find the actual pins
+        NodePin actualOutputPin;
+        NodePin actualInputPin;
+        bool foundOutput = false, foundInput = false;
+
+        for (const auto& pin : outputPins)
+        {
+            if (pin.name == outputPin.pinName)
+            {
+                actualOutputPin = pin;
+                foundOutput = true;
+                break;
+            }
+        }
+
+        for (const auto& pin : inputPins)
+        {
+            if (pin.name == inputPin.pinName)
+            {
+                actualInputPin = pin;
+                foundInput = true;
+                break;
+            }
+        }
+
+        if (!foundOutput || !foundInput)
+            return false;
+
+        // Validate pin directions
+        if (actualOutputPin.isInput || !actualInputPin.isInput)
+            return false;
+
+        // Validate data types match
+        if (actualOutputPin.dataType != actualInputPin.dataType)
+            return false;
+
+        return true;
+    }
+
+    bool NodeEditorLayer::CreateConnection(const PinId &outputPin, const PinId &inputPin)
+    {
+        if (!IsConnectionValid(outputPin, inputPin))
+            return false;
+
+        // Remove any existing connection to the input pin (inputs can only have one connection)
+        RemoveConnectionToInput(inputPin);
+
+        // Create new connection
+        connections.push_back({ outputPin, inputPin });
+        return true;
+    }
+
+    void NodeEditorLayer::RemoveConnectionToInput(const PinId &inputPin)
+    {
+        connections.erase(
+            std::remove_if(connections.begin(), connections.end(),
+                [&inputPin](const NodeConnection& conn) {
+                    return conn.inputPin == inputPin;
+                }),
+            connections.end()
+        );
+    }
+
+    void NodeEditorLayer::HandleConnectionInteractions()
+    {
+        const auto& io = ImGui::GetIO();
+        const auto mousePos = io.MousePos;
+
+        // Handle connection creation
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            // Don't start connection if interacting with UI elements
+            if (io.WantCaptureMouse && ImGui::IsAnyItemActive())
+                return;
+
+            const auto clickedPin = FindPinAtPosition(mousePos);
+
+            if (clickedPin.nodeId != kInvalidNodeId)
+            {
+                if (!connectionState.isCreating)
+                {
+                    // Start creating connection
+                    connectionState.isCreating = true;
+                    connectionState.startPin = clickedPin;
+                    connectionState.endPosition = mousePos;
+                }
+                else
+                {
+                    // Try to complete connection
+                    const auto& startPin = connectionState.startPin;
+                    const auto& endPin = clickedPin;
+
+                    // Determine which is output and which is input
+                    const auto* startNode = nodeEditor.GetNode(startPin.nodeId);
+                    const auto* endNode = nodeEditor.GetNode(endPin.nodeId);
+
+                    if (startNode && endNode)
+                    {
+                        const auto startPins = GetNodePins(startNode->GetName());
+                        const auto endPins = GetNodePins(endNode->GetName());
+
+                        bool startIsOutput = false, endIsInput = false;
+
+                        // Check if start pin is output
+                        for (const auto& pin : startPins)
+                        {
+                            if (pin.name == startPin.pinName && !pin.isInput)
+                            {
+                                startIsOutput = true;
+                                break;
+                            }
+                        }
+
+                        // Check if end pin is input
+                        for (const auto& pin : endPins)
+                        {
+                            if (pin.name == endPin.pinName && pin.isInput)
+                            {
+                                endIsInput = true;
+                                break;
+                            }
+                        }
+
+                        // Try to create connection in both directions
+                        bool connectionCreated = false;
+                        if (startIsOutput && endIsInput)
+                        {
+                            connectionCreated = CreateConnection(startPin, endPin);
+                        }
+                        else if (!startIsOutput && !endIsInput)
+                        {
+                            // Start is input, end is output - swap them
+                            connectionCreated = CreateConnection(endPin, startPin);
+                        }
+                    }
+
+                    // Reset connection state
+                    connectionState.isCreating = false;
+                }
+            }
+            else if (connectionState.isCreating)
+            {
+                // Clicked empty space while creating - cancel connection
+                connectionState.isCreating = false;
+            }
+        }
+
+        // Update connection end position while dragging
+        if (connectionState.isCreating)
+        {
+            connectionState.endPosition = mousePos;
+        }
+
+        // Cancel connection on right click or escape
+        if (connectionState.isCreating && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        {
+            connectionState.isCreating = false;
+        }
+    }
+
+    void NodeEditorLayer::RenderConnections()
+    {
+        auto* drawList = ImGui::GetWindowDrawList();
+
+        // Render existing connections
+        for (const auto& connection : connections)
+        {
+            RenderConnection(connection);
+        }
+
+        // Render connection being created
+        if (connectionState.isCreating)
+        {
+            const auto startPos = GetPinWorldPosition(connectionState.startPin);
+            const auto endPos = connectionState.endPosition;
+
+            // Add constants for connection rendering
+            constexpr auto kConnectionColor = IM_COL32(200, 200, 200, 255);
+            constexpr auto kConnectionThickness = 3.0f;
+
+            // Simple line for now (will be improved to bezier curve)
+            drawList->AddLine(startPos, endPos, kConnectionColor, kConnectionThickness);
+        }
+    }
+
+    void NodeEditorLayer::RenderConnection(const NodeConnection &connection)
+    {
+        auto* drawList = ImGui::GetWindowDrawList();
+
+        const auto startPos = GetPinWorldPosition(connection.outputPin);
+        const auto endPos = GetPinWorldPosition(connection.inputPin);
+
+        // Skip if either pin position is invalid
+        if (startPos.x == 0 && startPos.y == 0)
+            return;
+        if (endPos.x == 0 && endPos.y == 0)
+            return;
+
+        // Add constants for connection rendering
+        constexpr auto kConnectionColor = IM_COL32(150, 150, 150, 255);
+        constexpr auto kConnectionThickness = 3.0f;
+        constexpr auto kBezierTension = 100.0f;
+
+        // Calculate bezier control points for a nice curve
+        const auto distance = std::abs(endPos.x - startPos.x);
+        const auto tension = std::min(distance * 0.5f, kBezierTension * zoomLevel);
+
+        const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
+        const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
+
+        // Render bezier curve
+        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, kConnectionColor, kConnectionThickness);
     }
 } // namespace VisionCraft

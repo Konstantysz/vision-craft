@@ -13,43 +13,6 @@
 #include "Nodes/ImageOutputNode.h"
 #include "Nodes/ThresholdNode.h"
 
-namespace
-{
-
-    VisionCraft::NodeDimensions CalculateNodeDimensions(const std::vector<VisionCraft::NodePin> &pins, float zoomLevel)
-    {
-        std::vector<VisionCraft::NodePin> inputPins, outputPins, parameterPins;
-
-        std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-            return pin.isInput && pin.dataType == VisionCraft::PinDataType::Image;
-        });
-
-        std::copy_if(pins.begin(), pins.end(), std::back_inserter(parameterPins), [](const auto &pin) {
-            return pin.isInput && pin.dataType != VisionCraft::PinDataType::Image;
-        });
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-        const auto titleHeight = VisionCraft::Constants::Node::kTitleHeight * zoomLevel;
-        const auto pinHeight = VisionCraft::Constants::Pin::kHeight * zoomLevel;
-        const auto paramHeight = VisionCraft::Constants::Parameter::kHeight * zoomLevel;
-        const auto pinSpacing = VisionCraft::Constants::Pin::kSpacing * zoomLevel;
-        const auto padding = VisionCraft::Constants::Node::kPadding * zoomLevel;
-
-        const auto maxPins = std::max(inputPins.size(), outputPins.size());
-        const auto pinsHeight = maxPins * (pinHeight + pinSpacing);
-        const auto parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
-        const auto contentHeight = pinsHeight + parametersHeight + padding * 2;
-        const auto totalHeight = titleHeight + contentHeight + padding;
-
-        return { ImVec2(VisionCraft::Constants::Node::kWidth * zoomLevel,
-                     std::max(VisionCraft::Constants::Node::kMinHeight * zoomLevel, totalHeight)),
-            inputPins.size(),
-            outputPins.size(),
-            parameterPins.size() };
-    }
-} // namespace
 
 namespace VisionCraft
 {
@@ -87,9 +50,9 @@ namespace VisionCraft
         }
 
         HandleMouseInteractions();
-        HandleConnectionInteractions();
+        connectionManager.HandleConnectionInteractions(nodeEditor, nodePositions, canvas);
 
-        RenderConnections();
+        connectionManager.RenderConnections(nodeEditor, nodePositions, canvas);
         RenderNodes();
 
         RenderContextMenu();
@@ -115,8 +78,8 @@ namespace VisionCraft
     {
         auto *drawList = ImGui::GetWindowDrawList();
         const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-        const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+        const auto pins = connectionManager.GetNodePins(node->GetName());
+        const auto dimensions = connectionManager.CalculateNodeDimensions(pins, canvas.GetZoomLevel());
         const auto isSelected = (node->GetId() == selectedNodeId);
         const auto borderColor =
             isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
@@ -316,55 +279,6 @@ namespace VisionCraft
         }
     }
 
-    std::vector<NodePin> NodeEditorLayer::GetNodePins(const std::string &nodeName)
-    {
-        static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
-            { "Image Input",
-                {
-                    { "filepath", PinDataType::String, true }, // Parameter input
-                    { "Image", PinDataType::Image, false }     // Data output
-                } },
-            { "Image Output",
-                {
-                    { "Image", PinDataType::Image, true },     // Data input
-                    { "savePath", PinDataType::String, true }, // Parameter input
-                    { "autoSave", PinDataType::Bool, true },   // Parameter input
-                    { "format", PinDataType::String, true }    // Parameter input
-                } },
-            { "Grayscale",
-                {
-                    { "Image", PinDataType::Image, true },        // Data input
-                    { "method", PinDataType::String, true },      // Parameter input
-                    { "preserveAlpha", PinDataType::Bool, true }, // Parameter input
-                    { "Image", PinDataType::Image, false }        // Data output
-                } },
-            { "Canny Edge",
-                {
-                    { "Image", PinDataType::Image, true },         // Data input
-                    { "lowThreshold", PinDataType::Float, true },  // Parameter input
-                    { "highThreshold", PinDataType::Float, true }, // Parameter input
-                    { "apertureSize", PinDataType::Int, true },    // Parameter input
-                    { "l2Gradient", PinDataType::Bool, true },     // Parameter input
-                    { "Image", PinDataType::Image, false }         // Data output
-                } },
-            { "Threshold",
-                {
-                    { "Image", PinDataType::Image, true },     // Data input
-                    { "threshold", PinDataType::Float, true }, // Parameter input
-                    { "maxValue", PinDataType::Float, true },  // Parameter input
-                    { "type", PinDataType::String, true },     // Parameter input
-                    { "Image", PinDataType::Image, false }     // Data output
-                } }
-        };
-
-        auto it = nodePinDefinitions.find(nodeName);
-        if (it != nodePinDefinitions.end())
-        {
-            return it->second;
-        }
-
-        return {};
-    }
 
     ImU32 NodeEditorLayer::GetDataTypeColor(PinDataType dataType) const
     {
@@ -495,7 +409,7 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderNodeParameters(Engine::Node *node, const ImVec2 &startPos, const ImVec2 &nodeSize)
     {
-        auto pins = GetNodePins(node->GetName());
+        auto pins = connectionManager.GetNodePins(node->GetName());
         std::vector<NodePin> parameterPins;
         for (const auto &pin : pins)
         {
@@ -630,7 +544,7 @@ namespace VisionCraft
 
     std::vector<NodePin> NodeEditorLayer::GetNodeParameters(const std::string &nodeName) const
     {
-        const auto allPins = GetNodePins(nodeName);
+        const auto allPins = connectionManager.GetNodePins(nodeName);
         std::vector<NodePin> parameterPins;
 
         for (const auto &pin : allPins)
@@ -656,8 +570,8 @@ namespace VisionCraft
             if (!node || nodePositions.find(nodeId) == nodePositions.end())
                 continue;
 
-            const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+            const auto pins = connectionManager.GetNodePins(node->GetName());
+            const auto dimensions = connectionManager.CalculateNodeDimensions(pins, canvas.GetZoomLevel());
 
             if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))
             {
@@ -668,318 +582,4 @@ namespace VisionCraft
         return Constants::Special::kInvalidNodeId;
     }
 
-    PinId NodeEditorLayer::FindPinAtPosition(const ImVec2 &mousePos) const
-    {
-        const auto nodeIds = nodeEditor.GetNodeIds();
-        for (const auto nodeId : nodeIds)
-        {
-            const auto *node = nodeEditor.GetNode(nodeId);
-            if (!node || nodePositions.find(nodeId) == nodePositions.end())
-                continue;
-
-            const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
-            const auto &nodePos = nodePositions.at(nodeId);
-            const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-
-            std::vector<NodePin> inputPins;
-            std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-                return pin.isInput && pin.dataType == PinDataType::Image;
-            });
-
-            const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-            const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
-            const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
-            const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
-            const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
-            const auto leftColumnX = nodeWorldPos.x + padding;
-            const auto inputY = nodeWorldPos.y + titleHeight + padding;
-            for (std::size_t i = 0; i < inputPins.size(); ++i)
-            {
-                const auto &pin = inputPins[i];
-                const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
-                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
-                if (distanceSquared <= pinRadius * pinRadius)
-                {
-                    return { nodeId, pin.name };
-                }
-            }
-
-            std::vector<NodePin> outputPins;
-            std::copy_if(
-                pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-            const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-            const auto outputY = nodeWorldPos.y + titleHeight + padding;
-            for (std::size_t i = 0; i < outputPins.size(); ++i)
-            {
-                const auto &pin = outputPins[i];
-                const auto pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
-                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
-                if (distanceSquared <= pinRadius * pinRadius)
-                {
-                    return { nodeId, pin.name };
-                }
-            }
-        }
-
-        return { Constants::Special::kInvalidNodeId, "" };
-    }
-
-    ImVec2 NodeEditorLayer::GetPinWorldPosition(const PinId &pinId) const
-    {
-        if (pinId.nodeId == Constants::Special::kInvalidNodeId
-            || nodePositions.find(pinId.nodeId) == nodePositions.end())
-        {
-            return ImVec2(0, 0);
-        }
-
-        const auto *node = nodeEditor.GetNode(pinId.nodeId);
-        if (!node)
-        {
-            return ImVec2(0, 0);
-        }
-
-        const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
-        const auto &nodePos = nodePositions.at(pinId.nodeId);
-        const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-        const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
-        const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
-        const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
-
-        std::vector<NodePin> inputPins;
-        for (const auto &pin : pins)
-        {
-            if (pin.isInput && pin.dataType == PinDataType::Image)
-            {
-                inputPins.push_back(pin);
-            }
-        }
-
-        const auto leftColumnX = nodeWorldPos.x + padding;
-        const auto inputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < inputPins.size(); ++i)
-        {
-            if (inputPins[i].name == pinId.pinName)
-            {
-                return ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            }
-        }
-
-        std::vector<NodePin> outputPins;
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-        const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-        const auto outputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < outputPins.size(); ++i)
-        {
-            if (outputPins[i].name == pinId.pinName)
-            {
-                return ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            }
-        }
-
-        return ImVec2(0, 0);
-    }
-
-    bool NodeEditorLayer::IsConnectionValid(const PinId &outputPin, const PinId &inputPin) const
-    {
-        if (outputPin.nodeId == inputPin.nodeId)
-        {
-            return false;
-        }
-
-        const auto *outputNode = nodeEditor.GetNode(outputPin.nodeId);
-        const auto *inputNode = nodeEditor.GetNode(inputPin.nodeId);
-        if (!outputNode || !inputNode)
-        {
-            return false;
-        }
-
-        const auto outputPins = GetNodePins(outputNode->GetName());
-        const auto inputPins = GetNodePins(inputNode->GetName());
-
-        const auto outputPinIt = std::find_if(outputPins.begin(), outputPins.end(), [&outputPin](const auto &pin) {
-            return pin.name == outputPin.pinName;
-        });
-
-        const auto inputPinIt = std::find_if(
-            inputPins.begin(), inputPins.end(), [&inputPin](const auto &pin) { return pin.name == inputPin.pinName; });
-
-        if (outputPinIt == outputPins.end() || inputPinIt == inputPins.end())
-        {
-            return false;
-        }
-
-        const auto &actualOutputPin = *outputPinIt;
-        const auto &actualInputPin = *inputPinIt;
-
-        if (actualOutputPin.isInput || !actualInputPin.isInput)
-        {
-            return false;
-        }
-
-        if (actualOutputPin.dataType != actualInputPin.dataType)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool NodeEditorLayer::CreateConnection(const PinId &outputPin, const PinId &inputPin)
-    {
-        if (!IsConnectionValid(outputPin, inputPin))
-        {
-            return false;
-        }
-
-        RemoveConnectionToInput(inputPin);
-
-        connections.push_back({ outputPin, inputPin });
-
-        return true;
-    }
-
-    void NodeEditorLayer::RemoveConnectionToInput(const PinId &inputPin)
-    {
-        connections.erase(std::remove_if(connections.begin(),
-                              connections.end(),
-                              [&inputPin](const NodeConnection &conn) { return conn.inputPin == inputPin; }),
-            connections.end());
-    }
-
-    void NodeEditorLayer::HandleConnectionInteractions()
-    {
-        const auto &io = ImGui::GetIO();
-        const auto mousePos = io.MousePos;
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            if (io.WantCaptureMouse && ImGui::IsAnyItemActive())
-            {
-                return;
-            }
-
-            const auto clickedPin = FindPinAtPosition(mousePos);
-            if (clickedPin.nodeId != Constants::Special::kInvalidNodeId)
-            {
-                if (!connectionState.isCreating)
-                {
-                    connectionState.isCreating = true;
-                    connectionState.startPin = clickedPin;
-                    connectionState.endPosition = mousePos;
-                }
-                else
-                {
-                    const auto &startPin = connectionState.startPin;
-                    const auto &endPin = clickedPin;
-                    const auto *startNode = nodeEditor.GetNode(startPin.nodeId);
-                    const auto *endNode = nodeEditor.GetNode(endPin.nodeId);
-                    if (startNode && endNode)
-                    {
-                        const auto startPins = GetNodePins(startNode->GetName());
-                        const auto endPins = GetNodePins(endNode->GetName());
-                        auto startIsOutput = false;
-                        auto endIsInput = false;
-
-                        for (const auto &pin : startPins)
-                        {
-                            if (pin.name == startPin.pinName && !pin.isInput)
-                            {
-                                startIsOutput = true;
-                                break;
-                            }
-                        }
-
-                        for (const auto &pin : endPins)
-                        {
-                            if (pin.name == endPin.pinName && pin.isInput)
-                            {
-                                endIsInput = true;
-                                break;
-                            }
-                        }
-
-                        auto connectionCreated = false;
-                        if (startIsOutput && endIsInput)
-                        {
-                            connectionCreated = CreateConnection(startPin, endPin);
-                        }
-                        else if (!startIsOutput && !endIsInput)
-                        {
-                            connectionCreated = CreateConnection(endPin, startPin);
-                        }
-                    }
-
-                    connectionState.isCreating = false;
-                }
-            }
-            else if (connectionState.isCreating)
-            {
-                connectionState.isCreating = false;
-            }
-        }
-
-        if (connectionState.isCreating)
-        {
-            connectionState.endPosition = mousePos;
-        }
-
-        if (connectionState.isCreating && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        {
-            connectionState.isCreating = false;
-        }
-    }
-
-    void NodeEditorLayer::RenderConnections()
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-        for (const auto &connection : connections)
-        {
-            RenderConnection(connection);
-        }
-
-        if (connectionState.isCreating)
-        {
-            const auto startPos = GetPinWorldPosition(connectionState.startPin);
-            const auto endPos = connectionState.endPosition;
-            const auto connectionColor = Constants::Colors::Connection::kCreating;
-            const auto connectionThickness = Constants::Connection::kThickness;
-
-            drawList->AddLine(startPos, endPos, connectionColor, connectionThickness);
-        }
-    }
-
-    void NodeEditorLayer::RenderConnection(const NodeConnection &connection)
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-
-        const auto startPos = GetPinWorldPosition(connection.outputPin);
-        const auto endPos = GetPinWorldPosition(connection.inputPin);
-
-        if (startPos.x == 0 && startPos.y == 0)
-        {
-            return;
-        }
-
-        if (endPos.x == 0 && endPos.y == 0)
-        {
-            return;
-        }
-
-        const auto connectionColor = Constants::Colors::Connection::kActive;
-        const auto connectionThickness = Constants::Connection::kThickness;
-        const auto bezierTension = Constants::Connection::kBezierTension;
-        const auto distance = std::abs(endPos.x - startPos.x);
-        const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
-        const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
-        const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
-
-        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
-    }
 } // namespace VisionCraft

@@ -1,8 +1,10 @@
 #pragma once
 
+#include "CanvasController.h"
+#include "ConnectionManager.h"
 #include "Layer.h"
 #include "NodeEditor.h"
-#include "CanvasController.h"
+#include "NodeEditorTypes.h"
 
 #include <memory>
 #include <unordered_map>
@@ -11,93 +13,6 @@
 
 namespace VisionCraft
 {
-    /**
-     * @brief Structure representing the visual position of a node in the editor.
-     */
-    struct NodePosition
-    {
-        float x = 0.0f;
-        float y = 0.0f;
-    };
-
-    /**
-     * @brief Enum for different data types in the node editor.
-     */
-    enum class PinDataType
-    {
-        Image,  // cv::Mat - Green
-        String, // std::string - Magenta
-        Float,  // double - Light Blue
-        Int,    // int - Cyan
-        Bool    // bool - Red
-    };
-
-    /**
-     * @brief Structure representing an input or output pin on a node.
-     */
-    struct NodePin
-    {
-        std::string name;
-        PinDataType dataType;
-        bool isInput;
-    };
-
-    /**
-     * @brief Structure containing pre-calculated node dimensions.
-     */
-    struct NodeDimensions
-    {
-        ImVec2 size;
-        size_t inputPinCount;
-        size_t outputPinCount;
-        size_t parameterPinCount;
-    };
-
-    /**
-     * @brief Unique identifier for a pin on a node.
-     */
-    struct PinId
-    {
-        Engine::NodeId nodeId;
-        std::string pinName;
-
-        bool operator==(const PinId &other) const
-        {
-            return nodeId == other.nodeId && pinName == other.pinName;
-        }
-
-        bool operator<(const PinId &other) const
-        {
-            if (nodeId != other.nodeId)
-                return nodeId < other.nodeId;
-            return pinName < other.pinName;
-        }
-    };
-
-    /**
-     * @brief Represents a connection between two pins.
-     * Note: Each input pin can only have ONE connection, but output pins can have multiple connections.
-     */
-    struct NodeConnection
-    {
-        PinId outputPin; // Source pin (must be output)
-        PinId inputPin;  // Target pin (must be input, can only have one connection)
-
-        bool operator==(const NodeConnection &other) const
-        {
-            return outputPin == other.outputPin && inputPin == other.inputPin;
-        }
-    };
-
-    /**
-     * @brief Connection creation state.
-     */
-    struct ConnectionState
-    {
-        bool isCreating = false;
-        PinId startPin;
-        ImVec2 endPosition;
-    };
 
     /**
      * @brief Node editor layer.
@@ -180,12 +95,6 @@ namespace VisionCraft
          */
         void CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position);
 
-        /**
-         * @brief Gets the pins for a specific node type.
-         * @param nodeType Type of node
-         * @return Vector of pins for the node
-         */
-        static std::vector<NodePin> GetNodePins(const std::string &nodeType);
 
         /**
          * @brief Gets the color for a specific data type.
@@ -243,75 +152,21 @@ namespace VisionCraft
          */
         Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
 
-        /**
-         * @brief Finds a pin at the given mouse position.
-         * @param mousePos Mouse position in screen coordinates
-         * @return PinId if found, otherwise invalid PinId (nodeId = -1)
-         */
-        PinId FindPinAtPosition(const ImVec2 &mousePos) const;
-
-        /**
-         * @brief Gets the world position of a specific pin.
-         * @param pinId The pin to locate
-         * @return World position of the pin center
-         */
-        ImVec2 GetPinWorldPosition(const PinId &pinId) const;
-
-        /**
-         * @brief Validates if a connection between two pins is allowed.
-         * @param outputPin Source pin (must be output)
-         * @param inputPin Target pin (must be input)
-         * @return True if connection is valid
-         */
-        bool IsConnectionValid(const PinId &outputPin, const PinId &inputPin) const;
-
-        /**
-         * @brief Creates a connection between two pins.
-         * @param outputPin Source pin (must be output)
-         * @param inputPin Target pin (must be input)
-         * @return True if connection was created successfully
-         */
-        bool CreateConnection(const PinId &outputPin, const PinId &inputPin);
-
-        /**
-         * @brief Removes any existing connection to the given input pin.
-         * @param inputPin The input pin to disconnect
-         */
-        void RemoveConnectionToInput(const PinId &inputPin);
-
-        /**
-         * @brief Handles mouse interactions for connection creation.
-         */
-        void HandleConnectionInteractions();
-
-        /**
-         * @brief Renders all connections.
-         */
-        void RenderConnections();
-
-        /**
-         * @brief Renders a single connection as a bezier curve.
-         * @param connection The connection to render
-         */
-        void RenderConnection(const NodeConnection &connection);
 
         // Core components
-        CanvasController canvas;                                         ///< Canvas management component
+        CanvasController canvas;                                        ///< Canvas management component
+        ConnectionManager connectionManager;                            ///< Connection management component
         Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 
         // Selection and dragging state
         Engine::NodeId selectedNodeId = Constants::Special::kInvalidNodeId; ///< Currently selected node ID
-        bool isDragging = false;                ///< Whether a node is being dragged
+        bool isDragging = false;                                            ///< Whether a node is being dragged
         ImVec2 dragOffset = ImVec2(0.0f, 0.0f); ///< Mouse offset from node position during drag
 
         // Context menu state
-        bool showContextMenu = false;                 ///< Whether to show the context menu
-        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f);   ///< Position where context menu was opened
-
-        // Connection state
-        std::vector<NodeConnection> connections; ///< All active connections
-        ConnectionState connectionState;         ///< Current connection creation state
+        bool showContextMenu = false;               ///< Whether to show the context menu
+        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f); ///< Position where context menu was opened
     };
 } // namespace VisionCraft

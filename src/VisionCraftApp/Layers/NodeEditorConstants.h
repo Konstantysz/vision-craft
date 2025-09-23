@@ -35,7 +35,7 @@ namespace VisionCraft::Constants
 
         /// @brief Minimum zoom level at which text is rendered (performance optimization)
         constexpr float kMinForText = 0.5f;
-    }
+    } // namespace Zoom
 
     /**
      * @brief Canvas and grid rendering constants.
@@ -50,7 +50,7 @@ namespace VisionCraft::Constants
 
         /// @brief Alpha transparency value for grid lines (0-255)
         constexpr int kGridAlpha = 40;
-    }
+    } // namespace Canvas
 
     // ========================================
     // NODE VISUAL CONSTANTS
@@ -86,7 +86,7 @@ namespace VisionCraft::Constants
 
             /// @brief Border thickness for selected nodes in pixels
             constexpr float kThicknessSelected = 3.0f;
-        }
+        } // namespace Border
 
         /**
          * @brief Node text rendering constants.
@@ -95,7 +95,7 @@ namespace VisionCraft::Constants
         {
             /// @brief Text offset from node edges in pixels
             constexpr float kOffset = 4.0f;
-        }
+        } // namespace Text
 
         /**
          * @brief Node creation positioning constants.
@@ -107,8 +107,8 @@ namespace VisionCraft::Constants
 
             /// @brief Vertical offset when creating nodes at cursor position
             constexpr float kOffsetY = 40.0f;
-        }
-    }
+        } // namespace Creation
+    } // namespace Node
 
     // ========================================
     // PIN CONSTANTS
@@ -133,7 +133,7 @@ namespace VisionCraft::Constants
 
         /// @brief Horizontal offset between pin circle and label text
         constexpr float kTextOffset = 4.0f;
-    }
+    } // namespace Pin
 
     /**
      * @brief Parameter input widget constants.
@@ -151,7 +151,7 @@ namespace VisionCraft::Constants
 
         /// @brief Vertical offset for parameter input widgets
         constexpr float kInputOffset = 12.0f;
-    }
+    } // namespace Parameter
 
     // ========================================
     // CONNECTION CONSTANTS
@@ -167,7 +167,7 @@ namespace VisionCraft::Constants
 
         /// @brief Bezier curve tension for connection curves
         constexpr float kBezierTension = 100.0f;
-    }
+    } // namespace Connection
 
     // ========================================
     // COLOR CONSTANTS
@@ -200,7 +200,7 @@ namespace VisionCraft::Constants
 
             /// @brief Text color for node titles
             constexpr ImU32 kText = IM_COL32(255, 255, 255, 255);
-        }
+        } // namespace Node
 
         /**
          * @brief Pin visual colors.
@@ -232,7 +232,7 @@ namespace VisionCraft::Constants
 
             /// @brief Default color for unknown data types (gray)
             constexpr ImU32 kDefault = IM_COL32(128, 128, 128, 255);
-        }
+        } // namespace Pin
 
         /**
          * @brief Connection line colors.
@@ -244,7 +244,7 @@ namespace VisionCraft::Constants
 
             /// @brief Color for connection being created (preview)
             constexpr ImU32 kCreating = IM_COL32(200, 200, 200, 255);
-        }
+        } // namespace Connection
 
         /**
          * @brief Grid rendering colors.
@@ -253,8 +253,8 @@ namespace VisionCraft::Constants
         {
             /// @brief Color for grid lines (uses Canvas::kGridAlpha for transparency)
             constexpr ImU32 kLines = IM_COL32(200, 200, 200, Canvas::kGridAlpha);
-        }
-    }
+        } // namespace Grid
+    } // namespace Colors
 
     // ========================================
     // SPECIAL CONSTANTS
@@ -270,7 +270,7 @@ namespace VisionCraft::Constants
 
         /// @brief Buffer size for string parameter input widgets
         constexpr size_t kStringBufferSize = 256;
-    }
+    } // namespace Special
 
     // ========================================
     // INPUT CONSTANTS
@@ -293,8 +293,8 @@ namespace VisionCraft::Constants
             constexpr float kFastStep = 1.0f;
 
             /// @brief Display format for float values
-            constexpr const char* kFormat = "%.2f";
-        }
-    }
+            constexpr const char *kFormat = "%.2f";
+        } // namespace Float
+    } // namespace Input
 
 } // namespace VisionCraft::Constants

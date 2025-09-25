@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.26)
 
 add_executable(TestVisionCraftNodes
-    TestVisionCraftNodes.cpp
+    TestNodes.cpp
     TestNodeParameter.cpp
 )
 

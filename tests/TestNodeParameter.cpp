@@ -150,7 +150,7 @@ TEST_F(NodeParameterTest, UtilityMethods)
 
     // Test Count
     EXPECT_EQ(storage.Count(), 1);
-    storage.Set("another_param", "value");
+    storage.Set("another_param", std::string("value"));
     EXPECT_EQ(storage.Count(), 2);
 
     // Test GetParameterNames

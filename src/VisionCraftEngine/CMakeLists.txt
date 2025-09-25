@@ -7,6 +7,7 @@ find_package(spdlog CONFIG REQUIRED)
 add_library(VisionCraftEngine STATIC
     Node.cpp
     NodeEditor.cpp
+    NodeParameter.cpp
     Nodes/GrayscaleNode.cpp
     Nodes/ImageInputNode.cpp
     Nodes/CannyEdgeNode.cpp

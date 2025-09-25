@@ -7,10 +7,10 @@ namespace VisionCraft::Engine
     CannyEdgeNode::CannyEdgeNode(NodeId id, const std::string& name)
         : Node(id, name)
     {
-        SetParamValue("lowThreshold", "50");
-        SetParamValue("highThreshold", "150");
-        SetParamValue("apertureSize", "3");
-        SetParamValue("l2Gradient", "false");
+        SetParam("lowThreshold", 50.0);
+        SetParam("highThreshold", 150.0);
+        SetParam("apertureSize", 3);
+        SetParam("l2Gradient", false);
     }
 
     void CannyEdgeNode::Process()
@@ -24,15 +24,17 @@ namespace VisionCraft::Engine
 
         try
         {
-            double lowThreshold = GetValidatedDoubleParam("lowThreshold", 50.0, 0.0, std::nullopt);
-            double highThreshold = GetValidatedDoubleParam("highThreshold", 150.0, 0.0, std::nullopt);
-            int apertureSize = GetValidatedIntParam("apertureSize", 3, std::nullopt, std::nullopt);
-            bool l2Gradient = GetBoolParam("l2Gradient", false);
+            const ValidationRange<double> kThresholdValidation{0.0};
 
-            if (apertureSize != 3 && apertureSize != 5 && apertureSize != 7)
+            const auto lowThreshold = GetValidatedParam<double>("lowThreshold", 50.0, kThresholdValidation);
+            const auto highThreshold = GetValidatedParam<double>("highThreshold", 150.0, kThresholdValidation);
+            const auto apertureSize = GetParamOr<int>("apertureSize", 3);
+            const auto l2Gradient = GetBoolParam("l2Gradient", false);
+
+            if (apertureSize != 3 && apertureSize != 5 && apertureSize != 7) [[unlikely]]
             {
                 LOG_WARN("CannyEdgeNode {}: Invalid aperture size ({}), using 3", GetName(), apertureSize);
-                apertureSize = 3;
+                const_cast<int&>(apertureSize) = 3;
             }
 
             if (lowThreshold >= highThreshold)

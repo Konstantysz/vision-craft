@@ -6,8 +6,8 @@ namespace VisionCraft::Engine
     GrayscaleNode::GrayscaleNode(NodeId id, const std::string& name)
         : Node(id, name)
     {
-        SetParamValue("method", "BGR2GRAY");
-        SetParamValue("preserveAlpha", "false");
+        SetParam("method", std::string{"BGR2GRAY"});
+        SetParam("preserveAlpha", false);
     }
 
     void GrayscaleNode::Process()
@@ -21,9 +21,12 @@ namespace VisionCraft::Engine
 
         try
         {
-            std::string methodStr = GetValidatedStringParam("method", "BGR2GRAY",
-                {"BGR2GRAY", "RGB2GRAY", "BGRA2GRAY", "RGBA2GRAY"});
-            bool preserveAlpha = GetBoolParam("preserveAlpha", false);
+            const StringValidation kMethodValidation{
+                {"BGR2GRAY", "RGB2GRAY", "BGRA2GRAY", "RGBA2GRAY"}, true
+            };
+
+            const auto methodStr = GetValidatedString("method", "BGR2GRAY", kMethodValidation);
+            const auto preserveAlpha = GetBoolParam("preserveAlpha", false);
 
             if (inputImage.channels() == 1)
             {

@@ -48,6 +48,12 @@ namespace VisionCraft::Engine
         bool HasValidImage() const { return !outputImage.empty(); }
 
     private:
+        /**
+         * @brief Loads image from the specified file path.
+         * @param filepath Path to the image file
+         */
+        void LoadImageFromPath(const std::string& filepath);
+
         cv::Mat outputImage; ///< Loaded image data
     };
 } // namespace VisionCraft::Engine

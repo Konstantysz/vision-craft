@@ -7,9 +7,9 @@ namespace VisionCraft::Engine
     ThresholdNode::ThresholdNode(NodeId id, const std::string& name)
         : Node(id, name)
     {
-        SetParamValue("threshold", "127");
-        SetParamValue("maxValue", "255");
-        SetParamValue("type", "THRESH_BINARY");
+        SetParam("threshold", 127.0);
+        SetParam("maxValue", 255.0);
+        SetParam("type", std::string{"THRESH_BINARY"});
     }
 
     void ThresholdNode::Process()
@@ -23,11 +23,15 @@ namespace VisionCraft::Engine
 
         try
         {
-            double threshold = GetValidatedDoubleParam("threshold", 127.0, 0.0, 255.0);
-            double maxValue = GetValidatedDoubleParam("maxValue", 255.0, 0.0, 255.0);
-            std::string typeStr = GetValidatedStringParam("type", "THRESH_BINARY",
+            const ValidationRange<double> kThresholdRange{0.0, 255.0};
+            const StringValidation kTypeValidation{
                 {"THRESH_BINARY", "THRESH_BINARY_INV", "THRESH_TRUNC", "THRESH_TOZERO",
-                 "THRESH_TOZERO_INV", "THRESH_OTSU", "THRESH_TRIANGLE"});
+                 "THRESH_TOZERO_INV", "THRESH_OTSU", "THRESH_TRIANGLE"}, true
+            };
+
+            const auto threshold = GetValidatedParam<double>("threshold", 127.0, kThresholdRange);
+            const auto maxValue = GetValidatedParam<double>("maxValue", 255.0, kThresholdRange);
+            const auto typeStr = GetValidatedString("type", "THRESH_BINARY", kTypeValidation);
 
             int thresholdType = GetThresholdType(typeStr);
 

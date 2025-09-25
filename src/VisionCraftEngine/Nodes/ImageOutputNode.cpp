@@ -7,9 +7,9 @@ namespace VisionCraft::Engine
     ImageOutputNode::ImageOutputNode(NodeId id, const std::string& name)
         : Node(id, name)
     {
-        SetParamValue("savePath", "");
-        SetParamValue("autoSave", "false");
-        SetParamValue("format", "png");
+        SetParam("savePath", std::filesystem::path{});
+        SetParam("autoSave", false);
+        SetParam("format", std::string{"png"});
     }
 
     void ImageOutputNode::Process()
@@ -25,12 +25,12 @@ namespace VisionCraft::Engine
         {
             displayImage = inputImage.clone();
 
-            bool autoSave = GetBoolParam("autoSave", false);
-            auto savePathParam = GetParamValue("savePath");
+            const auto autoSave = GetBoolParam("autoSave", false);
+            const auto savePath = GetPath("savePath");
 
-            if (autoSave && savePathParam.has_value() && !savePathParam->empty())
+            if (autoSave && !savePath.empty())
             {
-                lastSaveSuccessful = SaveImage(savePathParam.value());
+                lastSaveSuccessful = SaveImage(savePath.string());
             }
             else
             {
@@ -73,7 +73,10 @@ namespace VisionCraft::Engine
                 LOG_INFO("ImageOutputNode {}: Created directory '{}'", GetName(), dir.string());
             }
 
-            std::string format = GetValidatedStringParam("format", "png", {"png", "jpg", "jpeg", "bmp", "tiff"});
+            const StringValidation kFormatValidation{
+                {"png", "jpg", "jpeg", "bmp", "tiff"}, true
+            };
+            const auto format = GetValidatedString("format", "png", kFormatValidation);
 
             std::vector<int> compressionParams;
             if (format == "jpg" || format == "jpeg")

@@ -447,8 +447,25 @@ namespace VisionCraft
 
             ImGui::SetCursorScreenPos(inputPos);
 
-            const auto currentValue = node->GetParamValue(pin.name);
-            const auto paramValue = currentValue.has_value() ? currentValue.value() : "";
+            std::string paramValue;
+            switch (pin.dataType)
+            {
+            case PinDataType::String:
+                paramValue = node->GetParamOr<std::string>(pin.name, "");
+                break;
+            case PinDataType::Float:
+                paramValue = std::to_string(node->GetParamOr<double>(pin.name, 0.0));
+                break;
+            case PinDataType::Int:
+                paramValue = std::to_string(node->GetParamOr<int>(pin.name, 0));
+                break;
+            case PinDataType::Bool:
+                paramValue = node->GetParamOr<bool>(pin.name, false) ? "true" : "false";
+                break;
+            default:
+                paramValue = "";
+                break;
+            }
             const auto widgetId = "##" + std::to_string(node->GetId()) + "_" + pin.name;
 
             const auto availableWidth = nodeSize.x - padding * 2;
@@ -465,25 +482,14 @@ namespace VisionCraft
                 ImGui::PushItemWidth(inputWidth);
                 if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
                 {
-                    node->SetParamValue(pin.name, std::string(buffer));
+                    node->SetParam(pin.name, std::string(buffer));
                 }
                 ImGui::PopItemWidth();
                 break;
             }
 
             case PinDataType::Float: {
-                float value = 0.0f;
-                if (!paramValue.empty())
-                {
-                    try
-                    {
-                        value = std::stof(paramValue);
-                    }
-                    catch (...)
-                    {
-                        value = 0.0f;
-                    }
-                }
+                float value = static_cast<float>(node->GetParamOr<double>(pin.name, 0.0));
 
                 ImGui::PushItemWidth(inputWidth);
                 if (ImGui::InputFloat(widgetId.c_str(),
@@ -492,45 +498,30 @@ namespace VisionCraft
                         Constants::Input::Float::kFastStep,
                         Constants::Input::Float::kFormat))
                 {
-                    node->SetParamValue(pin.name, std::to_string(value));
+                    node->SetParam(pin.name, static_cast<double>(value));
                 }
                 ImGui::PopItemWidth();
                 break;
             }
 
             case PinDataType::Int: {
-                int value = 0;
-                if (!paramValue.empty())
-                {
-                    try
-                    {
-                        value = std::stoi(paramValue);
-                    }
-                    catch (...)
-                    {
-                        value = 0;
-                    }
-                }
+                int value = node->GetParamOr<int>(pin.name, 0);
 
                 ImGui::PushItemWidth(inputWidth);
                 if (ImGui::InputInt(widgetId.c_str(), &value))
                 {
-                    node->SetParamValue(pin.name, std::to_string(value));
+                    node->SetParam(pin.name, value);
                 }
                 ImGui::PopItemWidth();
                 break;
             }
 
             case PinDataType::Bool: {
-                bool value = false;
-                if (!paramValue.empty())
-                {
-                    value = (paramValue == "true" || paramValue == "1" || paramValue == "yes" || paramValue == "on");
-                }
+                bool value = node->GetParamOr<bool>(pin.name, false);
 
                 if (ImGui::Checkbox((displayName + widgetId).c_str(), &value))
                 {
-                    node->SetParamValue(pin.name, value ? "true" : "false");
+                    node->SetParam(pin.name, value);
                 }
                 break;
             }

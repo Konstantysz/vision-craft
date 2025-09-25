@@ -36,21 +36,9 @@ namespace VisionCraft::Engine
         return parameters.GetParameterNames();
     }
 
-    std::string Node::GetValidatedString(const std::string &paramName,
-        const std::string &defaultValue,
-        const StringValidation &validation) const
-    {
-        return parameters.GetValidatedString(paramName, defaultValue, validation, GetName());
-    }
-
     bool Node::GetBoolParam(const std::string &paramName, bool defaultValue) const
     {
         return parameters.GetBool(paramName, defaultValue);
-    }
-
-    bool Node::ValidateFilePath(const std::string &paramName, const FilePathValidation &validation) const
-    {
-        return parameters.ValidateFilePath(paramName, validation, GetName());
     }
 
     std::filesystem::path Node::GetPath(const std::string &paramName, const std::filesystem::path &defaultPath) const
@@ -58,7 +46,18 @@ namespace VisionCraft::Engine
         return parameters.GetPath(paramName, defaultPath);
     }
 
-    // Template method definitions
+    bool Node::ValidateFilePath(const std::string &paramName, const FilePathValidation &validation) const
+    {
+        return parameters.ValidateFilePath(paramName, validation, GetName());
+    }
+
+    std::string Node::GetValidatedString(const std::string &paramName,
+        const std::string &defaultValue,
+        const StringValidation &validation) const
+    {
+        return parameters.GetValidatedString(paramName, defaultValue, validation, GetName());
+    }
+
     template<typename T> void Node::SetParam(const std::string &paramName, T &&value)
     {
         parameters.Set(paramName, std::forward<T>(value));
@@ -80,7 +79,9 @@ namespace VisionCraft::Engine
         return parameters.GetValidated(paramName, defaultValue, validation, GetName());
     }
 
-    // Explicit template instantiations
+    // ================================================================
+    // Explicit Template Instantiations
+    // ================================================================
     template void Node::SetParam<int>(const std::string &, int &&);
     template void Node::SetParam<double>(const std::string &, double &&);
     template void Node::SetParam<bool>(const std::string &, bool &&);

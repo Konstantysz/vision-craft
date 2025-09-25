@@ -99,11 +99,41 @@ namespace VisionCraft::Engine
         std::vector<std::string> GetParameterNames() const;
 
         /**
-         * @brief Abstract method for processing node data. Must be implemented by derived classes.
+         * @brief Gets a boolean parameter with smart parsing.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist or is invalid
+         * @return Boolean value (supports: true/false, 1/0, yes/no, on/off)
          */
-        virtual void Process() = 0;
+        bool GetBoolParam(const std::string &paramName, bool defaultValue = false) const;
 
-    protected:
+        /**
+         * @brief Gets a filesystem path parameter with smart type handling.
+         * @param paramName Name of the parameter
+         * @param defaultPath Default path if parameter doesn't exist
+         * @return Filesystem path parameter
+         */
+        std::filesystem::path GetPath(const std::string &paramName,
+            const std::filesystem::path &defaultPath = {}) const;
+
+        /**
+         * @brief Validates a file path parameter.
+         * @param paramName Name of the parameter containing the file path
+         * @param validation File path validation configuration
+         * @return True if path is valid, false otherwise
+         */
+        bool ValidateFilePath(const std::string &paramName, const FilePathValidation &validation = {}) const;
+
+        /**
+         * @brief Gets a validated string parameter.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist
+         * @param validation String validation configuration
+         * @return Validated string value
+         */
+        std::string GetValidatedString(const std::string &paramName,
+            const std::string &defaultValue,
+            const StringValidation &validation = {}) const;
+
         /**
          * @brief Gets a validated numeric parameter with range checking.
          * @tparam T Numeric type (int or double)
@@ -118,41 +148,11 @@ namespace VisionCraft::Engine
             const ValidationRange<T> &validation = {}) const;
 
         /**
-         * @brief Gets a validated string parameter.
-         * @param paramName Name of the parameter
-         * @param defaultValue Default value if parameter doesn't exist
-         * @param validation String validation configuration
-         * @return Validated string value
+         * @brief Abstract method for processing node data. Must be implemented by derived classes.
          */
-        std::string GetValidatedString(const std::string &paramName,
-            const std::string &defaultValue,
-            const StringValidation &validation = {}) const;
+        virtual void Process() = 0;
 
-        /**
-         * @brief Gets a boolean parameter with smart parsing.
-         * @param paramName Name of the parameter
-         * @param defaultValue Default value if parameter doesn't exist or is invalid
-         * @return Boolean value (supports: true/false, 1/0, yes/no, on/off)
-         */
-        bool GetBoolParam(const std::string &paramName, bool defaultValue = false) const;
-
-        /**
-         * @brief Validates a file path parameter.
-         * @param paramName Name of the parameter containing the file path
-         * @param validation File path validation configuration
-         * @return True if path is valid, false otherwise
-         */
-        bool ValidateFilePath(const std::string &paramName, const FilePathValidation &validation = {}) const;
-
-        /**
-         * @brief Gets a filesystem path parameter with smart type handling.
-         * @param paramName Name of the parameter
-         * @param defaultPath Default path if parameter doesn't exist
-         * @return Filesystem path parameter
-         */
-        std::filesystem::path GetPath(const std::string &paramName,
-            const std::filesystem::path &defaultPath = {}) const;
-
+    protected:
         ParameterStorage parameters; ///< Modern type-safe parameter storage
         std::string name;            ///< Name of the node
         NodeId id;                   ///< Unique identifier of the node

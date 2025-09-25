@@ -1,15 +1,7 @@
 #include "Node.h"
 
-#include <algorithm>
-#include <cctype>
-#include <filesystem>
-#include <stdexcept>
-
-#include "Logger.h"
-
 namespace VisionCraft::Engine
 {
-
     Node::Node(NodeId id, std::string name) : id(id), name(std::move(name))
     {
     }
@@ -24,192 +16,96 @@ namespace VisionCraft::Engine
         return name;
     }
 
-    const std::vector<NodeParam> &Node::GetParams() const
+    ParameterStorage &Node::GetParameters()
     {
-        return params;
+        return parameters;
     }
 
-    std::vector<NodeParam> &Node::GetParams()
+    const ParameterStorage &Node::GetParameters() const
     {
-        return params;
+        return parameters;
     }
 
-    std::optional<std::string> Node::GetParamValue(const std::string &paramName) const
+    bool Node::HasParameter(const std::string &paramName) const
     {
-        for (const auto &param : params)
-        {
-            if (param.name == paramName)
-            {
-                return param.value;
-            }
-        }
-
-        return std::nullopt;
+        return parameters.HasParameter(paramName);
     }
 
-    void Node::SetParamValue(const std::string &paramName, const std::string &value)
+    std::vector<std::string> Node::GetParameterNames() const
     {
-        for (auto &param : params)
-        {
-            if (param.name == paramName)
-            {
-                param.value = value;
-                return;
-            }
-        }
-
-        params.push_back({ paramName, value });
+        return parameters.GetParameterNames();
     }
 
-    double Node::GetValidatedDoubleParam(const std::string& paramName, double defaultValue,
-                                         std::optional<double> minValue, std::optional<double> maxValue) const
+    std::string Node::GetValidatedString(const std::string &paramName,
+        const std::string &defaultValue,
+        const StringValidation &validation) const
     {
-        auto paramValue = GetParamValue(paramName);
-        if (!paramValue.has_value())
-        {
-            return defaultValue;
-        }
-
-        try
-        {
-            double value = std::stod(paramValue.value());
-
-            if (minValue.has_value() && value < minValue.value())
-            {
-                LOG_WARN("Node {}: Parameter '{}' value ({}) below minimum ({}), clamping",
-                         GetName(), paramName, value, minValue.value());
-                value = minValue.value();
-            }
-
-            if (maxValue.has_value() && value > maxValue.value())
-            {
-                LOG_WARN("Node {}: Parameter '{}' value ({}) above maximum ({}), clamping",
-                         GetName(), paramName, value, maxValue.value());
-                value = maxValue.value();
-            }
-
-            return value;
-        }
-        catch (const std::exception& e)
-        {
-            LOG_WARN("Node {}: Invalid double value '{}' for parameter '{}', using default ({})",
-                     GetName(), paramValue.value(), paramName, defaultValue);
-            return defaultValue;
-        }
+        return parameters.GetValidatedString(paramName, defaultValue, validation, GetName());
     }
 
-    int Node::GetValidatedIntParam(const std::string& paramName, int defaultValue,
-                                   std::optional<int> minValue, std::optional<int> maxValue) const
+    bool Node::GetBoolParam(const std::string &paramName, bool defaultValue) const
     {
-        auto paramValue = GetParamValue(paramName);
-        if (!paramValue.has_value())
-        {
-            return defaultValue;
-        }
-
-        try
-        {
-            int value = std::stoi(paramValue.value());
-
-            if (minValue.has_value() && value < minValue.value())
-            {
-                LOG_WARN("Node {}: Parameter '{}' value ({}) below minimum ({}), clamping",
-                         GetName(), paramName, value, minValue.value());
-                value = minValue.value();
-            }
-
-            if (maxValue.has_value() && value > maxValue.value())
-            {
-                LOG_WARN("Node {}: Parameter '{}' value ({}) above maximum ({}), clamping",
-                         GetName(), paramName, value, maxValue.value());
-                value = maxValue.value();
-            }
-
-            return value;
-        }
-        catch (const std::exception& e)
-        {
-            LOG_WARN("Node {}: Invalid integer value '{}' for parameter '{}', using default ({})",
-                     GetName(), paramValue.value(), paramName, defaultValue);
-            return defaultValue;
-        }
+        return parameters.GetBool(paramName, defaultValue);
     }
 
-    bool Node::GetBoolParam(const std::string& paramName, bool defaultValue) const
+    bool Node::ValidateFilePath(const std::string &paramName, const FilePathValidation &validation) const
     {
-        auto paramValue = GetParamValue(paramName);
-        if (!paramValue.has_value())
-        {
-            return defaultValue;
-        }
-
-        std::string value = paramValue.value();
-        std::transform(value.begin(), value.end(), value.begin(), ::tolower);
-
-        return (value == "true" || value == "1" || value == "yes" || value == "on");
+        return parameters.ValidateFilePath(paramName, validation, GetName());
     }
 
-    std::string Node::GetValidatedStringParam(const std::string& paramName,
-                                              const std::string& defaultValue,
-                                              const std::vector<std::string>& allowedValues) const
+    std::filesystem::path Node::GetPath(const std::string &paramName, const std::filesystem::path &defaultPath) const
     {
-        auto paramValue = GetParamValue(paramName);
-        if (!paramValue.has_value())
-        {
-            return defaultValue;
-        }
-
-        const std::string& value = paramValue.value();
-        if (allowedValues.empty())
-        {
-            return value;
-        }
-
-        auto it = std::find(allowedValues.begin(), allowedValues.end(), value);
-        if (it != allowedValues.end())
-        {
-            return value;
-        }
-
-        LOG_WARN("Node {}: Invalid value '{}' for parameter '{}', using default '{}'",
-                 GetName(), value, paramName, defaultValue);
-        return defaultValue;
+        return parameters.GetPath(paramName, defaultPath);
     }
 
-    bool Node::ValidateFilePath(const std::string& paramName, bool requireExistence) const
+    // Template method definitions
+    template<typename T> void Node::SetParam(const std::string &paramName, T &&value)
     {
-        auto paramValue = GetParamValue(paramName);
-        if (!paramValue.has_value() || paramValue->empty())
-        {
-            LOG_WARN("Node {}: File path parameter '{}' is empty", GetName(), paramName);
-            return false;
-        }
-
-        const std::string& filePath = paramValue.value();
-
-        try
-        {
-            std::filesystem::path path(filePath);
-            if (path.empty())
-            {
-                LOG_WARN("Node {}: Invalid file path '{}' for parameter '{}'", GetName(), filePath, paramName);
-                return false;
-            }
-
-            if (requireExistence && !std::filesystem::exists(path))
-            {
-                LOG_WARN("Node {}: File '{}' does not exist for parameter '{}'", GetName(), filePath, paramName);
-                return false;
-            }
-
-            return true;
-        }
-        catch (const std::filesystem::filesystem_error& e)
-        {
-            LOG_ERROR("Node {}: Filesystem error validating path '{}' for parameter '{}': {}",
-                      GetName(), filePath, paramName, e.what());
-            return false;
-        }
+        parameters.Set(paramName, std::forward<T>(value));
     }
+
+    template<typename T> std::optional<T> Node::GetParam(const std::string &paramName) const
+    {
+        return parameters.Get<T>(paramName);
+    }
+
+    template<typename T> T Node::GetParamOr(const std::string &paramName, T defaultValue) const
+    {
+        return parameters.GetOr(paramName, std::move(defaultValue));
+    }
+
+    template<NumericParameter T>
+    T Node::GetValidatedParam(const std::string &paramName, T defaultValue, const ValidationRange<T> &validation) const
+    {
+        return parameters.GetValidated(paramName, defaultValue, validation, GetName());
+    }
+
+    // Explicit template instantiations
+    template void Node::SetParam<int>(const std::string &, int &&);
+    template void Node::SetParam<double>(const std::string &, double &&);
+    template void Node::SetParam<bool>(const std::string &, bool &&);
+    template void Node::SetParam<std::string>(const std::string &, std::string &&);
+    template void Node::SetParam<std::filesystem::path>(const std::string &, std::filesystem::path &&);
+    template void Node::SetParam<int &>(const std::string &, int &);
+    template void Node::SetParam<double &>(const std::string &, double &);
+    template void Node::SetParam<bool &>(const std::string &, bool &);
+    template void Node::SetParam<std::string &>(const std::string &, std::string &);
+    template void Node::SetParam<std::filesystem::path &>(const std::string &, std::filesystem::path &);
+
+    template std::optional<int> Node::GetParam<int>(const std::string &) const;
+    template std::optional<double> Node::GetParam<double>(const std::string &) const;
+    template std::optional<bool> Node::GetParam<bool>(const std::string &) const;
+    template std::optional<std::string> Node::GetParam<std::string>(const std::string &) const;
+    template std::optional<std::filesystem::path> Node::GetParam<std::filesystem::path>(const std::string &) const;
+
+    template int Node::GetParamOr<int>(const std::string &, int) const;
+    template double Node::GetParamOr<double>(const std::string &, double) const;
+    template bool Node::GetParamOr<bool>(const std::string &, bool) const;
+    template std::string Node::GetParamOr<std::string>(const std::string &, std::string) const;
+    template std::filesystem::path Node::GetParamOr<std::filesystem::path>(const std::string &,
+        std::filesystem::path) const;
+
+    template int Node::GetValidatedParam<int>(const std::string &, int, const ValidationRange<int> &) const;
+    template double Node::GetValidatedParam<double>(const std::string &, double, const ValidationRange<double> &) const;
 
 } // namespace VisionCraft::Engine

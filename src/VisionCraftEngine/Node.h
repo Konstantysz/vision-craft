@@ -1,9 +1,12 @@
 #pragma once
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "NodeParameter.h"
 
 namespace VisionCraft::Engine
 {
@@ -11,17 +14,6 @@ namespace VisionCraft::Engine
      * @brief Alias for a Node ID.
      */
     using NodeId = int;
-
-    /**
-     * @brief Structure representing a single parameter of a node.
-     *
-     * This structure holds the name and value of a parameter that can be attached to a node.
-     */
-    struct NodeParam
-    {
-        std::string name;  ///< Name of the parameter
-        std::string value; ///< Value of the parameter
-    };
 
     /**
      * @brief Abstract base class for all nodes in the editor.
@@ -57,31 +49,54 @@ namespace VisionCraft::Engine
         const std::string &GetName() const;
 
         /**
-         * @brief Get the parameters of the node (const).
-         * @return const std::vector<NodeParam>& Vector of node parameters.
+         * @brief Gets the modern parameter storage.
+         * @return Reference to the parameter storage system
          */
-
-        const std::vector<NodeParam> &GetParams() const;
-
-        /**
-         * @brief Get the parameters of the node.
-         * @return std::vector<NodeParam>& Vector of node parameters.
-         */
-        std::vector<NodeParam> &GetParams();
+        ParameterStorage &GetParameters();
 
         /**
-         * @brief Get the value of a parameter by name.
-         * @param paramName Name of the parameter.
-         * @return std::optional<std::string> Value if found, std::nullopt otherwise.
+         * @brief Gets the modern parameter storage (const version).
+         * @return Const reference to the parameter storage system
          */
-        std::optional<std::string> GetParamValue(const std::string &paramName) const;
+        const ParameterStorage &GetParameters() const;
 
         /**
-         * @brief Set the value of a parameter by name. Adds the parameter if it does not exist.
-         * @param paramName Name of the parameter.
-         * @param value Value to set.
+         * @brief Sets a parameter value with automatic type deduction.
+         * @tparam T Parameter value type
+         * @param paramName Name of the parameter
+         * @param value Value to set
          */
-        void SetParamValue(const std::string &paramName, const std::string &value);
+        template<typename T> void SetParam(const std::string &paramName, T &&value);
+
+        /**
+         * @brief Gets a parameter value with type checking.
+         * @tparam T Expected parameter type
+         * @param paramName Name of the parameter
+         * @return Optional value if exists and correct type
+         */
+        template<typename T> std::optional<T> GetParam(const std::string &paramName) const;
+
+        /**
+         * @brief Gets a parameter value with default fallback.
+         * @tparam T Parameter type
+         * @param paramName Name of the parameter
+         * @param defaultValue Default if not found or wrong type
+         * @return Parameter value or default
+         */
+        template<typename T> T GetParamOr(const std::string &paramName, T defaultValue) const;
+
+        /**
+         * @brief Checks if parameter exists.
+         * @param paramName Parameter name
+         * @return True if parameter exists
+         */
+        bool HasParameter(const std::string &paramName) const;
+
+        /**
+         * @brief Gets all parameter names.
+         * @return Vector of parameter names
+         */
+        std::vector<std::string> GetParameterNames() const;
 
         /**
          * @brief Abstract method for processing node data. Must be implemented by derived classes.
@@ -90,60 +105,88 @@ namespace VisionCraft::Engine
 
     protected:
         /**
-         * @brief Gets a parameter value as a double with validation.
+         * @brief Gets a validated numeric parameter with range checking.
+         * @tparam T Numeric type (int or double)
          * @param paramName Name of the parameter
          * @param defaultValue Default value if parameter doesn't exist or is invalid
-         * @param minValue Minimum allowed value (optional)
-         * @param maxValue Maximum allowed value (optional)
-         * @return Validated double value
+         * @param validation Range validation configuration
+         * @return Validated numeric value
          */
-        double GetValidatedDoubleParam(const std::string& paramName, double defaultValue,
-                                       std::optional<double> minValue = std::nullopt,
-                                       std::optional<double> maxValue = std::nullopt) const;
+        template<NumericParameter T>
+        T GetValidatedParam(const std::string &paramName,
+            T defaultValue,
+            const ValidationRange<T> &validation = {}) const;
 
         /**
-         * @brief Gets a parameter value as an integer with validation.
-         * @param paramName Name of the parameter
-         * @param defaultValue Default value if parameter doesn't exist or is invalid
-         * @param minValue Minimum allowed value (optional)
-         * @param maxValue Maximum allowed value (optional)
-         * @return Validated integer value
-         */
-        int GetValidatedIntParam(const std::string& paramName, int defaultValue,
-                                 std::optional<int> minValue = std::nullopt,
-                                 std::optional<int> maxValue = std::nullopt) const;
-
-        /**
-         * @brief Gets a parameter value as a boolean.
-         * @param paramName Name of the parameter
-         * @param defaultValue Default value if parameter doesn't exist or is invalid
-         * @return Boolean value (true for "true", "1", "yes", false otherwise)
-         */
-        bool GetBoolParam(const std::string& paramName, bool defaultValue = false) const;
-
-        /**
-         * @brief Gets a parameter value as a string with validation.
+         * @brief Gets a validated string parameter.
          * @param paramName Name of the parameter
          * @param defaultValue Default value if parameter doesn't exist
-         * @param allowedValues Optional set of allowed values for validation
+         * @param validation String validation configuration
          * @return Validated string value
          */
-        std::string GetValidatedStringParam(const std::string& paramName,
-                                            const std::string& defaultValue,
-                                            const std::vector<std::string>& allowedValues = {}) const;
+        std::string GetValidatedString(const std::string &paramName,
+            const std::string &defaultValue,
+            const StringValidation &validation = {}) const;
 
         /**
-         * @brief Validates that a file path parameter exists and is accessible.
+         * @brief Gets a boolean parameter with smart parsing.
+         * @param paramName Name of the parameter
+         * @param defaultValue Default value if parameter doesn't exist or is invalid
+         * @return Boolean value (supports: true/false, 1/0, yes/no, on/off)
+         */
+        bool GetBoolParam(const std::string &paramName, bool defaultValue = false) const;
+
+        /**
+         * @brief Validates a file path parameter.
          * @param paramName Name of the parameter containing the file path
-         * @param requireExistence Whether the file must exist (true) or just be a valid path (false)
+         * @param validation File path validation configuration
          * @return True if path is valid, false otherwise
          */
-        bool ValidateFilePath(const std::string& paramName, bool requireExistence = true) const;
+        bool ValidateFilePath(const std::string &paramName, const FilePathValidation &validation = {}) const;
 
-        NodeId id;                     ///< Unique identifier of the node
-        std::string name;              ///< Name of the node
-        std::vector<NodeParam> params; ///< Parameters of the node
+        /**
+         * @brief Gets a filesystem path parameter with smart type handling.
+         * @param paramName Name of the parameter
+         * @param defaultPath Default path if parameter doesn't exist
+         * @return Filesystem path parameter
+         */
+        std::filesystem::path GetPath(const std::string &paramName,
+            const std::filesystem::path &defaultPath = {}) const;
+
+        ParameterStorage parameters; ///< Modern type-safe parameter storage
+        std::string name;            ///< Name of the node
+        NodeId id;                   ///< Unique identifier of the node
     };
+
+    // Node template method instantiation declarations
+    extern template void Node::SetParam<int>(const std::string &, int &&);
+    extern template void Node::SetParam<double>(const std::string &, double &&);
+    extern template void Node::SetParam<bool>(const std::string &, bool &&);
+    extern template void Node::SetParam<std::string>(const std::string &, std::string &&);
+    extern template void Node::SetParam<std::filesystem::path>(const std::string &, std::filesystem::path &&);
+    extern template void Node::SetParam<int &>(const std::string &, int &);
+    extern template void Node::SetParam<double &>(const std::string &, double &);
+    extern template void Node::SetParam<bool &>(const std::string &, bool &);
+    extern template void Node::SetParam<std::string &>(const std::string &, std::string &);
+    extern template void Node::SetParam<std::filesystem::path &>(const std::string &, std::filesystem::path &);
+
+    extern template std::optional<int> Node::GetParam<int>(const std::string &) const;
+    extern template std::optional<double> Node::GetParam<double>(const std::string &) const;
+    extern template std::optional<bool> Node::GetParam<bool>(const std::string &) const;
+    extern template std::optional<std::string> Node::GetParam<std::string>(const std::string &) const;
+    extern template std::optional<std::filesystem::path> Node::GetParam<std::filesystem::path>(
+        const std::string &) const;
+
+    extern template int Node::GetParamOr<int>(const std::string &, int) const;
+    extern template double Node::GetParamOr<double>(const std::string &, double) const;
+    extern template bool Node::GetParamOr<bool>(const std::string &, bool) const;
+    extern template std::string Node::GetParamOr<std::string>(const std::string &, std::string) const;
+    extern template std::filesystem::path Node::GetParamOr<std::filesystem::path>(const std::string &,
+        std::filesystem::path) const;
+
+    extern template int Node::GetValidatedParam<int>(const std::string &, int, const ValidationRange<int> &) const;
+    extern template double
+        Node::GetValidatedParam<double>(const std::string &, double, const ValidationRange<double> &) const;
 
     /**
      * @brief Alias for a unique pointer to a Node.

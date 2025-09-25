@@ -50,6 +50,7 @@ namespace VisionCraft
         }
 
         HandleMouseInteractions();
+        DetectHoveredPin();
         connectionManager.HandleConnectionInteractions(nodeEditor, nodePositions, canvas);
 
         connectionManager.RenderConnections(nodeEditor, nodePositions, canvas);
@@ -112,7 +113,7 @@ namespace VisionCraft
             drawList->AddText(textPos, Constants::Colors::Node::kText, node->GetName().c_str());
         }
 
-        RenderNodePins(pins, worldPos, dimensions, canvas.GetZoomLevel());
+        RenderNodePins(node->GetId(), pins, worldPos, dimensions, canvas.GetZoomLevel());
 
         if (dimensions.parameterPinCount > 0 && canvas.GetZoomLevel() > Constants::Zoom::kMinForText)
         {
@@ -189,6 +190,46 @@ namespace VisionCraft
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {
             isDragging = false;
+        }
+    }
+
+    void NodeEditorLayer::DetectHoveredPin()
+    {
+        const auto &io = ImGui::GetIO();
+        const auto mousePos = io.MousePos;
+
+        if (!ImGui::IsWindowHovered())
+        {
+            hoveredPin = { Constants::Special::kInvalidNodeId, "" };
+            return;
+        }
+
+        hoveredPin = connectionManager.FindPinAtPosition(mousePos, nodeEditor, nodePositions, canvas);
+    }
+
+    PinInteractionState NodeEditorLayer::GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const
+    {
+        PinInteractionState state;
+        state.isHovered = (hoveredPin.nodeId == nodeId && hoveredPin.pinName == pinName);
+        state.isActive = (connectionManager.IsCreatingConnection() && connectionManager.GetStartPin().nodeId == nodeId
+                          && connectionManager.GetStartPin().pinName == pinName);
+        return state;
+    }
+
+    void NodeEditorLayer::RenderPinWithLabel(const NodePin &pin,
+        const ImVec2 &pinPos,
+        const ImVec2 &labelPos,
+        float pinRadius,
+        float zoomLevel,
+        const PinInteractionState &state) const
+    {
+        RenderPin(pin, pinPos, pinRadius, state);
+
+        if (zoomLevel > Constants::Zoom::kMinForText)
+        {
+            const auto displayName = FormatParameterName(pin.name);
+            auto *drawList = ImGui::GetWindowDrawList();
+            drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
         }
     }
 
@@ -299,16 +340,33 @@ namespace VisionCraft
         }
     }
 
-    void NodeEditorLayer::RenderPin(const NodePin &pin, const ImVec2 &position, float radius) const
+    void NodeEditorLayer::RenderPin(const NodePin &pin,
+        const ImVec2 &position,
+        float radius,
+        const PinInteractionState &state) const
     {
         auto *drawList = ImGui::GetWindowDrawList();
-        const auto pinColor = GetDataTypeColor(pin.dataType);
+        auto pinColor = GetDataTypeColor(pin.dataType);
+        auto borderColor = Constants::Colors::Pin::kBorder;
+
+        // Apply highlighting
+        if (state.isActive)
+        {
+            borderColor = Constants::Colors::Pin::kActive;
+            drawList->AddCircleFilled(position, radius + 3.0f, Constants::Colors::Pin::kActive);
+        }
+        else if (state.isHovered)
+        {
+            borderColor = Constants::Colors::Pin::kHover;
+            drawList->AddCircleFilled(position, radius + 2.5f, Constants::Colors::Pin::kHover);
+        }
 
         drawList->AddCircleFilled(position, radius, pinColor);
-        drawList->AddCircle(position, radius, Constants::Colors::Pin::kBorder, 0, Constants::Pin::kBorderThickness);
+        drawList->AddCircle(position, radius, borderColor, 0, Constants::Pin::kBorderThickness);
     }
 
-    void NodeEditorLayer::RenderNodePins(const std::vector<NodePin> &pins,
+    void NodeEditorLayer::RenderNodePins(Engine::NodeId nodeId,
+        const std::vector<NodePin> &pins,
         const ImVec2 &nodeWorldPos,
         const NodeDimensions &dimensions,
         float zoomLevel)
@@ -340,13 +398,8 @@ namespace VisionCraft
             const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
             const auto labelPos = ImVec2(leftColumnX + pinRadius + textOffset, inputY + i * (pinHeight + pinSpacing));
 
-            RenderPin(pin, pinPos, pinRadius);
-
-            if (zoomLevel > Constants::Zoom::kMinForText)
-            {
-                const auto displayName = FormatParameterName(pin.name);
-                drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
-            }
+            const auto state = GetPinInteractionState(nodeId, pin.name);
+            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, zoomLevel, state);
         }
 
         const auto outputY = nodeWorldPos.y + titleHeight + padding;
@@ -359,12 +412,8 @@ namespace VisionCraft
             const auto labelPos =
                 ImVec2(rightColumnX - pinRadius - textSize.x - textOffset, outputY + i * (pinHeight + pinSpacing));
 
-            RenderPin(pin, pinPos, pinRadius);
-
-            if (zoomLevel > Constants::Zoom::kMinForText)
-            {
-                drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
-            }
+            const auto state = GetPinInteractionState(nodeId, pin.name);
+            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, zoomLevel, state);
         }
     }
 
@@ -426,24 +475,22 @@ namespace VisionCraft
 
         auto *drawList = ImGui::GetWindowDrawList();
         const auto paramHeight = Constants::Parameter::kHeight * canvas.GetZoomLevel();
-        const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+        const auto paramSpacing = Constants::Parameter::kSpacing * canvas.GetZoomLevel();
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
         const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
 
         for (std::size_t i = 0; i < parameterPins.size(); ++i)
         {
             const auto &pin = parameterPins[i];
-            const auto currentY = startPos.y + i * (paramHeight + pinSpacing);
-            const auto pinPos = ImVec2(startPos.x + padding, currentY + pinSpacing * 0.5f);
+            const auto currentY = startPos.y + i * (paramHeight + paramSpacing);
+            const auto pinPos = ImVec2(startPos.x + padding, currentY + paramSpacing * 0.5f);
             const auto labelPos = ImVec2(pinPos.x + pinRadius + Constants::Pin::kTextOffset * canvas.GetZoomLevel(),
                 currentY - Constants::Parameter::kLabelOffset * canvas.GetZoomLevel());
             const auto inputPos =
                 ImVec2(startPos.x + padding, currentY + Constants::Parameter::kInputOffset * canvas.GetZoomLevel());
 
-            RenderPin(pin, pinPos, pinRadius);
-
-            const auto displayName = FormatParameterName(pin.name);
-            drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
+            const auto state = GetPinInteractionState(node->GetId(), pin.name);
+            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, canvas.GetZoomLevel(), state);
 
             ImGui::SetCursorScreenPos(inputPos);
 
@@ -519,7 +566,7 @@ namespace VisionCraft
             case PinDataType::Bool: {
                 bool value = node->GetParamOr<bool>(pin.name, false);
 
-                if (ImGui::Checkbox((displayName + widgetId).c_str(), &value))
+                if (ImGui::Checkbox(widgetId.c_str(), &value))
                 {
                     node->SetParam(pin.name, value);
                 }

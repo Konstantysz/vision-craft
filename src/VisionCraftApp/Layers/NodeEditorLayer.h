@@ -13,6 +13,14 @@
 
 namespace VisionCraft
 {
+    /**
+     * @brief Pin interaction state result.
+     */
+    struct PinInteractionState
+    {
+        bool isHovered = false;
+        bool isActive = false;
+    };
 
     /**
      * @brief Node editor layer.
@@ -84,6 +92,35 @@ namespace VisionCraft
         void HandleMouseInteractions();
 
         /**
+         * @brief Detects which pin is currently under the mouse cursor.
+         */
+        void DetectHoveredPin();
+
+        /**
+         * @brief Gets the interaction state for a specific pin.
+         * @param nodeId ID of the node containing the pin
+         * @param pinName Name of the pin
+         * @return PinInteractionState containing hover and active flags
+         */
+        PinInteractionState GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const;
+
+        /**
+         * @brief Render a pin with its label text.
+         * @param pin The pin to render
+         * @param pinPos Screen position of the pin
+         * @param labelPos Screen position of the label
+         * @param pinRadius Radius of the pin circle
+         * @param zoomLevel Current zoom level
+         * @param state Pin interaction state (hover/active)
+         */
+        void RenderPinWithLabel(const NodePin &pin,
+            const ImVec2 &pinPos,
+            const ImVec2 &labelPos,
+            float pinRadius,
+            float zoomLevel,
+            const PinInteractionState &state) const;
+
+        /**
          * @brief Renders the context menu for creating nodes.
          */
         void RenderContextMenu();
@@ -108,17 +145,23 @@ namespace VisionCraft
          * @param pin The pin to render
          * @param position Screen position for the pin
          * @param radius Radius of the pin circle
+         * @param state Pin interaction state (hover/active)
          */
-        void RenderPin(const NodePin &pin, const ImVec2 &position, float radius) const;
+        void RenderPin(const NodePin &pin,
+            const ImVec2 &position,
+            float radius,
+            const PinInteractionState &state = {}) const;
 
         /**
          * @brief Renders all pins for a node.
+         * @param nodeId ID of the node being rendered
          * @param pins Vector of all pins for the node
          * @param nodeWorldPos World position of the node
          * @param dimensions Pre-calculated node dimensions
          * @param zoomLevel Current zoom level
          */
-        void RenderNodePins(const std::vector<NodePin> &pins,
+        void RenderNodePins(Engine::NodeId nodeId,
+            const std::vector<NodePin> &pins,
             const ImVec2 &nodeWorldPos,
             const NodeDimensions &dimensions,
             float zoomLevel);
@@ -168,5 +211,8 @@ namespace VisionCraft
         // Context menu state
         bool showContextMenu = false;               ///< Whether to show the context menu
         ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f); ///< Position where context menu was opened
+
+        // Pin interaction state
+        PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin
     };
 } // namespace VisionCraft

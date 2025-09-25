@@ -139,6 +139,18 @@ namespace VisionCraft
          */
         static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel);
 
+        /**
+         * @brief Check if currently creating a connection.
+         * @return True if in connection creation mode
+         */
+        bool IsCreatingConnection() const;
+
+        /**
+         * @brief Get the starting pin of current connection being created.
+         * @return PinId of start pin, or invalid pin if not creating connection
+         */
+        const PinId &GetStartPin() const;
+
     private:
         /**
          * @brief Removes any existing connection to the given input pin.

@@ -126,7 +126,7 @@ namespace VisionCraft::Constants
         constexpr float kSpacing = 3.0f;
 
         /// @brief Radius of pin circles in pixels
-        constexpr float kRadius = 5.0f;
+        constexpr float kRadius = 7.0f;
 
         /// @brief Thickness of pin border circles in pixels
         constexpr float kBorderThickness = 1.5f;
@@ -141,7 +141,7 @@ namespace VisionCraft::Constants
     namespace Parameter
     {
         /// @brief Height of parameter input rows in pixels
-        constexpr float kHeight = 22.0f;
+        constexpr float kHeight = 35.0f;
 
         /// @brief Minimum width for parameter input widgets
         constexpr float kMinInputWidth = 80.0f;
@@ -150,7 +150,10 @@ namespace VisionCraft::Constants
         constexpr float kLabelOffset = 2.0f;
 
         /// @brief Vertical offset for parameter input widgets
-        constexpr float kInputOffset = 12.0f;
+        constexpr float kInputOffset = 16.0f;
+
+        /// @brief Additional spacing between parameters
+        constexpr float kSpacing = 8.0f;
     } // namespace Parameter
 
     // ========================================
@@ -232,6 +235,12 @@ namespace VisionCraft::Constants
 
             /// @brief Default color for unknown data types (gray)
             constexpr ImU32 kDefault = IM_COL32(128, 128, 128, 255);
+
+            /// @brief Highlight color for hovered pins (matches node selection)
+            constexpr ImU32 kHover = IM_COL32(255, 165, 0, 255);
+
+            /// @brief Highlight color for clicked/active pins
+            constexpr ImU32 kActive = IM_COL32(255, 255, 0, 255);
         } // namespace Pin
 
         /**

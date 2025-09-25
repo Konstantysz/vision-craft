@@ -430,10 +430,11 @@ namespace VisionCraft
         const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
         const auto paramHeight = Constants::Parameter::kHeight * zoomLevel;
         const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
+        const auto paramSpacing = Constants::Parameter::kSpacing * zoomLevel;
         const auto padding = Constants::Node::kPadding * zoomLevel;
         const auto maxPins = std::max(inputPins.size(), outputPins.size());
         const auto pinsHeight = maxPins * (pinHeight + pinSpacing);
-        const auto parametersHeight = parameterPins.size() * (paramHeight + pinSpacing);
+        const auto parametersHeight = parameterPins.size() * (paramHeight + paramSpacing);
         const auto contentHeight = pinsHeight + parametersHeight + padding * 2;
         const auto totalHeight = titleHeight + contentHeight + padding;
 
@@ -442,5 +443,15 @@ namespace VisionCraft
             inputPins.size(),
             outputPins.size(),
             parameterPins.size() };
+    }
+
+    bool ConnectionManager::IsCreatingConnection() const
+    {
+        return connectionState.isCreating;
+    }
+
+    const PinId &ConnectionManager::GetStartPin() const
+    {
+        return connectionState.startPin;
     }
 } // namespace VisionCraft

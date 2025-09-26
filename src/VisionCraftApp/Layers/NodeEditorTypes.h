@@ -24,7 +24,8 @@ namespace VisionCraft
         String, // std::string - Magenta
         Float,  // double - Light Blue
         Int,    // int - Cyan
-        Bool    // bool - Red
+        Bool,   // bool - Red
+        Path    // std::filesystem::path - Orange
     };
 
     /**

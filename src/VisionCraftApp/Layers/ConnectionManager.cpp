@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iterator>
+#include <limits>
 
 namespace VisionCraft
 {
@@ -185,11 +186,31 @@ namespace VisionCraft
         return true;
     }
 
+    bool ConnectionManager::IsPinConnected(const PinId &pin) const
+    {
+        for (const auto &connection : connections)
+        {
+            if (connection.inputPin == pin || connection.outputPin == pin)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool ConnectionManager::PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const
+    {
+        return pin.isInput && pin.dataType != PinDataType::Image && !IsPinConnected({ nodeId, pin.name });
+    }
+
     PinId ConnectionManager::FindPinAtPosition(const ImVec2 &mousePos,
         const Engine::NodeEditor &nodeEditor,
         const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
         const CanvasController &canvas) const
     {
+        PinId closestPin = { Constants::Special::kInvalidNodeId, "" };
+        float closestDistanceSquared = std::numeric_limits<float>::max();
+
         const auto nodeIds = nodeEditor.GetNodeIds();
         for (const auto nodeId : nodeIds)
         {
@@ -204,48 +225,89 @@ namespace VisionCraft
             const auto &nodePos = nodePositions.at(nodeId);
             const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
-            std::vector<NodePin> inputPins;
-            std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-                return pin.isInput && pin.dataType == PinDataType::Image;
-            });
-
-            const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-            const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
-            const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
-            const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
-            const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
-            const auto leftColumnX = nodeWorldPos.x + padding;
-            const auto inputY = nodeWorldPos.y + titleHeight + padding;
-            for (std::size_t i = 0; i < inputPins.size(); ++i)
+            const auto pinInNode = FindPinAtPositionInNode(mousePos, nodeId, nodeEditor, nodePositions, canvas);
+            if (pinInNode.nodeId != Constants::Special::kInvalidNodeId)
             {
-                const auto &pin = inputPins[i];
-                const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
-                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
-                if (distanceSquared <= pinRadius * pinRadius)
-                {
-                    return { nodeId, pin.name };
-                }
+                return pinInNode;
+            }
+        }
+
+        return closestPin;
+    }
+
+    PinId ConnectionManager::FindPinAtPositionInNode(const ImVec2 &mousePos,
+        Engine::NodeId nodeId,
+        const Engine::NodeEditor &nodeEditor,
+        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+        const CanvasController &canvas) const
+    {
+        const auto *node = nodeEditor.GetNode(nodeId);
+        if (!node || nodePositions.find(nodeId) == nodePositions.end())
+        {
+            return { Constants::Special::kInvalidNodeId, "" };
+        }
+
+        const auto pins = GetNodePins(node->GetName());
+        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+        const auto &nodePos = nodePositions.at(nodeId);
+        const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+
+        std::vector<NodePin> inputPins, outputPins;
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+
+        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
+        const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
+        const auto extendedPinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
+        const auto compactSpacing = Constants::Pin::kCompactSpacing * canvas.GetZoomLevel();
+        const auto normalSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+        const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
+        const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
+
+        // Check input pins using dynamic spacing
+        const auto leftColumnX = nodeWorldPos.x + padding;
+        const auto startY = nodeWorldPos.y + titleHeight + padding;
+        float currentY = startY;
+
+        for (std::size_t i = 0; i < inputPins.size(); ++i)
+        {
+            const auto &pin = inputPins[i];
+            // Use helper function for consistent logic
+            const bool needsInputWidget = PinNeedsInputWidget(nodeId, pin);
+            const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+            const auto currentSpacing = needsInputWidget ? normalSpacing : compactSpacing;
+
+            const auto pinPos = ImVec2(leftColumnX, currentY + currentPinHeight * 0.5f);
+            const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+            const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+            if (distanceSquared <= pinRadius * pinRadius)
+            {
+                return { nodeId, pin.name };
             }
 
-            std::vector<NodePin> outputPins;
-            std::copy_if(
-                pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+            currentY += currentPinHeight + currentSpacing;
+        }
 
-            const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-            const auto outputY = nodeWorldPos.y + titleHeight + padding;
+        const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
+        currentY = startY;
 
-            for (std::size_t i = 0; i < outputPins.size(); ++i)
+        for (std::size_t i = 0; i < outputPins.size(); ++i)
+        {
+            const auto &pin = outputPins[i];
+            const auto currentPinHeight = compactPinHeight;
+            const auto currentSpacing = compactSpacing;
+
+            const auto pinPos = ImVec2(rightColumnX, currentY + currentPinHeight * 0.5f);
+            const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+            const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+            if (distanceSquared <= pinRadius * pinRadius)
             {
-                const auto &pin = outputPins[i];
-                const auto pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
-                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
-                if (distanceSquared <= pinRadius * pinRadius)
-                {
-                    return { nodeId, pin.name };
-                }
+                return { nodeId, pin.name };
             }
+
+            currentY += currentPinHeight + currentSpacing;
         }
 
         return { Constants::Special::kInvalidNodeId, "" };
@@ -272,42 +334,48 @@ namespace VisionCraft
         const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
         const auto &nodePos = nodePositions.at(pinId.nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+
         const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-        const auto pinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
-        const auto pinSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
+        const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
+        const auto extendedPinHeight = Constants::Pin::kHeight * canvas.GetZoomLevel();
+        const auto compactSpacing = Constants::Pin::kCompactSpacing * canvas.GetZoomLevel();
+        const auto normalSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
 
-        std::vector<NodePin> inputPins;
-        for (const auto &pin : pins)
-        {
-            if (pin.isInput && pin.dataType == PinDataType::Image)
-            {
-                inputPins.push_back(pin);
-            }
-        }
-
-        const auto leftColumnX = nodeWorldPos.x + padding;
-        const auto inputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < inputPins.size(); ++i)
-        {
-            if (inputPins[i].name == pinId.pinName)
-            {
-                return ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            }
-        }
-
-        std::vector<NodePin> outputPins;
+        std::vector<NodePin> inputPins, outputPins;
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
 
+        const auto leftColumnX = nodeWorldPos.x + padding;
         const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-        const auto outputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < outputPins.size(); ++i)
+        const auto startY = nodeWorldPos.y + titleHeight + padding;
+
+        float currentY = startY;
+        for (const auto &pin : inputPins)
         {
-            if (outputPins[i].name == pinId.pinName)
+            if (pin.name == pinId.pinName)
             {
-                return ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
+                const bool needsInputWidget = PinNeedsInputWidget(pinId.nodeId, pin);
+                const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+                return ImVec2(leftColumnX, currentY + currentPinHeight * 0.5f);
             }
+
+            const bool needsInputWidget = PinNeedsInputWidget(pinId.nodeId, pin);
+            const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+            const auto currentSpacing = needsInputWidget ? normalSpacing : compactSpacing;
+            currentY += currentPinHeight + currentSpacing;
+        }
+
+        currentY = startY;
+        for (const auto &pin : outputPins)
+        {
+            if (pin.name == pinId.pinName)
+            {
+                return ImVec2(rightColumnX, currentY + compactPinHeight * 0.5f);
+            }
+            currentY += compactPinHeight + compactSpacing;
         }
 
         return ImVec2(0, 0);
@@ -366,39 +434,39 @@ namespace VisionCraft
         static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
             { "Image Input",
                 {
-                    { "filepath", PinDataType::String, true }, // Parameter input
-                    { "Image", PinDataType::Image, false }     // Data output
+                    { "filepath", PinDataType::Path, true }, // Parameter input
+                    { "Output", PinDataType::Image, false }  // Data output
                 } },
             { "Image Output",
                 {
-                    { "Image", PinDataType::Image, true },     // Data input
-                    { "savePath", PinDataType::String, true }, // Parameter input
-                    { "autoSave", PinDataType::Bool, true },   // Parameter input
-                    { "format", PinDataType::String, true }    // Parameter input
+                    { "Input", PinDataType::Image, true },   // Data input
+                    { "savePath", PinDataType::Path, true }, // Parameter input
+                    { "autoSave", PinDataType::Bool, true }, // Parameter input
+                    { "format", PinDataType::String, true }  // Parameter input
                 } },
             { "Grayscale",
                 {
-                    { "Image", PinDataType::Image, true },        // Data input
+                    { "Input", PinDataType::Image, true },        // Data input
                     { "method", PinDataType::String, true },      // Parameter input
                     { "preserveAlpha", PinDataType::Bool, true }, // Parameter input
-                    { "Image", PinDataType::Image, false }        // Data output
+                    { "Output", PinDataType::Image, false }       // Data output
                 } },
             { "Canny Edge",
                 {
-                    { "Image", PinDataType::Image, true },         // Data input
+                    { "Input", PinDataType::Image, true },         // Data input
                     { "lowThreshold", PinDataType::Float, true },  // Parameter input
                     { "highThreshold", PinDataType::Float, true }, // Parameter input
                     { "apertureSize", PinDataType::Int, true },    // Parameter input
                     { "l2Gradient", PinDataType::Bool, true },     // Parameter input
-                    { "Image", PinDataType::Image, false }         // Data output
+                    { "Output", PinDataType::Image, false }        // Data output
                 } },
             { "Threshold",
                 {
-                    { "Image", PinDataType::Image, true },     // Data input
+                    { "Input", PinDataType::Image, true },     // Data input
                     { "threshold", PinDataType::Float, true }, // Parameter input
                     { "maxValue", PinDataType::Float, true },  // Parameter input
                     { "type", PinDataType::String, true },     // Parameter input
-                    { "Image", PinDataType::Image, false }     // Data output
+                    { "Output", PinDataType::Image, false }    // Data output
                 } }
         };
 
@@ -413,36 +481,41 @@ namespace VisionCraft
 
     NodeDimensions ConnectionManager::CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel)
     {
-        std::vector<NodePin> inputPins, outputPins, parameterPins;
+        std::vector<NodePin> inputPins, outputPins;
 
-        std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-            return pin.isInput && pin.dataType == PinDataType::Image;
-        });
-
-        std::copy_if(pins.begin(), pins.end(), std::back_inserter(parameterPins), [](const auto &pin) {
-            return pin.isInput && pin.dataType != PinDataType::Image;
-        });
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
 
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
 
         const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
-        const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto paramHeight = Constants::Parameter::kHeight * zoomLevel;
-        const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
-        const auto paramSpacing = Constants::Parameter::kSpacing * zoomLevel;
+        const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
+        const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
+        const auto compactSpacing = Constants::Pin::kCompactSpacing * zoomLevel;
+        const auto normalSpacing = Constants::Pin::kSpacing * zoomLevel;
         const auto padding = Constants::Node::kPadding * zoomLevel;
-        const auto maxPins = std::max(inputPins.size(), outputPins.size());
-        const auto pinsHeight = maxPins * (pinHeight + pinSpacing);
-        const auto parametersHeight = parameterPins.size() * (paramHeight + paramSpacing);
-        const auto contentHeight = pinsHeight + parametersHeight + padding * 2;
+
+        float inputColumnHeight = 0;
+        for (const auto &pin : inputPins)
+        {
+            const bool needsInputWidget = pin.dataType != PinDataType::Image;
+            const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+            const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
+            inputColumnHeight += pinHeight + spacing;
+        }
+
+        const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
+
+        const auto pinsHeight = std::max(inputColumnHeight, outputColumnHeight);
+        const auto contentHeight = pinsHeight + padding * 2;
         const auto totalHeight = titleHeight + contentHeight + padding;
 
         return { ImVec2(Constants::Node::kWidth * zoomLevel,
                      std::max(Constants::Node::kMinHeight * zoomLevel, totalHeight)),
             inputPins.size(),
             outputPins.size(),
-            parameterPins.size() };
+            0 };
     }
 
     bool ConnectionManager::IsCreatingConnection() const

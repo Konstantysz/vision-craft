@@ -5,6 +5,7 @@
 #include "Layer.h"
 #include "NodeEditor.h"
 #include "NodeEditorTypes.h"
+#include "NodeRenderer.h"
 
 #include <memory>
 #include <unordered_map>
@@ -13,15 +14,6 @@
 
 namespace VisionCraft
 {
-    /**
-     * @brief Pin interaction state result.
-     */
-    struct PinInteractionState
-    {
-        bool isHovered = false;
-        bool isActive = false;
-    };
-
     /**
      * @brief Node editor layer.
      *
@@ -35,7 +27,7 @@ namespace VisionCraft
         /**
          * @brief Default constructor.
          */
-        NodeEditorLayer() = default;
+        NodeEditorLayer();
 
         /**
          * @brief Virtual destructor.
@@ -104,6 +96,7 @@ namespace VisionCraft
          */
         PinInteractionState GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const;
 
+
         /**
          * @brief Render a pin with its label text.
          * @param pin The pin to render
@@ -140,53 +133,6 @@ namespace VisionCraft
          */
         ImU32 GetDataTypeColor(PinDataType dataType) const;
 
-        /**
-         * @brief Renders a single pin (input or output).
-         * @param pin The pin to render
-         * @param position Screen position for the pin
-         * @param radius Radius of the pin circle
-         * @param state Pin interaction state (hover/active)
-         */
-        void RenderPin(const NodePin &pin,
-            const ImVec2 &position,
-            float radius,
-            const PinInteractionState &state = {}) const;
-
-        /**
-         * @brief Renders all pins for a node.
-         * @param nodeId ID of the node being rendered
-         * @param pins Vector of all pins for the node
-         * @param nodeWorldPos World position of the node
-         * @param dimensions Pre-calculated node dimensions
-         * @param zoomLevel Current zoom level
-         */
-        void RenderNodePins(Engine::NodeId nodeId,
-            const std::vector<NodePin> &pins,
-            const ImVec2 &nodeWorldPos,
-            const NodeDimensions &dimensions,
-            float zoomLevel);
-
-        /**
-         * @brief Gets the editable parameters for a specific node type.
-         * @param nodeName Name of the node
-         * @return Vector of parameter definitions
-         */
-        std::vector<NodePin> GetNodeParameters(const std::string &nodeName) const;
-
-        /**
-         * @brief Renders inline parameter editors for a node.
-         * @param node Pointer to the node
-         * @param startPos Starting position for parameter rendering
-         * @param nodeSize Size of the node
-         */
-        void RenderNodeParameters(Engine::Node *node, const ImVec2 &startPos, const ImVec2 &nodeSize);
-
-        /**
-         * @brief Converts camelCase parameter names to Title Case for display.
-         * @param paramName The parameter name in camelCase (e.g., "lowThreshold")
-         * @return User-friendly display name (e.g., "Low Threshold")
-         */
-        static std::string FormatParameterName(const std::string &paramName);
 
         /**
          * @brief Finds the topmost node at the given mouse position.
@@ -200,6 +146,7 @@ namespace VisionCraft
         CanvasController canvas;                                        ///< Canvas management component
         ConnectionManager connectionManager;                            ///< Connection management component
         Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
+        NodeRenderer nodeRenderer;                                      ///< Node rendering component
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 

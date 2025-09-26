@@ -62,7 +62,7 @@ namespace VisionCraft::Constants
     namespace Node
     {
         /// @brief Default width of nodes in pixels
-        constexpr float kWidth = 220.0f;
+        constexpr float kWidth = 320.0f;
 
         /// @brief Minimum height of nodes in pixels
         constexpr float kMinHeight = 100.0f;
@@ -71,7 +71,7 @@ namespace VisionCraft::Constants
         constexpr float kTitleHeight = 25.0f;
 
         /// @brief Internal padding within nodes in pixels
-        constexpr float kPadding = 8.0f;
+        constexpr float kPadding = 12.0f;
 
         /// @brief Corner rounding radius for node rectangles in pixels
         constexpr float kRounding = 8.0f;
@@ -119,11 +119,17 @@ namespace VisionCraft::Constants
      */
     namespace Pin
     {
-        /// @brief Height of pin rows in pixels
-        constexpr float kHeight = 18.0f;
+        /// @brief Height of pin rows in pixels (for pins with input widgets)
+        constexpr float kHeight = 45.0f;
 
-        /// @brief Vertical spacing between pins in pixels
-        constexpr float kSpacing = 3.0f;
+        /// @brief Compact height for pins without input widgets (Image pins, connected parameters)
+        constexpr float kCompactHeight = 20.0f;
+
+        /// @brief Vertical spacing between pins in pixels (for pins with input widgets)
+        constexpr float kSpacing = 10.0f;
+
+        /// @brief Compact spacing for pins without input widgets
+        constexpr float kCompactSpacing = 2.0f;
 
         /// @brief Radius of pin circles in pixels
         constexpr float kRadius = 7.0f;
@@ -144,7 +150,7 @@ namespace VisionCraft::Constants
         constexpr float kHeight = 35.0f;
 
         /// @brief Minimum width for parameter input widgets
-        constexpr float kMinInputWidth = 80.0f;
+        constexpr float kMinInputWidth = 60.0f;
 
         /// @brief Vertical offset for parameter labels
         constexpr float kLabelOffset = 2.0f;
@@ -232,6 +238,9 @@ namespace VisionCraft::Constants
 
             /// @brief Color for Bool data type pins (red)
             constexpr ImU32 kBool = IM_COL32(255, 100, 100, 255);
+
+            /// @brief Color for Path data type pins (orange)
+            constexpr ImU32 kPath = IM_COL32(255, 165, 0, 255);
 
             /// @brief Default color for unknown data types (gray)
             constexpr ImU32 kDefault = IM_COL32(128, 128, 128, 255);

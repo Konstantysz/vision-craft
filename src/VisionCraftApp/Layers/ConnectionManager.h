@@ -87,6 +87,21 @@ namespace VisionCraft
             const Engine::NodeEditor &nodeEditor) const;
 
         /**
+         * @brief Checks if a pin has any connections.
+         * @param pin The pin to check
+         * @return True if the pin is connected to another pin
+         */
+        bool IsPinConnected(const PinId &pin) const;
+
+        /**
+         * @brief Determines if a pin needs input widget space (and extended spacing).
+         * @param nodeId ID of the node
+         * @param pin The pin to check
+         * @return True if pin needs input widget space
+         */
+        bool PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const;
+
+        /**
          * @brief Finds a pin at the given mouse position.
          * @param mousePos Mouse position in screen coordinates
          * @param nodeEditor Reference to the node editor backend
@@ -95,6 +110,21 @@ namespace VisionCraft
          * @return PinId if found, otherwise invalid PinId (nodeId = -1)
          */
         PinId FindPinAtPosition(const ImVec2 &mousePos,
+            const Engine::NodeEditor &nodeEditor,
+            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+            const CanvasController &canvas) const;
+
+        /**
+         * @brief Finds a pin at the specified position within a specific node only.
+         * @param mousePos Mouse position in screen coordinates
+         * @param nodeId ID of the node to search within
+         * @param nodeEditor Reference to the node editor backend
+         * @param nodePositions Map of node positions
+         * @param canvas Reference to canvas controller
+         * @return PinId if found, otherwise invalid PinId (nodeId = -1)
+         */
+        PinId FindPinAtPositionInNode(const ImVec2 &mousePos,
+            Engine::NodeId nodeId,
             const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas) const;

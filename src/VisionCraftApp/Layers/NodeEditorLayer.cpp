@@ -16,6 +16,9 @@
 
 namespace VisionCraft
 {
+    NodeEditorLayer::NodeEditorLayer() : nodeRenderer(canvas, connectionManager)
+    {
+    }
     void NodeEditorLayer::OnEvent(Core::Event &event)
     {
     }
@@ -77,53 +80,11 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderNode(Engine::Node *node, const NodePosition &nodePos)
     {
-        auto *drawList = ImGui::GetWindowDrawList();
-        const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-        const auto pins = connectionManager.GetNodePins(node->GetName());
-        const auto dimensions = connectionManager.CalculateNodeDimensions(pins, canvas.GetZoomLevel());
-        const auto isSelected = (node->GetId() == selectedNodeId);
-        const auto borderColor =
-            isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
-        const auto borderThickness =
-            isSelected ? Constants::Node::Border::kThicknessSelected : Constants::Node::Border::kThicknessNormal;
-        const auto nodeRounding = Constants::Node::kRounding * canvas.GetZoomLevel();
+        auto getPinInteractionState = [this](Engine::NodeId nodeId, const std::string &pinName) -> PinInteractionState {
+            return this->GetPinInteractionState(nodeId, pinName);
+        };
 
-        drawList->AddRectFilled(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y),
-            Constants::Colors::Node::kBackground,
-            nodeRounding);
-        drawList->AddRect(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y),
-            borderColor,
-            nodeRounding,
-            0,
-            borderThickness * canvas.GetZoomLevel());
-
-        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-        drawList->AddRectFilled(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + titleHeight),
-            Constants::Colors::Node::kTitle,
-            nodeRounding,
-            ImDrawFlags_RoundCornersTop);
-
-        if (canvas.GetZoomLevel() > Constants::Zoom::kMinForText)
-        {
-            const auto textPos = ImVec2(worldPos.x + Constants::Node::kPadding * canvas.GetZoomLevel(),
-                worldPos.y + Constants::Node::Text::kOffset * canvas.GetZoomLevel());
-            drawList->AddText(textPos, Constants::Colors::Node::kText, node->GetName().c_str());
-        }
-
-        RenderNodePins(node->GetId(), pins, worldPos, dimensions, canvas.GetZoomLevel());
-
-        if (dimensions.parameterPinCount > 0 && canvas.GetZoomLevel() > Constants::Zoom::kMinForText)
-        {
-            const auto parametersStartY =
-                worldPos.y + titleHeight + (Constants::Node::kPadding * canvas.GetZoomLevel())
-                + (std::max(dimensions.inputPinCount, dimensions.outputPinCount)
-                    * (Constants::Pin::kHeight + Constants::Pin::kSpacing) * canvas.GetZoomLevel())
-                + (Constants::Node::kPadding * canvas.GetZoomLevel());
-            RenderNodeParameters(node, ImVec2(worldPos.x, parametersStartY), dimensions.size);
-        }
+        nodeRenderer.RenderNode(node, nodePos, selectedNodeId, getPinInteractionState);
     }
 
     bool NodeEditorLayer::IsMouseOverNode(const ImVec2 &mousePos,
@@ -204,7 +165,15 @@ namespace VisionCraft
             return;
         }
 
-        hoveredPin = connectionManager.FindPinAtPosition(mousePos, nodeEditor, nodePositions, canvas);
+        const auto hoveredNodeId = FindNodeAtPosition(mousePos);
+        if (hoveredNodeId == Constants::Special::kInvalidNodeId)
+        {
+            hoveredPin = { Constants::Special::kInvalidNodeId, "" };
+            return;
+        }
+
+        hoveredPin =
+            connectionManager.FindPinAtPositionInNode(mousePos, hoveredNodeId, nodeEditor, nodePositions, canvas);
     }
 
     PinInteractionState NodeEditorLayer::GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const
@@ -216,22 +185,6 @@ namespace VisionCraft
         return state;
     }
 
-    void NodeEditorLayer::RenderPinWithLabel(const NodePin &pin,
-        const ImVec2 &pinPos,
-        const ImVec2 &labelPos,
-        float pinRadius,
-        float zoomLevel,
-        const PinInteractionState &state) const
-    {
-        RenderPin(pin, pinPos, pinRadius, state);
-
-        if (zoomLevel > Constants::Zoom::kMinForText)
-        {
-            const auto displayName = FormatParameterName(pin.name);
-            auto *drawList = ImGui::GetWindowDrawList();
-            drawList->AddText(labelPos, Constants::Colors::Pin::kLabel, displayName.c_str());
-        }
-    }
 
     void NodeEditorLayer::RenderContextMenu()
     {
@@ -335,266 +288,13 @@ namespace VisionCraft
             return Constants::Colors::Pin::kInt;
         case PinDataType::Bool:
             return Constants::Colors::Pin::kBool;
+        case PinDataType::Path:
+            return Constants::Colors::Pin::kPath;
         default:
             return Constants::Colors::Pin::kDefault;
         }
     }
 
-    void NodeEditorLayer::RenderPin(const NodePin &pin,
-        const ImVec2 &position,
-        float radius,
-        const PinInteractionState &state) const
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-        auto pinColor = GetDataTypeColor(pin.dataType);
-        auto borderColor = Constants::Colors::Pin::kBorder;
-
-        // Apply highlighting
-        if (state.isActive)
-        {
-            borderColor = Constants::Colors::Pin::kActive;
-            drawList->AddCircleFilled(position, radius + 3.0f, Constants::Colors::Pin::kActive);
-        }
-        else if (state.isHovered)
-        {
-            borderColor = Constants::Colors::Pin::kHover;
-            drawList->AddCircleFilled(position, radius + 2.5f, Constants::Colors::Pin::kHover);
-        }
-
-        drawList->AddCircleFilled(position, radius, pinColor);
-        drawList->AddCircle(position, radius, borderColor, 0, Constants::Pin::kBorderThickness);
-    }
-
-    void NodeEditorLayer::RenderNodePins(Engine::NodeId nodeId,
-        const std::vector<NodePin> &pins,
-        const ImVec2 &nodeWorldPos,
-        const NodeDimensions &dimensions,
-        float zoomLevel)
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-
-        std::vector<NodePin> inputPins;
-        std::vector<NodePin> outputPins;
-
-        std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-            return pin.isInput && pin.dataType == PinDataType::Image;
-        });
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-        const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
-        const auto pinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto pinSpacing = Constants::Pin::kSpacing * zoomLevel;
-        const auto padding = Constants::Node::kPadding * zoomLevel;
-        const auto pinRadius = Constants::Pin::kRadius * zoomLevel;
-        const auto textOffset = Constants::Pin::kTextOffset * zoomLevel;
-        const auto leftColumnX = nodeWorldPos.x + padding;
-        const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-        const auto inputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < inputPins.size(); ++i)
-        {
-            const auto &pin = inputPins[i];
-            const auto pinPos = ImVec2(leftColumnX, inputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            const auto labelPos = ImVec2(leftColumnX + pinRadius + textOffset, inputY + i * (pinHeight + pinSpacing));
-
-            const auto state = GetPinInteractionState(nodeId, pin.name);
-            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, zoomLevel, state);
-        }
-
-        const auto outputY = nodeWorldPos.y + titleHeight + padding;
-        for (std::size_t i = 0; i < outputPins.size(); ++i)
-        {
-            const auto &pin = outputPins[i];
-            const auto displayName = FormatParameterName(pin.name);
-            const auto textSize = ImGui::CalcTextSize(displayName.c_str());
-            const auto pinPos = ImVec2(rightColumnX, outputY + i * (pinHeight + pinSpacing) + pinHeight * 0.5f);
-            const auto labelPos =
-                ImVec2(rightColumnX - pinRadius - textSize.x - textOffset, outputY + i * (pinHeight + pinSpacing));
-
-            const auto state = GetPinInteractionState(nodeId, pin.name);
-            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, zoomLevel, state);
-        }
-    }
-
-    std::string NodeEditorLayer::FormatParameterName(const std::string &paramName)
-    {
-        if (paramName.empty())
-        {
-            return paramName;
-        }
-
-        std::string result;
-        result.reserve(paramName.length() + 10);
-        result += std::toupper(paramName[0]);
-
-        for (std::size_t i = 1; i < paramName.length(); ++i)
-        {
-            char current = paramName[i];
-            char previous = paramName[i - 1];
-            if (std::isupper(current))
-            {
-                result += ' ';
-                result += current;
-            }
-            else if (std::isdigit(current) && std::isalpha(previous))
-            {
-                result += ' ';
-                result += current;
-            }
-            else if (std::isalpha(current) && std::isdigit(previous))
-            {
-                result += ' ';
-                result += std::toupper(current);
-            }
-            else
-            {
-                result += current;
-            }
-        }
-
-        return result;
-    }
-
-    void NodeEditorLayer::RenderNodeParameters(Engine::Node *node, const ImVec2 &startPos, const ImVec2 &nodeSize)
-    {
-        auto pins = connectionManager.GetNodePins(node->GetName());
-        std::vector<NodePin> parameterPins;
-        for (const auto &pin : pins)
-        {
-            if (pin.isInput && pin.dataType != PinDataType::Image)
-            {
-                parameterPins.push_back(pin);
-            }
-        }
-
-        if (parameterPins.empty())
-        {
-            return;
-        }
-
-        auto *drawList = ImGui::GetWindowDrawList();
-        const auto paramHeight = Constants::Parameter::kHeight * canvas.GetZoomLevel();
-        const auto paramSpacing = Constants::Parameter::kSpacing * canvas.GetZoomLevel();
-        const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
-        const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
-
-        for (std::size_t i = 0; i < parameterPins.size(); ++i)
-        {
-            const auto &pin = parameterPins[i];
-            const auto currentY = startPos.y + i * (paramHeight + paramSpacing);
-            const auto pinPos = ImVec2(startPos.x + padding, currentY + paramSpacing * 0.5f);
-            const auto labelPos = ImVec2(pinPos.x + pinRadius + Constants::Pin::kTextOffset * canvas.GetZoomLevel(),
-                currentY - Constants::Parameter::kLabelOffset * canvas.GetZoomLevel());
-            const auto inputPos =
-                ImVec2(startPos.x + padding, currentY + Constants::Parameter::kInputOffset * canvas.GetZoomLevel());
-
-            const auto state = GetPinInteractionState(node->GetId(), pin.name);
-            RenderPinWithLabel(pin, pinPos, labelPos, pinRadius, canvas.GetZoomLevel(), state);
-
-            ImGui::SetCursorScreenPos(inputPos);
-
-            std::string paramValue;
-            switch (pin.dataType)
-            {
-            case PinDataType::String:
-                paramValue = node->GetParamOr<std::string>(pin.name, "");
-                break;
-            case PinDataType::Float:
-                paramValue = std::to_string(node->GetParamOr<double>(pin.name, 0.0));
-                break;
-            case PinDataType::Int:
-                paramValue = std::to_string(node->GetParamOr<int>(pin.name, 0));
-                break;
-            case PinDataType::Bool:
-                paramValue = node->GetParamOr<bool>(pin.name, false) ? "true" : "false";
-                break;
-            default:
-                paramValue = "";
-                break;
-            }
-            const auto widgetId = "##" + std::to_string(node->GetId()) + "_" + pin.name;
-
-            const auto availableWidth = nodeSize.x - padding * 2;
-            const auto inputWidth =
-                std::max(Constants::Parameter::kMinInputWidth * canvas.GetZoomLevel(), availableWidth);
-
-            switch (pin.dataType)
-            {
-            case PinDataType::String: {
-                char buffer[Constants::Special::kStringBufferSize];
-                strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
-                buffer[sizeof(buffer) - 1] = '\0';
-
-                ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
-                {
-                    node->SetParam(pin.name, std::string(buffer));
-                }
-                ImGui::PopItemWidth();
-                break;
-            }
-
-            case PinDataType::Float: {
-                float value = static_cast<float>(node->GetParamOr<double>(pin.name, 0.0));
-
-                ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputFloat(widgetId.c_str(),
-                        &value,
-                        Constants::Input::Float::kStep,
-                        Constants::Input::Float::kFastStep,
-                        Constants::Input::Float::kFormat))
-                {
-                    node->SetParam(pin.name, static_cast<double>(value));
-                }
-                ImGui::PopItemWidth();
-                break;
-            }
-
-            case PinDataType::Int: {
-                int value = node->GetParamOr<int>(pin.name, 0);
-
-                ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputInt(widgetId.c_str(), &value))
-                {
-                    node->SetParam(pin.name, value);
-                }
-                ImGui::PopItemWidth();
-                break;
-            }
-
-            case PinDataType::Bool: {
-                bool value = node->GetParamOr<bool>(pin.name, false);
-
-                if (ImGui::Checkbox(widgetId.c_str(), &value))
-                {
-                    node->SetParam(pin.name, value);
-                }
-                break;
-            }
-
-            default:
-                ImGui::Text("%s", paramValue.c_str());
-                break;
-            }
-        }
-    }
-
-    std::vector<NodePin> NodeEditorLayer::GetNodeParameters(const std::string &nodeName) const
-    {
-        const auto allPins = connectionManager.GetNodePins(nodeName);
-        std::vector<NodePin> parameterPins;
-
-        for (const auto &pin : allPins)
-        {
-            if (pin.isInput && pin.dataType != PinDataType::Image)
-            {
-                parameterPins.push_back(pin);
-            }
-        }
-
-        return parameterPins;
-    }
 
     Engine::NodeId NodeEditorLayer::FindNodeAtPosition(const ImVec2 &mousePos) const
     {

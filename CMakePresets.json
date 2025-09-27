@@ -44,6 +44,85 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "Debug-x64-Analysis",
+      "inherits": "Base-x64",
+      "displayName": "Debug with Static Analysis (MSVC + Ninja x64)",
+      "description": "Debug build with clang-tidy static analysis enabled",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_CLANG_TIDY": "ON",
+        "ENABLE_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "Release-x64-Analysis",
+      "inherits": "Base-x64",
+      "displayName": "Release with Static Analysis (MSVC + Ninja x64)",
+      "description": "Release build with clang-tidy static analysis enabled",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_CLANG_TIDY": "ON",
+        "ENABLE_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "Base-Linux",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++",
+        "VCPKG_MANIFEST_MODE": "ON"
+      }
+    },
+    {
+      "name": "Debug-Linux",
+      "inherits": "Base-Linux",
+      "displayName": "Debug (GCC + Ninja)",
+      "description": "Debug build with GCC using Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "Release-Linux",
+      "inherits": "Base-Linux",
+      "displayName": "Release (GCC + Ninja)",
+      "description": "Release build with GCC using Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "Debug-Linux-Analysis",
+      "inherits": "Base-Linux",
+      "displayName": "Debug with Static Analysis (GCC + Ninja)",
+      "description": "Debug build with clang-tidy static analysis enabled",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_CLANG_TIDY": "ON",
+        "ENABLE_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "Release-Linux-Analysis",
+      "inherits": "Base-Linux",
+      "displayName": "Release with Static Analysis (GCC + Ninja)",
+      "description": "Release build with clang-tidy static analysis enabled",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_CLANG_TIDY": "ON",
+        "ENABLE_COMPILE_COMMANDS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -54,6 +133,38 @@
     {
       "name": "Release-x64",
       "configurePreset": "Release-x64"
+    },
+    {
+      "name": "Debug-x64-Analysis",
+      "configurePreset": "Debug-x64-Analysis",
+      "displayName": "Debug with Static Analysis",
+      "description": "Build Debug configuration with clang-tidy analysis"
+    },
+    {
+      "name": "Release-x64-Analysis",
+      "configurePreset": "Release-x64-Analysis",
+      "displayName": "Release with Static Analysis",
+      "description": "Build Release configuration with clang-tidy analysis"
+    },
+    {
+      "name": "Debug-Linux",
+      "configurePreset": "Debug-Linux"
+    },
+    {
+      "name": "Release-Linux",
+      "configurePreset": "Release-Linux"
+    },
+    {
+      "name": "Debug-Linux-Analysis",
+      "configurePreset": "Debug-Linux-Analysis",
+      "displayName": "Debug with Static Analysis (Linux)",
+      "description": "Build Debug configuration with clang-tidy analysis on Linux"
+    },
+    {
+      "name": "Release-Linux-Analysis",
+      "configurePreset": "Release-Linux-Analysis",
+      "displayName": "Release with Static Analysis (Linux)",
+      "description": "Build Release configuration with clang-tidy analysis on Linux"
     }
   ]
 }

@@ -5,8 +5,7 @@
 
 namespace VisionCraft::Engine
 {
-    ImageInputNode::ImageInputNode(NodeId id, const std::string& name)
-        : Node(id, name)
+    ImageInputNode::ImageInputNode(NodeId id, const std::string &name) : Node(id, name)
     {
         // Set default parameters using modern type-safe API
         SetParam("filepath", std::filesystem::path{});
@@ -18,7 +17,7 @@ namespace VisionCraft::Engine
         FilePathValidation kImageFileValidation;
         kImageFileValidation.mustExist = true;
         kImageFileValidation.allowEmpty = false;
-        kImageFileValidation.allowedExtensions = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp"};
+        kImageFileValidation.allowedExtensions = { ".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".tif", ".webp" };
 
         if (!ValidateFilePath("filepath", kImageFileValidation))
         {
@@ -39,7 +38,7 @@ namespace VisionCraft::Engine
         LoadImageFromPath(filepath.string());
     }
 
-    void ImageInputNode::LoadImageFromPath(const std::string& filepath)
+    void ImageInputNode::LoadImageFromPath(const std::string &filepath)
     {
         try
         {
@@ -47,30 +46,30 @@ namespace VisionCraft::Engine
 
             if (outputImage.empty()) [[unlikely]]
             {
-                LOG_ERROR("ImageInputNode {}: Failed to load image from '{}' - file may be corrupted or unsupported format",
-                         GetName(), filepath);
+                LOG_ERROR(
+                    "ImageInputNode {}: Failed to load image from '{}' - file may be corrupted or unsupported format",
+                    GetName(),
+                    filepath);
                 return;
             }
 
             // Success logging with structured information
             LOG_INFO("ImageInputNode {}: Successfully loaded image from '{}' ({}x{}, {} channels, {} bytes)",
-                     GetName(),
-                     filepath,
-                     outputImage.cols,
-                     outputImage.rows,
-                     outputImage.channels(),
-                     outputImage.total() * outputImage.elemSize());
+                GetName(),
+                filepath,
+                outputImage.cols,
+                outputImage.rows,
+                outputImage.channels(),
+                outputImage.total() * outputImage.elemSize());
         }
-        catch (const cv::Exception& e)
+        catch (const cv::Exception &e)
         {
-            LOG_ERROR("ImageInputNode {}: OpenCV error loading image '{}': {}",
-                      GetName(), filepath, e.what());
+            LOG_ERROR("ImageInputNode {}: OpenCV error loading image '{}': {}", GetName(), filepath, e.what());
             outputImage = cv::Mat{};
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
-            LOG_ERROR("ImageInputNode {}: Unexpected error loading image '{}': {}",
-                      GetName(), filepath, e.what());
+            LOG_ERROR("ImageInputNode {}: Unexpected error loading image '{}': {}", GetName(), filepath, e.what());
             outputImage = cv::Mat{};
         }
     }

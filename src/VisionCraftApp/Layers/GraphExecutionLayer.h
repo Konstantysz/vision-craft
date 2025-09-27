@@ -50,7 +50,7 @@ namespace VisionCraft
         void OnRender() override;
 
     private:
-        bool isExecuting = false;        ///< Whether the graph is currently executing
+        bool isExecuting = false;       ///< Whether the graph is currently executing
         bool showResultsWindow = false; ///< Whether to display the results window
     };
 } // namespace VisionCraft

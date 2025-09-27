@@ -420,3 +420,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Code Quality temporary files
+*-report.md
+code-quality-report.md
+clang-tidy-report.md
+build-test/

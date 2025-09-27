@@ -1,7 +1,7 @@
 #include "VisionCraftEngine/NodeEditor.h"
+#include "VisionCraftEngine/Nodes/CannyEdgeNode.h"
 #include "VisionCraftEngine/Nodes/ImageInputNode.h"
 #include "VisionCraftEngine/Nodes/ThresholdNode.h"
-#include "VisionCraftEngine/Nodes/CannyEdgeNode.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -12,8 +12,12 @@ using namespace VisionCraft::Engine;
 class TestNode : public Node
 {
 public:
-    TestNode(NodeId id, std::string name) : Node(id, std::move(name)) {}
-    void Process() override {} // No-op for testing
+    TestNode(NodeId id, std::string name) : Node(id, std::move(name))
+    {
+    }
+    void Process() override
+    {
+    } // No-op for testing
 };
 
 class NodeEditorTest : public ::testing::Test
@@ -44,7 +48,7 @@ TEST_F(NodeEditorTest, AddSingleNode)
     EXPECT_EQ(editor.GetNodeIds().size(), 1);
     EXPECT_EQ(editor.GetNodeIds()[0], nodeId);
 
-    const auto* retrievedNode = editor.GetNode(nodeId);
+    const auto *retrievedNode = editor.GetNode(nodeId);
     ASSERT_NE(retrievedNode, nullptr);
     EXPECT_EQ(retrievedNode->GetId(), nodeId);
     EXPECT_EQ(retrievedNode->GetName(), "TestNode");
@@ -121,8 +125,8 @@ TEST_F(NodeEditorTest, ConstGetNode)
     auto node = std::make_unique<TestNode>(7, "ConstTest");
     editor.AddNode(std::move(node));
 
-    const auto& constEditor = editor;
-    const auto* constNode = constEditor.GetNode(7);
+    const auto &constEditor = editor;
+    const auto *constNode = constEditor.GetNode(7);
 
     ASSERT_NE(constNode, nullptr);
     EXPECT_EQ(constNode->GetId(), 7);
@@ -146,7 +150,7 @@ TEST_F(NodeEditorTest, AddSingleConnection)
 
     editor.AddConnection(1, 2);
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
     EXPECT_EQ(connections[0].to, 2);
@@ -166,16 +170,19 @@ TEST_F(NodeEditorTest, AddMultipleConnections)
     editor.AddConnection(2, 3);
     editor.AddConnection(1, 3);
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 3);
 
     // Verify all connections exist
     bool found1to2 = false, found2to3 = false, found1to3 = false;
-    for (const auto& conn : connections)
+    for (const auto &conn : connections)
     {
-        if (conn.from == 1 && conn.to == 2) found1to2 = true;
-        if (conn.from == 2 && conn.to == 3) found2to3 = true;
-        if (conn.from == 1 && conn.to == 3) found1to3 = true;
+        if (conn.from == 1 && conn.to == 2)
+            found1to2 = true;
+        if (conn.from == 2 && conn.to == 3)
+            found2to3 = true;
+        if (conn.from == 1 && conn.to == 3)
+            found1to3 = true;
     }
 
     EXPECT_TRUE(found1to2);
@@ -199,16 +206,19 @@ TEST_F(NodeEditorTest, RemoveExistingConnection)
 
     EXPECT_TRUE(editor.RemoveConnection(1, 2));
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 2);
 
     // Verify 1->2 is removed but others remain
     bool found1to2 = false, found2to3 = false, found1to3 = false;
-    for (const auto& conn : connections)
+    for (const auto &conn : connections)
     {
-        if (conn.from == 1 && conn.to == 2) found1to2 = true;
-        if (conn.from == 2 && conn.to == 3) found2to3 = true;
-        if (conn.from == 1 && conn.to == 3) found1to3 = true;
+        if (conn.from == 1 && conn.to == 2)
+            found1to2 = true;
+        if (conn.from == 2 && conn.to == 3)
+            found2to3 = true;
+        if (conn.from == 1 && conn.to == 3)
+            found1to3 = true;
     }
 
     EXPECT_FALSE(found1to2);
@@ -230,7 +240,7 @@ TEST_F(NodeEditorTest, RemoveNonExistentConnection)
     EXPECT_FALSE(editor.RemoveConnection(1, 3)); // Non-existent target
     EXPECT_FALSE(editor.RemoveConnection(3, 2)); // Non-existent source
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
     EXPECT_EQ(connections[0].to, 2);
@@ -258,7 +268,7 @@ TEST_F(NodeEditorTest, RemoveNodeCleansUpConnections)
     // Remove node 2
     EXPECT_TRUE(editor.RemoveNode(2));
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
     EXPECT_EQ(connections[0].to, 3);
@@ -280,7 +290,7 @@ TEST_F(NodeEditorTest, RemoveNodeWithNoConnections)
     // Remove node 2 (no connections)
     EXPECT_TRUE(editor.RemoveNode(2));
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
     EXPECT_EQ(connections[0].to, 3);
@@ -349,7 +359,7 @@ TEST_F(NodeEditorTest, DuplicateConnections)
     editor.AddConnection(1, 2);
     editor.AddConnection(1, 2); // Duplicate
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 2); // Both connections are stored (no deduplication)
 }
 
@@ -360,7 +370,7 @@ TEST_F(NodeEditorTest, SelfConnection)
 
     editor.AddConnection(1, 1); // Self connection
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
     EXPECT_EQ(connections[0].to, 1);
@@ -376,7 +386,7 @@ TEST_F(NodeEditorTest, ConnectionsToNonExistentNodes)
     editor.AddConnection(888, 1);   // From non-existent
     editor.AddConnection(777, 666); // Both non-existent
 
-    const auto& connections = editor.GetConnections();
+    const auto &connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 3); // All connections are stored regardless
 }
 

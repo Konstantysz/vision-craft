@@ -20,7 +20,7 @@ namespace VisionCraft::Engine
          * @param id Unique identifier for this node
          * @param name Display name for this node
          */
-        GrayscaleNode(NodeId id, const std::string& name = "Grayscale");
+        GrayscaleNode(NodeId id, const std::string &name = "Grayscale");
 
         /**
          * @brief Virtual destructor.
@@ -39,19 +39,28 @@ namespace VisionCraft::Engine
          * @brief Sets the input image for processing.
          * @param image Input image to convert to grayscale
          */
-        void SetInputImage(const cv::Mat& image) { inputImage = image; }
+        void SetInputImage(const cv::Mat &image)
+        {
+            inputImage = image;
+        }
 
         /**
          * @brief Gets the processed grayscale image.
          * @return OpenCV Mat containing the grayscale image
          */
-        const cv::Mat& GetOutputImage() const { return outputImage; }
+        const cv::Mat &GetOutputImage() const
+        {
+            return outputImage;
+        }
 
         /**
          * @brief Checks if the node has valid output.
          * @return True if output image is valid, false otherwise
          */
-        bool HasValidOutput() const { return !outputImage.empty(); }
+        bool HasValidOutput() const
+        {
+            return !outputImage.empty();
+        }
 
     private:
         cv::Mat inputImage;  ///< Input image for grayscale conversion
@@ -62,6 +71,6 @@ namespace VisionCraft::Engine
          * @param methodStr String representation of conversion method
          * @return OpenCV color conversion constant
          */
-        int GetConversionMethod(const std::string& methodStr) const;
+        int GetConversionMethod(const std::string &methodStr) const;
     };
 } // namespace VisionCraft::Engine

@@ -3,10 +3,9 @@
 
 namespace VisionCraft::Engine
 {
-    GrayscaleNode::GrayscaleNode(NodeId id, const std::string& name)
-        : Node(id, name)
+    GrayscaleNode::GrayscaleNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        SetParam("method", std::string{"BGR2GRAY"});
+        SetParam("method", std::string{ "BGR2GRAY" });
         SetParam("preserveAlpha", false);
     }
 
@@ -21,9 +20,7 @@ namespace VisionCraft::Engine
 
         try
         {
-            const StringValidation kMethodValidation{
-                {"BGR2GRAY", "RGB2GRAY", "BGRA2GRAY", "RGBA2GRAY"}, true
-            };
+            const StringValidation kMethodValidation{ { "BGR2GRAY", "RGB2GRAY", "BGRA2GRAY", "RGBA2GRAY" }, true };
 
             const auto methodStr = GetValidatedString("method", "BGR2GRAY", kMethodValidation);
             const auto preserveAlpha = GetBoolParam("preserveAlpha", false);
@@ -46,11 +43,13 @@ namespace VisionCraft::Engine
                 if (inputImage.channels() == 4)
                 {
                     cv::Mat rgb;
-                    cv::merge(std::vector<cv::Mat>{channels[0], channels[1], channels[2]}, rgb);
-                    cv::cvtColor(rgb, colorPart, conversionCode == cv::COLOR_BGRA2GRAY ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
+                    cv::merge(std::vector<cv::Mat>{ channels[0], channels[1], channels[2] }, rgb);
+                    cv::cvtColor(rgb,
+                        colorPart,
+                        conversionCode == cv::COLOR_BGRA2GRAY ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
                 }
 
-                std::vector<cv::Mat> grayAlpha = {colorPart, channels[3]};
+                std::vector<cv::Mat> grayAlpha = { colorPart, channels[3] };
                 cv::merge(grayAlpha, outputImage);
 
                 LOG_INFO("GrayscaleNode {}: Converted to grayscale with alpha preservation", GetName());
@@ -61,24 +60,28 @@ namespace VisionCraft::Engine
                 LOG_INFO("GrayscaleNode {}: Converted to grayscale using method '{}'", GetName(), methodStr);
             }
         }
-        catch (const cv::Exception& e)
+        catch (const cv::Exception &e)
         {
             LOG_ERROR("GrayscaleNode {}: OpenCV error: {}", GetName(), e.what());
             outputImage = cv::Mat();
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             LOG_ERROR("GrayscaleNode {}: Error processing image: {}", GetName(), e.what());
             outputImage = cv::Mat();
         }
     }
 
-    int GrayscaleNode::GetConversionMethod(const std::string& methodStr) const
+    int GrayscaleNode::GetConversionMethod(const std::string &methodStr) const
     {
-        if (methodStr == "BGR2GRAY") return cv::COLOR_BGR2GRAY;
-        if (methodStr == "RGB2GRAY") return cv::COLOR_RGB2GRAY;
-        if (methodStr == "BGRA2GRAY") return cv::COLOR_BGRA2GRAY;
-        if (methodStr == "RGBA2GRAY") return cv::COLOR_RGBA2GRAY;
+        if (methodStr == "BGR2GRAY")
+            return cv::COLOR_BGR2GRAY;
+        if (methodStr == "RGB2GRAY")
+            return cv::COLOR_RGB2GRAY;
+        if (methodStr == "BGRA2GRAY")
+            return cv::COLOR_BGRA2GRAY;
+        if (methodStr == "RGBA2GRAY")
+            return cv::COLOR_RGBA2GRAY;
 
         LOG_WARN("GrayscaleNode {}: Unknown conversion method '{}', using BGR2GRAY", GetName(), methodStr);
         return cv::COLOR_BGR2GRAY;

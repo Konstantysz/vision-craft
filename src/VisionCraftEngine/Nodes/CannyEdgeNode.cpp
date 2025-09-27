@@ -4,8 +4,7 @@
 
 namespace VisionCraft::Engine
 {
-    CannyEdgeNode::CannyEdgeNode(NodeId id, const std::string& name)
-        : Node(id, name)
+    CannyEdgeNode::CannyEdgeNode(NodeId id, const std::string &name) : Node(id, name)
     {
         SetParam("lowThreshold", 50.0);
         SetParam("highThreshold", 150.0);
@@ -24,7 +23,7 @@ namespace VisionCraft::Engine
 
         try
         {
-            const ValidationRange<double> kThresholdValidation{0.0};
+            const ValidationRange<double> kThresholdValidation{ 0.0 };
 
             const auto lowThreshold = GetValidatedParam<double>("lowThreshold", 50.0, kThresholdValidation);
             const auto highThreshold = GetValidatedParam<double>("highThreshold", 150.0, kThresholdValidation);
@@ -34,13 +33,15 @@ namespace VisionCraft::Engine
             if (apertureSize != 3 && apertureSize != 5 && apertureSize != 7) [[unlikely]]
             {
                 LOG_WARN("CannyEdgeNode {}: Invalid aperture size ({}), using 3", GetName(), apertureSize);
-                const_cast<int&>(apertureSize) = 3;
+                const_cast<int &>(apertureSize) = 3;
             }
 
             if (lowThreshold >= highThreshold)
             {
                 LOG_WARN("CannyEdgeNode {}: Low threshold ({}) should be less than high threshold ({})",
-                         GetName(), lowThreshold, highThreshold);
+                    GetName(),
+                    lowThreshold,
+                    highThreshold);
             }
 
             cv::Mat grayImage;
@@ -56,14 +57,18 @@ namespace VisionCraft::Engine
             cv::Canny(grayImage, outputImage, lowThreshold, highThreshold, apertureSize, l2Gradient);
 
             LOG_INFO("CannyEdgeNode {}: Applied Canny edge detection (low: {}, high: {}, aperture: {}, l2: {})",
-                     GetName(), lowThreshold, highThreshold, apertureSize, l2Gradient);
+                GetName(),
+                lowThreshold,
+                highThreshold,
+                apertureSize,
+                l2Gradient);
         }
-        catch (const cv::Exception& e)
+        catch (const cv::Exception &e)
         {
             LOG_ERROR("CannyEdgeNode {}: OpenCV error: {}", GetName(), e.what());
             outputImage = cv::Mat();
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             LOG_ERROR("CannyEdgeNode {}: Error processing image: {}", GetName(), e.what());
             outputImage = cv::Mat();

@@ -9,11 +9,11 @@ namespace VisionCraft
     {
     }
 
-    void CanvasController::HandleInput(Core::Event& event, const ImVec2& mousePos, bool isWindowHovered)
+    void CanvasController::HandleInput(Core::Event &event, const ImVec2 &mousePos, bool isWindowHovered)
     {
     }
 
-    void CanvasController::HandleImGuiInput(const ImGuiIO& io, bool isWindowHovered)
+    void CanvasController::HandleImGuiInput(const ImGuiIO &io, bool isWindowHovered)
     {
         if (!isWindowHovered)
             return;
@@ -29,7 +29,7 @@ namespace VisionCraft
         }
     }
 
-    void CanvasController::BeginCanvas(ImDrawList* drawList, const ImVec2& canvasPos, const ImVec2& canvasSize)
+    void CanvasController::BeginCanvas(ImDrawList *drawList, const ImVec2 &canvasPos, const ImVec2 &canvasSize)
     {
         currentDrawList = drawList;
         currentCanvasPos = canvasPos;
@@ -46,20 +46,16 @@ namespace VisionCraft
         currentDrawList = nullptr;
     }
 
-    ImVec2 CanvasController::ScreenToWorld(const ImVec2& screenPos) const
+    ImVec2 CanvasController::ScreenToWorld(const ImVec2 &screenPos) const
     {
-        return ImVec2(
-            (screenPos.x - currentCanvasPos.x - panX) / zoomLevel,
-            (screenPos.y - currentCanvasPos.y - panY) / zoomLevel
-        );
+        return ImVec2((screenPos.x - currentCanvasPos.x - panX) / zoomLevel,
+            (screenPos.y - currentCanvasPos.y - panY) / zoomLevel);
     }
 
-    ImVec2 CanvasController::WorldToScreen(const ImVec2& worldPos) const
+    ImVec2 CanvasController::WorldToScreen(const ImVec2 &worldPos) const
     {
         return ImVec2(
-            currentCanvasPos.x + (worldPos.x * zoomLevel + panX),
-            currentCanvasPos.y + (worldPos.y * zoomLevel + panY)
-        );
+            currentCanvasPos.x + (worldPos.x * zoomLevel + panX), currentCanvasPos.y + (worldPos.y * zoomLevel + panY));
     }
 
     void CanvasController::SetZoomLevel(float newZoom)
@@ -72,7 +68,7 @@ namespace VisionCraft
         SetZoomLevel(zoomLevel + delta);
     }
 
-    void CanvasController::ZoomToFit(const ImVec2& contentMin, const ImVec2& contentMax, float padding)
+    void CanvasController::ZoomToFit(const ImVec2 &contentMin, const ImVec2 &contentMax, float padding)
     {
         if (currentCanvasSize.x <= 0 || currentCanvasSize.y <= 0)
             return;
@@ -89,26 +85,23 @@ namespace VisionCraft
 
         SetZoomLevel(targetZoom);
 
-        const auto contentCenter = ImVec2(
-            (contentMin.x + contentMax.x) * 0.5f,
-            (contentMin.y + contentMax.y) * 0.5f
-        );
+        const auto contentCenter = ImVec2((contentMin.x + contentMax.x) * 0.5f, (contentMin.y + contentMax.y) * 0.5f);
         CenterOn(contentCenter);
     }
 
-    void CanvasController::SetPanOffset(const ImVec2& offset)
+    void CanvasController::SetPanOffset(const ImVec2 &offset)
     {
         panX = offset.x;
         panY = offset.y;
     }
 
-    void CanvasController::ApplyPanDelta(const ImVec2& delta)
+    void CanvasController::ApplyPanDelta(const ImVec2 &delta)
     {
         panX += delta.x;
         panY += delta.y;
     }
 
-    void CanvasController::CenterOn(const ImVec2& worldPos)
+    void CanvasController::CenterOn(const ImVec2 &worldPos)
     {
         const auto screenCenter = ImVec2(currentCanvasSize.x * 0.5f, currentCanvasSize.y * 0.5f);
         const auto worldScreenPos = ImVec2(worldPos.x * zoomLevel, worldPos.y * zoomLevel);
@@ -122,22 +115,20 @@ namespace VisionCraft
         panY = 0.0f;
     }
 
-    bool CanvasController::IsRectangleVisible(const ImVec2& worldMin, const ImVec2& worldMax) const
+    bool CanvasController::IsRectangleVisible(const ImVec2 &worldMin, const ImVec2 &worldMax) const
     {
         const auto screenMin = WorldToScreen(worldMin);
         const auto screenMax = WorldToScreen(worldMax);
 
-        return !(screenMax.x < currentCanvasPos.x ||
-                screenMin.x > currentCanvasPos.x + currentCanvasSize.x ||
-                screenMax.y < currentCanvasPos.y ||
-                screenMin.y > currentCanvasPos.y + currentCanvasSize.y);
+        return !(screenMax.x < currentCanvasPos.x || screenMin.x > currentCanvasPos.x + currentCanvasSize.x
+                 || screenMax.y < currentCanvasPos.y || screenMin.y > currentCanvasPos.y + currentCanvasSize.y);
     }
 
-    void CanvasController::GetVisibleWorldBounds(ImVec2& outMin, ImVec2& outMax) const
+    void CanvasController::GetVisibleWorldBounds(ImVec2 &outMin, ImVec2 &outMax) const
     {
         outMin = ScreenToWorld(currentCanvasPos);
-        outMax = ScreenToWorld(ImVec2(currentCanvasPos.x + currentCanvasSize.x,
-                                     currentCanvasPos.y + currentCanvasSize.y));
+        outMax =
+            ScreenToWorld(ImVec2(currentCanvasPos.x + currentCanvasSize.x, currentCanvasPos.y + currentCanvasSize.y));
     }
 
     void CanvasController::RenderGrid()
@@ -149,20 +140,16 @@ namespace VisionCraft
 
         for (float x = fmodf(panX, gridStep); x < currentCanvasSize.x; x += gridStep)
         {
-            currentDrawList->AddLine(
-                ImVec2(currentCanvasPos.x + x, currentCanvasPos.y),
+            currentDrawList->AddLine(ImVec2(currentCanvasPos.x + x, currentCanvasPos.y),
                 ImVec2(currentCanvasPos.x + x, currentCanvasPos.y + currentCanvasSize.y),
-                Constants::Colors::Grid::kLines
-            );
+                Constants::Colors::Grid::kLines);
         }
 
         for (float y = fmodf(panY, gridStep); y < currentCanvasSize.y; y += gridStep)
         {
-            currentDrawList->AddLine(
-                ImVec2(currentCanvasPos.x, currentCanvasPos.y + y),
+            currentDrawList->AddLine(ImVec2(currentCanvasPos.x, currentCanvasPos.y + y),
                 ImVec2(currentCanvasPos.x + currentCanvasSize.x, currentCanvasPos.y + y),
-                Constants::Colors::Grid::kLines
-            );
+                Constants::Colors::Grid::kLines);
         }
     }
 
@@ -171,12 +158,9 @@ namespace VisionCraft
         return std::clamp(zoom, Constants::Zoom::kMin, Constants::Zoom::kMax);
     }
 
-    ImVec2 CanvasController::EnsureMinimumCanvasSize(const ImVec2& size) const
+    ImVec2 CanvasController::EnsureMinimumCanvasSize(const ImVec2 &size) const
     {
-        return ImVec2(
-            std::max(size.x, Constants::Canvas::kMinSize),
-            std::max(size.y, Constants::Canvas::kMinSize)
-        );
+        return ImVec2(std::max(size.x, Constants::Canvas::kMinSize), std::max(size.y, Constants::Canvas::kMinSize));
     }
 
 } // namespace VisionCraft

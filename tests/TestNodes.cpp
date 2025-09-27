@@ -1,9 +1,9 @@
 #include "VisionCraftEngine/Node.h"
 #include "VisionCraftEngine/NodeParameter.h"
 
-#include <gtest/gtest.h>
 #include <algorithm>
 #include <filesystem>
+#include <gtest/gtest.h>
 
 using namespace VisionCraft::Engine;
 
@@ -24,7 +24,7 @@ public:
 class NodeTest : public ::testing::Test
 {
 protected:
-    DummyNode node{1, "TestNode"};
+    DummyNode node{ 1, "TestNode" };
 };
 
 // ============================================================================
@@ -275,7 +275,7 @@ TEST_F(NodeTest, ValidatedNumericParameters)
 
 TEST_F(NodeTest, ValidatedStringParameters)
 {
-    StringValidation validation({"option1", "option2", "option3"});
+    StringValidation validation({ "option1", "option2", "option3" });
 
     // Test valid value
     node.SetParam("string_param", std::string("option1"));
@@ -317,7 +317,7 @@ TEST_F(NodeTest, FilePathValidation)
 {
     FilePathValidation validation;
     validation.mustExist = false; // Don't check file existence for tests
-    validation.allowedExtensions = {".txt", ".cpp"};
+    validation.allowedExtensions = { ".txt", ".cpp" };
 
     // Test valid extension
     node.SetParam("valid_path", std::filesystem::path("/path/file.txt"));
@@ -344,7 +344,7 @@ TEST_F(NodeTest, FilePathValidation)
 TEST_F(NodeTest, ParameterStorageAccess)
 {
     // Test direct access to parameter storage
-    auto& params = node.GetParameters();
+    auto &params = node.GetParameters();
     params.Set("direct_param", 123);
 
     // Verify through Node interface
@@ -352,8 +352,8 @@ TEST_F(NodeTest, ParameterStorageAccess)
     EXPECT_TRUE(node.HasParameter("direct_param"));
 
     // Test const access
-    const auto& constNode = node;
-    const auto& constParams = constNode.GetParameters();
+    const auto &constNode = node;
+    const auto &constParams = constNode.GetParameters();
     auto value = constParams.Get<int>("direct_param");
     ASSERT_TRUE(value.has_value());
     EXPECT_EQ(value.value(), 123);

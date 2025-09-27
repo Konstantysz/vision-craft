@@ -20,7 +20,7 @@ namespace VisionCraft::Engine
          * @param id Unique identifier for this node
          * @param name Display name for this node
          */
-        CannyEdgeNode(NodeId id, const std::string& name = "Canny Edge Detection");
+        CannyEdgeNode(NodeId id, const std::string &name = "Canny Edge Detection");
 
         /**
          * @brief Virtual destructor.
@@ -39,19 +39,28 @@ namespace VisionCraft::Engine
          * @brief Sets the input image for processing.
          * @param image Input image to process
          */
-        void SetInputImage(const cv::Mat& image) { inputImage = image; }
+        void SetInputImage(const cv::Mat &image)
+        {
+            inputImage = image;
+        }
 
         /**
          * @brief Gets the processed edge image.
          * @return OpenCV Mat containing the edge-detected image
          */
-        const cv::Mat& GetOutputImage() const { return outputImage; }
+        const cv::Mat &GetOutputImage() const
+        {
+            return outputImage;
+        }
 
         /**
          * @brief Checks if the node has valid output.
          * @return True if output image is valid, false otherwise
          */
-        bool HasValidOutput() const { return !outputImage.empty(); }
+        bool HasValidOutput() const
+        {
+            return !outputImage.empty();
+        }
 
     private:
         cv::Mat inputImage;  ///< Input image for edge detection

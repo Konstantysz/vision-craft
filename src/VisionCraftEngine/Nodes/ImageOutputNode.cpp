@@ -4,12 +4,11 @@
 
 namespace VisionCraft::Engine
 {
-    ImageOutputNode::ImageOutputNode(NodeId id, const std::string& name)
-        : Node(id, name)
+    ImageOutputNode::ImageOutputNode(NodeId id, const std::string &name) : Node(id, name)
     {
         SetParam("savePath", std::filesystem::path{});
         SetParam("autoSave", false);
-        SetParam("format", std::string{"png"});
+        SetParam("format", std::string{ "png" });
     }
 
     void ImageOutputNode::Process()
@@ -38,15 +37,18 @@ namespace VisionCraft::Engine
             }
 
             LOG_INFO("ImageOutputNode {}: Processed image ({}x{}, {} channels)",
-                     GetName(), displayImage.cols, displayImage.rows, displayImage.channels());
+                GetName(),
+                displayImage.cols,
+                displayImage.rows,
+                displayImage.channels());
         }
-        catch (const cv::Exception& e)
+        catch (const cv::Exception &e)
         {
             LOG_ERROR("ImageOutputNode {}: OpenCV error: {}", GetName(), e.what());
             displayImage = cv::Mat();
             lastSaveSuccessful = false;
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             LOG_ERROR("ImageOutputNode {}: Error processing image: {}", GetName(), e.what());
             displayImage = cv::Mat();
@@ -54,7 +56,7 @@ namespace VisionCraft::Engine
         }
     }
 
-    bool ImageOutputNode::SaveImage(const std::string& filepath)
+    bool ImageOutputNode::SaveImage(const std::string &filepath)
     {
         if (displayImage.empty())
         {
@@ -73,9 +75,7 @@ namespace VisionCraft::Engine
                 LOG_INFO("ImageOutputNode {}: Created directory '{}'", GetName(), dir.string());
             }
 
-            const StringValidation kFormatValidation{
-                {"png", "jpg", "jpeg", "bmp", "tiff"}, true
-            };
+            const StringValidation kFormatValidation{ { "png", "jpg", "jpeg", "bmp", "tiff" }, true };
             const auto format = GetValidatedString("format", "png", kFormatValidation);
 
             std::vector<int> compressionParams;
@@ -103,12 +103,12 @@ namespace VisionCraft::Engine
 
             return success;
         }
-        catch (const cv::Exception& e)
+        catch (const cv::Exception &e)
         {
             LOG_ERROR("ImageOutputNode {}: OpenCV error saving to '{}': {}", GetName(), filepath, e.what());
             return false;
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             LOG_ERROR("ImageOutputNode {}: Error saving to '{}': {}", GetName(), filepath, e.what());
             return false;

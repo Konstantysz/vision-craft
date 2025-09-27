@@ -1,7 +1,7 @@
 #include "VisionCraftEngine/NodeParameter.h"
 
-#include <gtest/gtest.h>
 #include <filesystem>
+#include <gtest/gtest.h>
 
 using namespace VisionCraft::Engine;
 
@@ -245,7 +245,7 @@ TEST_F(NodeParameterTest, GetValidatedNumeric)
 
 TEST(StringValidationTest, AllowedValues)
 {
-    StringValidation validation({"red", "green", "blue"}, true);
+    StringValidation validation({ "red", "green", "blue" }, true);
 
     // Test valid values
     EXPECT_EQ(validation.ValidateOrDefault("red", "default", "color", "TestNode"), "red");
@@ -258,7 +258,7 @@ TEST(StringValidationTest, AllowedValues)
 
 TEST(StringValidationTest, CaseInsensitive)
 {
-    StringValidation validation({"Red", "Green", "Blue"}, false);
+    StringValidation validation({ "Red", "Green", "Blue" }, false);
 
     // Test case variations
     EXPECT_EQ(validation.ValidateOrDefault("red", "default", "color", "TestNode"), "red");
@@ -272,7 +272,7 @@ TEST(StringValidationTest, CaseInsensitive)
 
 TEST(StringValidationTest, CaseSensitive)
 {
-    StringValidation validation({"Red", "Green", "Blue"}, true);
+    StringValidation validation({ "Red", "Green", "Blue" }, true);
 
     // Test exact matches
     EXPECT_EQ(validation.ValidateOrDefault("Red", "default", "color", "TestNode"), "Red");
@@ -294,7 +294,7 @@ TEST(StringValidationTest, NoValidation)
 
 TEST_F(NodeParameterTest, GetValidatedString)
 {
-    StringValidation validation({"option1", "option2", "option3"});
+    StringValidation validation({ "option1", "option2", "option3" });
 
     // Test valid value
     storage.Set("string_param", std::string("option1"));
@@ -322,7 +322,7 @@ TEST(FilePathValidationTest, EmptyPaths)
 TEST(FilePathValidationTest, Extensions)
 {
     FilePathValidation validation;
-    validation.allowedExtensions = {".txt", ".md", ".cpp"};
+    validation.allowedExtensions = { ".txt", ".md", ".cpp" };
     validation.mustExist = false; // Don't check existence for this test
 
     // Test valid extensions
@@ -354,7 +354,7 @@ TEST_F(NodeParameterTest, ValidateFilePath)
 {
     FilePathValidation validation;
     validation.mustExist = false; // Don't check file existence
-    validation.allowedExtensions = {".txt"};
+    validation.allowedExtensions = { ".txt" };
 
     // Test valid path
     storage.Set("valid_path", std::filesystem::path("/path/file.txt"));

@@ -34,7 +34,7 @@ VisionCraft is built using a layered architecture:
 - Git
 - Build essentials (`build-essential` on Ubuntu/Debian)
 
-## 🚀 Installation & Build
+## 🚀 Quick Start
 
 ### 🪟 Windows
 
@@ -44,80 +44,54 @@ VisionCraft is built using a layered architecture:
    cd vision-craft
    ```
 
-2. **Install vcpkg (if not already installed)**
+2. **Configure and build**
    ```cmd
-   git clone https://github.com/Microsoft/vcpkg.git
-   cd vcpkg
-   .\bootstrap-vcpkg.bat
-   .\vcpkg integrate install
-   cd ..
+   cmake -B build
+   cmake --build build --config Release
    ```
 
-3. **Configure CMake with vcpkg**
+3. **Run VisionCraft**
    ```cmd
-   mkdir build
-   cd build
-   cmake .. -DCMAKE_TOOLCHAIN_FILE=path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
-   ```
-
-4. **Build the project**
-   ```cmd
-   cmake --build . --config Release
-   ```
-
-5. **Run VisionCraft**
-   ```cmd
-   .\src\VisionCraftApp\Release\VisionCraftApp.exe
+   .\build\src\VisionCraftApp\Release\VisionCraftApp.exe
    ```
 
 ### 🐧 Linux
 
 1. **Install dependencies**
-
-   **Ubuntu/Debian:**
    ```bash
+   # Ubuntu/Debian
    sudo apt update
-   sudo apt install build-essential git cmake pkg-config
-   sudo apt install libgl1-mesa-dev libglu1-mesa-dev
+   sudo apt install build-essential cmake libgl1-mesa-dev libglu1-mesa-dev
+
+   # Fedora/RHEL
+   sudo dnf install gcc-c++ cmake mesa-libGL-devel mesa-libGLU-devel
    ```
 
-   **Fedora/RHEL:**
-   ```bash
-   sudo dnf install gcc-c++ git cmake pkgconfig
-   sudo dnf install mesa-libGL-devel mesa-libGLU-devel
-   ```
-
-2. **Clone the repository**
+2. **Clone and build**
    ```bash
    git clone https://github.com/yourusername/vision-craft.git
    cd vision-craft
+   cmake -B build
+   cmake --build build --config Release -j$(nproc)
    ```
 
-3. **Install vcpkg (if not already installed)**
+3. **Run VisionCraft**
    ```bash
-   git clone https://github.com/Microsoft/vcpkg.git
-   cd vcpkg
-   ./bootstrap-vcpkg.sh
-   ./vcpkg integrate install
-   cd ..
+   ./build/src/VisionCraftApp/VisionCraftApp
    ```
 
-4. **Configure CMake with vcpkg**
-   ```bash
-   mkdir build
-   cd build
-   cmake .. -DCMAKE_TOOLCHAIN_FILE=path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
-   ```
+## 🔧 Development Build
 
-5. **Build the project**
-   ```bash
-   cmake --build . --config Release -j$(nproc)
-   ```
+For development with code quality tools:
 
-6. **Run VisionCraft**
-   ```bash
-   ./src/VisionCraftApp/VisionCraftApp
-   ```
+```bash
+# Configure with static analysis
+cmake -B build -DENABLE_CLANG_TIDY=ON -DENABLE_COMPILE_COMMANDS=ON
+cmake --build build --config Release
+
+# Run code quality checks
+python scripts/run-code-quality.py
+```
 
 ## 📚 Dependencies
 
@@ -143,11 +117,19 @@ vision-craft/
 │   │   └── Logger.h          # Logging utilities
 │   ├── VisionCraftEngine/    # Node system and CV logic
 │   │   ├── Node.h            # Abstract node base
-│   │   └── NodeEditor.h      # Node graph management
+│   │   ├── NodeEditor.h      # Node graph management
+│   │   └── Nodes/            # Computer vision nodes
 │   └── VisionCraftApp/       # GUI application
 │       ├── VisionCraftApplication.h  # Main application
 │       └── Layers/           # UI layers
 ├── tests/                    # Unit tests
+├── cmake/                    # Build system extensions
+│   └── CodeQuality.cmake     # Code quality integration
+├── scripts/                  # Development tools
+│   └── run-code-quality.py   # Code quality runner
+├── .pre-commit-config.yaml   # Pre-commit hooks configuration
+├── .clang-format            # Code formatting rules
+├── .clang-tidy              # Static analysis configuration
 ├── CMakeLists.txt           # Main build configuration
 └── vcpkg.json              # Package dependencies
 ```
@@ -163,6 +145,30 @@ vision-craft/
 
 ## 👨‍💻 Development
 
+### 🛠️ Code Quality Tools
+
+VisionCraft includes integrated code quality tools:
+
+```bash
+# Install pre-commit hooks (one-time setup)
+pip install pre-commit
+pre-commit install
+
+# Run all code quality checks
+python scripts/run-code-quality.py
+
+# Format code only
+python scripts/run-code-quality.py --format-only
+
+# Static analysis only
+python scripts/run-code-quality.py --tidy-only
+
+# CMake targets for individual checks
+cmake --build build --target format-all        # Apply formatting
+cmake --build build --target tidy-all          # Run static analysis
+cmake --build build --target code-quality      # All checks
+```
+
 ### 🧪 Running Tests
 
 ```bash
@@ -170,18 +176,42 @@ cd build
 ctest --output-on-failure
 ```
 
-### 📐 Code Style
+### 📐 Code Standards
 
-The project uses clang-format for code formatting.
+- **Language**: C++20
+- **Formatting**: clang-format (automatically applied via pre-commit hooks)
+- **Static Analysis**: clang-tidy integration for modern C++ practices
+- **Line Width**: 120 characters
+- **Indentation**: 4 spaces
+
+### 🔄 Development Workflow
+
+1. **Setup development environment**:
+   ```bash
+   cmake -B build -DENABLE_CLANG_TIDY=ON
+   pip install pre-commit && pre-commit install
+   ```
+
+2. **Make changes**: Edit code following project standards
+
+3. **Test locally**:
+   ```bash
+   cmake --build build
+   python scripts/run-code-quality.py
+   ```
+
+4. **Commit**: Pre-commit hooks automatically run formatting and checks
 
 ### 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes following the code standards
 4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+5. Ensure all code quality checks pass (`python scripts/run-code-quality.py`)
+6. Commit your changes (pre-commit hooks will run automatically)
+7. Push to your branch (`git push origin feature/amazing-feature`)
+8. Submit a pull request
 
 ## 📄 License
 

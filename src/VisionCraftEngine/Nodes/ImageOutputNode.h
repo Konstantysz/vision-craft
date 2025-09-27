@@ -20,7 +20,7 @@ namespace VisionCraft::Engine
          * @param id Unique identifier for this node
          * @param name Display name for this node
          */
-        ImageOutputNode(NodeId id, const std::string& name = "Image Output");
+        ImageOutputNode(NodeId id, const std::string &name = "Image Output");
 
         /**
          * @brief Virtual destructor.
@@ -39,29 +39,41 @@ namespace VisionCraft::Engine
          * @brief Sets the input image for output.
          * @param image Input image to display/save
          */
-        void SetInputImage(const cv::Mat& image) { inputImage = image; }
+        void SetInputImage(const cv::Mat &image)
+        {
+            inputImage = image;
+        }
 
         /**
          * @brief Gets the image for display.
          * @return OpenCV Mat containing the image to display
          */
-        const cv::Mat& GetDisplayImage() const { return displayImage; }
+        [[nodiscard]] const cv::Mat &GetDisplayImage() const
+        {
+            return displayImage;
+        }
 
         /**
          * @brief Checks if the node has a valid image to display.
          * @return True if display image is valid, false otherwise
          */
-        bool HasValidImage() const { return !displayImage.empty(); }
+        [[nodiscard]] bool HasValidImage() const
+        {
+            return !displayImage.empty();
+        }
 
         /**
          * @brief Gets the last save status.
          * @return True if last save operation was successful, false otherwise
          */
-        bool GetLastSaveStatus() const { return lastSaveSuccessful; }
+        [[nodiscard]] bool GetLastSaveStatus() const
+        {
+            return lastSaveSuccessful;
+        }
 
     private:
-        cv::Mat inputImage;   ///< Input image to process
-        cv::Mat displayImage; ///< Image prepared for display
+        cv::Mat inputImage;              ///< Input image to process
+        cv::Mat displayImage;            ///< Image prepared for display
         bool lastSaveSuccessful = false; ///< Status of last save operation
 
         /**
@@ -69,6 +81,6 @@ namespace VisionCraft::Engine
          * @param filepath Path where to save the image
          * @return True if save was successful, false otherwise
          */
-        bool SaveImage(const std::string& filepath);
+        bool SaveImage(const std::string &filepath);
     };
 } // namespace VisionCraft::Engine

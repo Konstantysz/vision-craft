@@ -17,11 +17,11 @@ namespace Core
      */
     struct WindowSpecification
     {
-        std::string title;               ///< Window title displayed in the title bar
-        unsigned int width = 1280;      ///< Window width in pixels
-        unsigned int height = 720;      ///< Window height in pixels
-        bool isResizable = true;         ///< Whether the window can be resized by the user
-        bool vSync = true;               ///< Whether vertical sync is enabled
+        std::string title;         ///< Window title displayed in the title bar
+        unsigned int width = 1280; ///< Window width in pixels
+        unsigned int height = 720; ///< Window height in pixels
+        bool isResizable = true;   ///< Whether the window can be resized by the user
+        bool vSync = true;         ///< Whether vertical sync is enabled
     };
 
     /**
@@ -38,7 +38,7 @@ namespace Core
          * @brief Constructs a window with the given specification.
          * @param spec Configuration options for the window
          */
-        Window(const WindowSpecification &spec);
+        explicit Window(const WindowSpecification &spec);
 
         /**
          * @brief Destructor that ensures proper cleanup of window resources.
@@ -75,7 +75,7 @@ namespace Core
          *
          * The framebuffer size may differ from the window size on high-DPI displays.
          */
-        glm::vec2 GetFrameBufferSize() const;
+        [[nodiscard]] glm::vec2 GetFrameBufferSize() const;
 
         /**
          * @brief Checks if the window should close.
@@ -83,7 +83,7 @@ namespace Core
          *
          * This typically happens when the user clicks the window's close button.
          */
-        bool ShouldClose() const;
+        [[nodiscard]] bool ShouldClose() const;
 
         /**
          * @brief Gets the underlying GLFW window handle.
@@ -91,10 +91,10 @@ namespace Core
          *
          * This provides direct access to the GLFW window for advanced operations.
          */
-        GLFWwindow *GetHandle() const;
+        [[nodiscard]] GLFWwindow *GetHandle() const;
 
     private:
         WindowSpecification specification; ///< Window configuration
-        GLFWwindow *handle;               ///< GLFW window handle
+        GLFWwindow *handle;                ///< GLFW window handle
     };
 } // namespace Core

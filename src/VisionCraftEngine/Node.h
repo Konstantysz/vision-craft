@@ -40,25 +40,25 @@ namespace VisionCraft::Engine
          * @brief Get the unique identifier of the node.
          * @return NodeId The node's ID.
          */
-        NodeId GetId() const;
+        [[nodiscard]] NodeId GetId() const;
 
         /**
          * @brief Get the name of the node.
          * @return const std::string& The node's name.
          */
-        const std::string &GetName() const;
+        [[nodiscard]] const std::string &GetName() const;
 
         /**
          * @brief Gets the modern parameter storage.
          * @return Reference to the parameter storage system
          */
-        ParameterStorage &GetParameters();
+        [[nodiscard]] ParameterStorage &GetParameters();
 
         /**
          * @brief Gets the modern parameter storage (const version).
          * @return Const reference to the parameter storage system
          */
-        const ParameterStorage &GetParameters() const;
+        [[nodiscard]] const ParameterStorage &GetParameters() const;
 
         /**
          * @brief Sets a parameter value with automatic type deduction.
@@ -74,7 +74,7 @@ namespace VisionCraft::Engine
          * @param paramName Name of the parameter
          * @return Optional value if exists and correct type
          */
-        template<typename T> std::optional<T> GetParam(const std::string &paramName) const;
+        template<typename T> [[nodiscard]] std::optional<T> GetParam(const std::string &paramName) const;
 
         /**
          * @brief Gets a parameter value with default fallback.
@@ -83,20 +83,20 @@ namespace VisionCraft::Engine
          * @param defaultValue Default if not found or wrong type
          * @return Parameter value or default
          */
-        template<typename T> T GetParamOr(const std::string &paramName, T defaultValue) const;
+        template<typename T> [[nodiscard]] T GetParamOr(const std::string &paramName, T defaultValue) const;
 
         /**
          * @brief Checks if parameter exists.
          * @param paramName Parameter name
          * @return True if parameter exists
          */
-        bool HasParameter(const std::string &paramName) const;
+        [[nodiscard]] bool HasParameter(const std::string &paramName) const;
 
         /**
          * @brief Gets all parameter names.
          * @return Vector of parameter names
          */
-        std::vector<std::string> GetParameterNames() const;
+        [[nodiscard]] std::vector<std::string> GetParameterNames() const;
 
         /**
          * @brief Gets a boolean parameter with smart parsing.
@@ -104,7 +104,7 @@ namespace VisionCraft::Engine
          * @param defaultValue Default value if parameter doesn't exist or is invalid
          * @return Boolean value (supports: true/false, 1/0, yes/no, on/off)
          */
-        bool GetBoolParam(const std::string &paramName, bool defaultValue = false) const;
+        [[nodiscard]] bool GetBoolParam(const std::string &paramName, bool defaultValue = false) const;
 
         /**
          * @brief Gets a filesystem path parameter with smart type handling.
@@ -112,7 +112,7 @@ namespace VisionCraft::Engine
          * @param defaultPath Default path if parameter doesn't exist
          * @return Filesystem path parameter
          */
-        std::filesystem::path GetPath(const std::string &paramName,
+        [[nodiscard]] std::filesystem::path GetPath(const std::string &paramName,
             const std::filesystem::path &defaultPath = {}) const;
 
         /**
@@ -121,7 +121,8 @@ namespace VisionCraft::Engine
          * @param validation File path validation configuration
          * @return True if path is valid, false otherwise
          */
-        bool ValidateFilePath(const std::string &paramName, const FilePathValidation &validation = {}) const;
+        [[nodiscard]] bool ValidateFilePath(const std::string &paramName,
+            const FilePathValidation &validation = {}) const;
 
         /**
          * @brief Gets a validated string parameter.
@@ -130,7 +131,7 @@ namespace VisionCraft::Engine
          * @param validation String validation configuration
          * @return Validated string value
          */
-        std::string GetValidatedString(const std::string &paramName,
+        [[nodiscard]] std::string GetValidatedString(const std::string &paramName,
             const std::string &defaultValue,
             const StringValidation &validation = {}) const;
 
@@ -143,7 +144,7 @@ namespace VisionCraft::Engine
          * @return Validated numeric value
          */
         template<NumericParameter T>
-        T GetValidatedParam(const std::string &paramName,
+        [[nodiscard]] T GetValidatedParam(const std::string &paramName,
             T defaultValue,
             const ValidationRange<T> &validation = {}) const;
 

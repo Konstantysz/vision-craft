@@ -76,7 +76,8 @@ namespace VisionCraft
          * @param nodeSize Node size in pixels
          * @return True if mouse hits the node
          */
-        bool IsMouseOverNode(const ImVec2 &mousePos, const NodePosition &nodePos, const ImVec2 &nodeSize) const;
+        [[nodiscard]] bool
+            IsMouseOverNode(const ImVec2 &mousePos, const NodePosition &nodePos, const ImVec2 &nodeSize) const;
 
         /**
          * @brief Handles mouse interactions for node selection and dragging.
@@ -94,7 +95,8 @@ namespace VisionCraft
          * @param pinName Name of the pin
          * @return PinInteractionState containing hover and active flags
          */
-        PinInteractionState GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const;
+        [[nodiscard]] PinInteractionState GetPinInteractionState(Engine::NodeId nodeId,
+            const std::string &pinName) const;
 
 
         /**
@@ -131,7 +133,7 @@ namespace VisionCraft
          * @param dataType The data type
          * @return ImU32 color value
          */
-        ImU32 GetDataTypeColor(PinDataType dataType) const;
+        [[nodiscard]] ImU32 GetDataTypeColor(PinDataType dataType) const;
 
 
         /**
@@ -139,7 +141,7 @@ namespace VisionCraft
          * @param mousePos Mouse position in screen coordinates
          * @return Node ID if found, or -1 if no node at position
          */
-        Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
+        [[nodiscard]] Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
 
 
         // Core components

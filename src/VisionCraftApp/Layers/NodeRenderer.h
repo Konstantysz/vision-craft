@@ -114,14 +114,14 @@ namespace VisionCraft
          * @param dataType The data type
          * @return ImU32 color value
          */
-        ImU32 GetDataTypeColor(PinDataType dataType) const;
+        [[nodiscard]] ImU32 GetDataTypeColor(PinDataType dataType) const;
 
         /**
          * @brief Converts camelCase parameter names to Title Case for display.
          * @param paramName The parameter name in camelCase (e.g., "lowThreshold")
          * @return User-friendly display name (e.g., "Low Threshold")
          */
-        static std::string FormatParameterName(const std::string &paramName);
+        [[nodiscard]] static std::string FormatParameterName(const std::string &paramName);
 
         /**
          * @brief Calculates the layout for column-based parameter rendering.
@@ -138,7 +138,8 @@ namespace VisionCraft
             float rowHeight;
             float maxRows;
         };
-        ColumnLayout CalculateColumnLayout(const ImVec2 &nodeSize, size_t inputPinCount, size_t outputPinCount) const;
+        [[nodiscard]] ColumnLayout
+            CalculateColumnLayout(const ImVec2 &nodeSize, size_t inputPinCount, size_t outputPinCount) const;
 
         /**
          * @brief Ensures text fits within column boundaries by truncating if necessary.
@@ -146,7 +147,7 @@ namespace VisionCraft
          * @param maxWidth Maximum width allowed
          * @return Truncated text that fits within bounds
          */
-        std::string FitTextInColumn(const std::string &text, float maxWidth) const;
+        [[nodiscard]] std::string FitTextInColumn(const std::string &text, float maxWidth) const;
 
 
         /**

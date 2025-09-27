@@ -35,7 +35,7 @@ namespace Core
          * @brief Constructs an application with the given specification.
          * @param specification Configuration options for the application
          */
-        Application(const ApplicationSpecification &specification = ApplicationSpecification());
+        explicit Application(const ApplicationSpecification &specification = ApplicationSpecification());
 
         /**
          * @brief Virtual destructor for proper cleanup of derived classes.
@@ -77,7 +77,7 @@ namespace Core
          * @brief Gets the current framebuffer size.
          * @return 2D vector containing width and height of the framebuffer
          */
-        glm::vec2 GetFramebufferSize() const;
+        [[nodiscard]] glm::vec2 GetFramebufferSize() const;
 
         /**
          * @brief Called at the beginning of each frame.
@@ -103,18 +103,18 @@ namespace Core
          * @brief Gets the singleton instance of the application.
          * @return Reference to the current application instance
          */
-        static Application &Get();
+        [[nodiscard]] static Application &Get();
 
         /**
          * @brief Gets the current time in seconds.
          * @return Current time as a float
          */
-        static float GetTime();
+        [[nodiscard]] static float GetTime();
 
     private:
-        ApplicationSpecification specification; ///< Application configuration
+        ApplicationSpecification specification;         ///< Application configuration
         std::vector<std::unique_ptr<Layer>> layerStack; ///< Stack of application layers
-        std::shared_ptr<Window> window; ///< Main application window
-        bool isRunning = false; ///< Flag indicating if the application is running
+        std::shared_ptr<Window> window;                 ///< Main application window
+        bool isRunning = false;                         ///< Flag indicating if the application is running
     };
 } // namespace Core

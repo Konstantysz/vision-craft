@@ -20,7 +20,7 @@ namespace VisionCraft::Engine
          * @param id Unique identifier for this node
          * @param name Display name for this node
          */
-        ImageInputNode(NodeId id, const std::string& name = "Image Input");
+        ImageInputNode(NodeId id, const std::string &name = "Image Input");
 
         /**
          * @brief Virtual destructor.
@@ -39,20 +39,26 @@ namespace VisionCraft::Engine
          * @brief Gets the loaded image data.
          * @return OpenCV Mat containing the loaded image, or empty Mat if no image loaded
          */
-        const cv::Mat& GetOutputImage() const { return outputImage; }
+        [[nodiscard]] const cv::Mat &GetOutputImage() const
+        {
+            return outputImage;
+        }
 
         /**
          * @brief Checks if an image has been successfully loaded.
          * @return True if image is loaded and valid, false otherwise
          */
-        bool HasValidImage() const { return !outputImage.empty(); }
+        [[nodiscard]] bool HasValidImage() const
+        {
+            return !outputImage.empty();
+        }
 
     private:
         /**
          * @brief Loads image from the specified file path.
          * @param filepath Path to the image file
          */
-        void LoadImageFromPath(const std::string& filepath);
+        void LoadImageFromPath(const std::string &filepath);
 
         cv::Mat outputImage; ///< Loaded image data
     };

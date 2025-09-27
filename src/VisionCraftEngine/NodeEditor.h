@@ -45,27 +45,27 @@ namespace VisionCraft::Engine
          * @param id ID of the node to remove.
          * @return true if the node was removed, false otherwise.
          */
-        bool RemoveNode(NodeId id);
+        [[nodiscard]] bool RemoveNode(NodeId id);
 
         /**
          * @brief Get a pointer to a node by its ID.
          * @param id ID of the node.
          * @return Node* Pointer to the node, or nullptr if not found.
          */
-        Node *GetNode(NodeId id);
+        [[nodiscard]] Node *GetNode(NodeId id);
 
         /**
          * @brief Get a const pointer to a node by its ID.
          * @param id ID of the node.
          * @return const Node* Const pointer to the node, or nullptr if not found.
          */
-        const Node *GetNode(NodeId id) const;
+        [[nodiscard]] const Node *GetNode(NodeId id) const;
 
         /**
          * @brief Get a vector of all node IDs in the editor.
          * @return std::vector<NodeId> Vector of node IDs.
          */
-        std::vector<NodeId> GetNodeIds() const;
+        [[nodiscard]] std::vector<NodeId> GetNodeIds() const;
 
         /**
          * @brief Add a connection between two nodes.
@@ -80,13 +80,13 @@ namespace VisionCraft::Engine
          * @param to ID of the destination node.
          * @return true if the connection was removed, false otherwise.
          */
-        bool RemoveConnection(NodeId from, NodeId to);
+        [[nodiscard]] bool RemoveConnection(NodeId from, NodeId to);
 
         /**
          * @brief Get all connections in the editor.
          * @return const std::vector<Connection>& Vector of connections.
          */
-        const std::vector<Connection> &GetConnections() const;
+        [[nodiscard]] const std::vector<Connection> &GetConnections() const;
 
         /**
          * @brief Remove all nodes and connections from the editor.

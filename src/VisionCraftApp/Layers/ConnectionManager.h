@@ -82,7 +82,7 @@ namespace VisionCraft
          * @param nodeEditor Reference to node editor for pin validation
          * @return True if connection is valid
          */
-        bool IsConnectionValid(const PinId &outputPin,
+        [[nodiscard]] bool IsConnectionValid(const PinId &outputPin,
             const PinId &inputPin,
             const Engine::NodeEditor &nodeEditor) const;
 
@@ -91,7 +91,7 @@ namespace VisionCraft
          * @param pin The pin to check
          * @return True if the pin is connected to another pin
          */
-        bool IsPinConnected(const PinId &pin) const;
+        [[nodiscard]] bool IsPinConnected(const PinId &pin) const;
 
         /**
          * @brief Determines if a pin needs input widget space (and extended spacing).
@@ -99,7 +99,7 @@ namespace VisionCraft
          * @param pin The pin to check
          * @return True if pin needs input widget space
          */
-        bool PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const;
+        [[nodiscard]] bool PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const;
 
         /**
          * @brief Finds a pin at the given mouse position.
@@ -109,7 +109,7 @@ namespace VisionCraft
          * @param canvas Reference to canvas controller
          * @return PinId if found, otherwise invalid PinId (nodeId = -1)
          */
-        PinId FindPinAtPosition(const ImVec2 &mousePos,
+        [[nodiscard]] PinId FindPinAtPosition(const ImVec2 &mousePos,
             const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas) const;
@@ -123,7 +123,7 @@ namespace VisionCraft
          * @param canvas Reference to canvas controller
          * @return PinId if found, otherwise invalid PinId (nodeId = -1)
          */
-        PinId FindPinAtPositionInNode(const ImVec2 &mousePos,
+        [[nodiscard]] PinId FindPinAtPositionInNode(const ImVec2 &mousePos,
             Engine::NodeId nodeId,
             const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
@@ -137,7 +137,7 @@ namespace VisionCraft
          * @param canvas Reference to canvas controller
          * @return World position of the pin center
          */
-        ImVec2 GetPinWorldPosition(const PinId &pinId,
+        [[nodiscard]] ImVec2 GetPinWorldPosition(const PinId &pinId,
             const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas) const;
@@ -146,20 +146,20 @@ namespace VisionCraft
          * @brief Gets all active connections.
          * @return Vector of all connections
          */
-        const std::vector<NodeConnection> &GetConnections() const;
+        [[nodiscard]] const std::vector<NodeConnection> &GetConnections() const;
 
         /**
          * @brief Gets the current connection state.
          * @return Current connection creation state
          */
-        const ConnectionState &GetConnectionState() const;
+        [[nodiscard]] const ConnectionState &GetConnectionState() const;
 
         /**
          * @brief Gets the pins for a specific node type.
          * @param nodeType Type of node
          * @return Vector of pins for the node
          */
-        static std::vector<NodePin> GetNodePins(const std::string &nodeType);
+        [[nodiscard]] static std::vector<NodePin> GetNodePins(const std::string &nodeType);
 
         /**
          * @brief Calculates node dimensions based on pins and zoom level.
@@ -167,19 +167,19 @@ namespace VisionCraft
          * @param zoomLevel Current zoom level
          * @return Calculated node dimensions
          */
-        static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel);
+        [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel);
 
         /**
          * @brief Check if currently creating a connection.
          * @return True if in connection creation mode
          */
-        bool IsCreatingConnection() const;
+        [[nodiscard]] bool IsCreatingConnection() const;
 
         /**
          * @brief Get the starting pin of current connection being created.
          * @return PinId of start pin, or invalid pin if not creating connection
          */
-        const PinId &GetStartPin() const;
+        [[nodiscard]] const PinId &GetStartPin() const;
 
     private:
         /**

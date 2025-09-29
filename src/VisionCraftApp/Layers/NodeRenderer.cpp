@@ -1,5 +1,6 @@
 #include "NodeRenderer.h"
 #include "NodeEditorConstants.h"
+#include "Nodes/ImageInputNode.h"
 
 #include <algorithm>
 #include <cmath>
@@ -21,7 +22,7 @@ namespace VisionCraft
         auto *drawList = ImGui::GetWindowDrawList();
         const auto worldPos = canvas_.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
         const auto pins = connectionManager_.GetNodePins(node->GetName());
-        const auto dimensions = connectionManager_.CalculateNodeDimensions(pins, canvas_.GetZoomLevel());
+        const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas_.GetZoomLevel(), node);
         const auto isSelected = (node->GetId() == selectedNodeId);
         const auto borderColor =
             isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
@@ -70,6 +71,9 @@ namespace VisionCraft
 
         RenderPinsInColumn(node, inputPins, worldPos, dimensions, true, getPinInteractionState);
         RenderPinsInColumn(node, outputPins, worldPos, dimensions, false, getPinInteractionState);
+
+        // Render custom node content
+        RenderCustomNodeContent(node, worldPos, dimensions.size);
     }
 
     void NodeRenderer::RenderNodeParametersInColumns(Engine::Node *node,
@@ -514,18 +518,210 @@ namespace VisionCraft
             strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
             buffer[sizeof(buffer) - 1] = '\0';
 
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+            // Check if this is an ImageInputNode with filepath parameter
+            bool isImageInputFilepath =
+                (pin.name == "filepath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
+
+            if (isImageInputFilepath)
             {
-                node->SetParam(pin.name, std::filesystem::path(buffer));
+                // Special handling for ImageInputNode filepath - keep original textbox width
+                // Store current cursor position before rendering textbox
+                ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
+                // Render the textbox at normal width first
+                ImGui::PushItemWidth(inputWidth);
+                if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+                {
+                    node->SetParam(pin.name, std::filesystem::path(buffer));
+                }
+                ImGui::PopItemWidth();
+
+                // Now position buttons to the right using absolute positioning
+                const float buttonWidth = 35.0f * canvas_.GetZoomLevel();
+                const float spacing = 5.0f * canvas_.GetZoomLevel();
+                const float buttonHeight = ImGui::GetFrameHeight();
+
+                // Calculate button position to the right of the textbox
+                ImVec2 buttonPos = ImVec2(cursorPos.x + inputWidth + spacing, cursorPos.y);
+
+                // Browse button
+                ImGui::SetCursorScreenPos(buttonPos);
+                const std::string browseId = "..."; // + std::to_string(static_cast<int>(node->GetId()));
+                if (ImGui::Button(browseId.c_str(), ImVec2(buttonWidth, buttonHeight)))
+                {
+                    auto *imageNode = static_cast<Engine::ImageInputNode *>(node);
+                    std::string selectedPath = imageNode->OpenFileBrowser();
+                    if (!selectedPath.empty())
+                    {
+                        strncpy_s(buffer, selectedPath.c_str(), sizeof(buffer) - 1);
+                        buffer[sizeof(buffer) - 1] = '\0';
+                        node->SetParam(pin.name, std::filesystem::path(selectedPath));
+                        node->Process(); // Trigger processing
+                    }
+                }
+
+                // Load button
+                ImVec2 loadButtonPos = ImVec2(buttonPos.x + buttonWidth + spacing, buttonPos.y);
+                ImGui::SetCursorScreenPos(loadButtonPos);
+                const std::string loadId = "Load"; // + std::to_string(static_cast<int>(node->GetId()));
+                if (ImGui::Button(loadId.c_str(), ImVec2(buttonWidth, buttonHeight)))
+                {
+                    // Force reprocessing with current parameter value
+                    node->Process();
+                }
             }
-            ImGui::PopItemWidth();
+            else
+            {
+                // Standard path input for other nodes
+                ImGui::PushItemWidth(inputWidth);
+                if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+                {
+                    node->SetParam(pin.name, std::filesystem::path(buffer));
+                }
+                ImGui::PopItemWidth();
+            }
             break;
         }
 
         default:
             break;
         }
+    }
+
+    void NodeRenderer::RenderCustomNodeContent(Engine::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize)
+    {
+        // Check if this is an ImageInputNode and render full-width image preview
+        if (auto *imageNode = dynamic_cast<Engine::ImageInputNode *>(node))
+        {
+            // Display image preview if available (below all parameters)
+            if (imageNode->HasValidImage() && imageNode->GetTextureId() != 0)
+            {
+                const float titleHeight = Constants::Node::kTitleHeight * canvas_.GetZoomLevel();
+                const float padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
+
+                // Calculate actual parameter area height
+                const auto pins = connectionManager_.GetNodePins(node->GetName());
+                std::vector<NodePin> inputPins, outputPins;
+                std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
+                    return pin.isInput;
+                });
+                std::copy_if(pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) {
+                    return !pin.isInput;
+                });
+
+                const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas_.GetZoomLevel();
+                const auto extendedPinHeight = Constants::Pin::kHeight * canvas_.GetZoomLevel();
+                const auto compactSpacing = Constants::Pin::kCompactSpacing * canvas_.GetZoomLevel();
+                const auto normalSpacing = Constants::Pin::kSpacing * canvas_.GetZoomLevel();
+
+                float inputColumnHeight = 0;
+                for (const auto &pin : inputPins)
+                {
+                    const bool needsInputWidget = pin.dataType != PinDataType::Image;
+                    const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+                    const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
+                    inputColumnHeight += pinHeight + spacing;
+                }
+
+                const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
+                const auto parameterAreaHeight = std::max(inputColumnHeight, outputColumnHeight);
+
+                // Add extra spacing to ensure the image appears clearly below parameters
+                const float extraSpacing = 10.0f * canvas_.GetZoomLevel();
+                const float previewY = nodePos.y + titleHeight + padding + parameterAreaHeight + extraSpacing;
+
+                // Calculate full-width preview size (use full node width minus padding)
+                const float nodeContentWidth = nodeSize.x - (padding * 2);
+
+                // Calculate actual preview dimensions - full width, preserve aspect ratio
+                auto [previewWidth, previewHeight] = imageNode->CalculatePreviewDimensions(nodeContentWidth, 0);
+
+                if (previewWidth > 0 && previewHeight > 0)
+                {
+                    // Always position at left edge with padding - use full width
+                    ImGui::SetCursorScreenPos(ImVec2(nodePos.x + padding, previewY));
+
+                    ImGui::Image(static_cast<ImTextureID>(imageNode->GetTextureId()),
+                        ImVec2(previewWidth, previewHeight),
+                        ImVec2(0, 0),
+                        ImVec2(1, 1));
+
+                    // Show tooltip with image info on hover
+                    if (ImGui::IsItemHovered())
+                    {
+                        auto outputImage = imageNode->GetOutputImage();
+                        float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
+                        ImGui::SetTooltip(
+                            "%dx%d pixels\nAspect ratio: %.2f", outputImage.cols, outputImage.rows, imageAspect);
+                    }
+                }
+            }
+        }
+    }
+
+    NodeDimensions NodeRenderer::CalculateNodeDimensions(const std::vector<NodePin> &pins,
+        float zoomLevel,
+        const Engine::Node *node)
+    {
+        std::vector<NodePin> inputPins, outputPins;
+
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
+
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+
+        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
+        const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
+        const auto compactSpacing = Constants::Pin::kCompactSpacing * zoomLevel;
+        const auto normalSpacing = Constants::Pin::kSpacing * zoomLevel;
+        const auto padding = Constants::Node::kPadding * zoomLevel;
+
+        float inputColumnHeight = 0;
+        for (const auto &pin : inputPins)
+        {
+            const bool needsInputWidget = pin.dataType != PinDataType::Image;
+            const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
+            const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
+            inputColumnHeight += pinHeight + spacing;
+        }
+
+        const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
+
+        const auto pinsHeight = std::max(inputColumnHeight, outputColumnHeight);
+        const auto contentHeight = pinsHeight + padding * 2;
+
+        // Add extra height for ImageInputNode image preview - EXACT DIMENSIONS PRE-CALCULATED!
+        float extraHeight = 0;
+        if (node && node->GetName() == "Image Input")
+        {
+            const auto *imageInputNode = dynamic_cast<const Engine::ImageInputNode *>(node);
+            if (imageInputNode && imageInputNode->HasValidImage())
+            {
+                // Calculate EXACT same dimensions that will be used during rendering
+                // This ensures ImGui knows the final node size from frame 1
+                const float nodeWidth = Constants::Node::kWidth * zoomLevel;
+                const float nodeContentWidth = nodeWidth - (padding * 2);
+                auto [previewWidth, actualPreviewHeight] =
+                    imageInputNode->CalculatePreviewDimensions(nodeContentWidth, 0);
+
+                // Use EXACT same spacing calculation as in RenderCustomNodeContent
+                const float imagePreviewSpacing = 10.0f * zoomLevel; // This matches extraSpacing in rendering
+                extraHeight = actualPreviewHeight + imagePreviewSpacing;
+
+                // Debug: Ensure dimension calculation matches rendering exactly
+                // The values calculated here MUST match what RenderCustomNodeContent uses
+            }
+        }
+
+        const auto totalHeight = titleHeight + contentHeight + extraHeight + padding;
+
+        return { ImVec2(Constants::Node::kWidth * zoomLevel,
+                     std::max(Constants::Node::kMinHeight * zoomLevel, totalHeight)),
+            inputPins.size(),
+            outputPins.size(),
+            0 };
     }
 
 } // namespace VisionCraft

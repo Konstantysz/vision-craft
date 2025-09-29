@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Node.h"
+#include <glad/glad.h>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 namespace VisionCraft::Engine
 {
@@ -25,7 +27,7 @@ namespace VisionCraft::Engine
         /**
          * @brief Virtual destructor.
          */
-        virtual ~ImageInputNode() = default;
+        virtual ~ImageInputNode();
 
         /**
          * @brief Processes the node by loading the specified image.
@@ -45,13 +47,43 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Checks if an image has been successfully loaded.
-         * @return True if image is loaded and valid, false otherwise
+         * @brief Checks if an image has been successfully loaded AND texture is ready.
+         * @return True if image is loaded and texture is available for rendering, false otherwise
          */
         [[nodiscard]] bool HasValidImage() const
         {
-            return !outputImage.empty();
+            return !outputImage.empty() && textureId != 0;
         }
+
+        /**
+         * @brief Gets the OpenGL texture ID for displaying the image.
+         * @return OpenGL texture ID, or 0 if no texture is available
+         */
+        [[nodiscard]] GLuint GetTextureId() const
+        {
+            return textureId;
+        }
+
+        /**
+         * @brief Renders the custom UI for this node (file browser and image preview).
+         */
+        void RenderCustomUI();
+
+        /**
+         * @brief Opens a file browser dialog for image selection.
+         * @return Selected file path, or empty string if cancelled
+         */
+        std::string OpenFileBrowser();
+
+        /**
+         * @brief Calculates the actual preview dimensions that will be used for rendering.
+         * @param nodeContentWidth Available width for the preview (node width minus padding)
+         * @param maxHeight Maximum allowed height for the preview
+         * @return Pair of (width, height) for the actual preview dimensions
+         */
+        [[nodiscard]] std::pair<float, float> CalculatePreviewDimensions(float nodeContentWidth, float maxHeight) const;
+
+        char filePathBuffer[512] = ""; ///< Buffer for file path input (public for NodeRenderer access)
 
     private:
         /**
@@ -60,6 +92,24 @@ namespace VisionCraft::Engine
          */
         void LoadImageFromPath(const std::string &filepath);
 
-        cv::Mat outputImage; ///< Loaded image data
+        /**
+         * @brief Creates/updates OpenGL texture from the loaded image.
+         */
+        void UpdateTexture();
+
+        /**
+         * @brief Cleans up OpenGL texture resources.
+         */
+        void CleanupTexture();
+
+        /**
+         * @brief Renders the file path input field.
+         * @return Selected file path if changed, empty string otherwise
+         */
+        std::string RenderFilePathInput();
+
+        cv::Mat outputImage;        ///< Loaded image data
+        GLuint textureId = 0;       ///< OpenGL texture ID for display
+        std::string lastLoadedPath; ///< Last successfully loaded file path
     };
 } // namespace VisionCraft::Engine

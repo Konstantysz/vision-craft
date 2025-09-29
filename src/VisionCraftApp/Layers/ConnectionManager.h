@@ -162,14 +162,6 @@ namespace VisionCraft
         [[nodiscard]] static std::vector<NodePin> GetNodePins(const std::string &nodeType);
 
         /**
-         * @brief Calculates node dimensions based on pins and zoom level.
-         * @param pins Vector of node pins
-         * @param zoomLevel Current zoom level
-         * @return Calculated node dimensions
-         */
-        [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel);
-
-        /**
          * @brief Check if currently creating a connection.
          * @return True if in connection creation mode
          */

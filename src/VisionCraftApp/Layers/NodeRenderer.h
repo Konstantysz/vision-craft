@@ -168,6 +168,28 @@ namespace VisionCraft
          */
         void RenderParameterInputWidget(Engine::Node *node, const NodePin &pin, const ImVec2 &pinPos, float pinRadius);
 
+        /**
+         * @brief Renders custom node content (e.g., image preview for ImageInputNode).
+         * @param node Pointer to the node
+         * @param nodePos Position of the node
+         * @param nodeSize Size of the node
+         */
+        void RenderCustomNodeContent(Engine::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize);
+
+    public:
+        /**
+         * @brief Calculates node dimensions based on pins and node type.
+         * This is the proper place for dimension calculation - nodes know their own layout!
+         * @param pins Vector of pins for this node
+         * @param zoomLevel Current zoom level
+         * @param node Pointer to the node (for node-specific sizing like ImageInputNode)
+         * @return Calculated node dimensions
+         */
+        [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins,
+            float zoomLevel,
+            const Engine::Node *node = nullptr);
+
+    private:
         CanvasController &canvas_;
         ConnectionManager &connectionManager_;
     };

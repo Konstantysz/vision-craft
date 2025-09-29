@@ -1,5 +1,6 @@
 #include "ConnectionManager.h"
 #include "NodeEditorLayer.h"
+#include "NodeRenderer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -221,7 +222,7 @@ namespace VisionCraft
             }
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+            const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
             const auto &nodePos = nodePositions.at(nodeId);
             const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
@@ -248,7 +249,7 @@ namespace VisionCraft
         }
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+        const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
@@ -331,7 +332,7 @@ namespace VisionCraft
         }
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+        const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(pinId.nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
@@ -434,7 +435,7 @@ namespace VisionCraft
         static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
             { "Image Input",
                 {
-                    { "filepath", PinDataType::Path, true }, // Parameter input
+                    { "filepath", PinDataType::Path, true }, // Parameter input (temporary - for basic functionality)
                     { "Output", PinDataType::Image, false }  // Data output
                 } },
             { "Image Output",
@@ -479,44 +480,6 @@ namespace VisionCraft
         return {};
     }
 
-    NodeDimensions ConnectionManager::CalculateNodeDimensions(const std::vector<NodePin> &pins, float zoomLevel)
-    {
-        std::vector<NodePin> inputPins, outputPins;
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
-        const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
-        const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto compactSpacing = Constants::Pin::kCompactSpacing * zoomLevel;
-        const auto normalSpacing = Constants::Pin::kSpacing * zoomLevel;
-        const auto padding = Constants::Node::kPadding * zoomLevel;
-
-        float inputColumnHeight = 0;
-        for (const auto &pin : inputPins)
-        {
-            const bool needsInputWidget = pin.dataType != PinDataType::Image;
-            const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
-            const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
-            inputColumnHeight += pinHeight + spacing;
-        }
-
-        const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
-
-        const auto pinsHeight = std::max(inputColumnHeight, outputColumnHeight);
-        const auto contentHeight = pinsHeight + padding * 2;
-        const auto totalHeight = titleHeight + contentHeight + padding;
-
-        return { ImVec2(Constants::Node::kWidth * zoomLevel,
-                     std::max(Constants::Node::kMinHeight * zoomLevel, totalHeight)),
-            inputPins.size(),
-            outputPins.size(),
-            0 };
-    }
 
     bool ConnectionManager::IsCreatingConnection() const
     {

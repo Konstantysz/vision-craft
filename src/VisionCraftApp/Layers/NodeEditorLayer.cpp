@@ -1,5 +1,6 @@
 #include "NodeEditorLayer.h"
 #include "NodeEditorConstants.h"
+#include "NodeRenderer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -309,7 +310,7 @@ namespace VisionCraft
                 continue;
 
             const auto pins = connectionManager.GetNodePins(node->GetName());
-            const auto dimensions = connectionManager.CalculateNodeDimensions(pins, canvas.GetZoomLevel());
+            const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
 
             if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))
             {

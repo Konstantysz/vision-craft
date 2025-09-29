@@ -1,6 +1,7 @@
 #include "NodeRenderer.h"
 #include "DefaultNodeRenderingStrategy.h"
 #include "ImageInputNodeRenderingStrategy.h"
+#include "NodeDimensionCalculator.h"
 #include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
 
@@ -603,65 +604,8 @@ namespace VisionCraft
         float zoomLevel,
         const Engine::Node *node)
     {
-        std::vector<NodePin> inputPins, outputPins;
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
-
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
-
-        const auto titleHeight = Constants::Node::kTitleHeight * zoomLevel;
-        const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
-        const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto compactSpacing = Constants::Pin::kCompactSpacing * zoomLevel;
-        const auto normalSpacing = Constants::Pin::kSpacing * zoomLevel;
-        const auto padding = Constants::Node::kPadding * zoomLevel;
-
-        float inputColumnHeight = 0;
-        for (const auto &pin : inputPins)
-        {
-            const bool needsInputWidget = pin.dataType != PinDataType::Image;
-            const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
-            const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
-            inputColumnHeight += pinHeight + spacing;
-        }
-
-        const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
-
-        const auto pinsHeight = std::max(inputColumnHeight, outputColumnHeight);
-        const auto contentHeight = pinsHeight + padding * 2;
-
-        // Add extra height for ImageInputNode image preview - EXACT DIMENSIONS PRE-CALCULATED!
-        float extraHeight = 0;
-        if (node && node->GetName() == "Image Input")
-        {
-            const auto *imageInputNode = dynamic_cast<const Engine::ImageInputNode *>(node);
-            if (imageInputNode && imageInputNode->HasValidImage())
-            {
-                // Calculate EXACT same dimensions that will be used during rendering
-                // This ensures ImGui knows the final node size from frame 1
-                const float nodeWidth = Constants::Node::kWidth * zoomLevel;
-                const float nodeContentWidth = nodeWidth - (padding * 2);
-                auto [previewWidth, actualPreviewHeight] =
-                    imageInputNode->CalculatePreviewDimensions(nodeContentWidth, 0);
-
-                // Use EXACT same spacing calculation as in RenderCustomNodeContent
-                const float imagePreviewSpacing = 10.0f * zoomLevel; // This matches extraSpacing in rendering
-                extraHeight = actualPreviewHeight + imagePreviewSpacing;
-
-                // Debug: Ensure dimension calculation matches rendering exactly
-                // The values calculated here MUST match what RenderCustomNodeContent uses
-            }
-        }
-
-        const auto totalHeight = titleHeight + contentHeight + extraHeight + padding;
-
-        return { ImVec2(Constants::Node::kWidth * zoomLevel,
-                     std::max(Constants::Node::kMinHeight * zoomLevel, totalHeight)),
-            inputPins.size(),
-            outputPins.size(),
-            0 };
+        // Delegate to the utility class - eliminates DRY violations!
+        return NodeDimensionCalculator::CalculateNodeDimensions(pins, zoomLevel, node);
     }
 
     std::unique_ptr<NodeRenderingStrategy> NodeRenderer::CreateRenderingStrategy(const Engine::Node *node)

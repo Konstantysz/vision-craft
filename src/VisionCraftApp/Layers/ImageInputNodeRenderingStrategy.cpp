@@ -1,4 +1,6 @@
 #include "ImageInputNodeRenderingStrategy.h"
+#include "ConnectionManager.h"
+#include "NodeDimensionCalculator.h"
 #include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
 #include <algorithm>
@@ -19,19 +21,19 @@ namespace VisionCraft
         const float titleHeight = Constants::Node::kTitleHeight * zoomLevel;
         const float padding = Constants::Node::kPadding * zoomLevel;
 
-        // Calculate actual parameter area height (same logic as was in RenderCustomNodeContent)
-        const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
-        const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
-        const auto compactSpacing = Constants::Pin::kCompactSpacing * zoomLevel;
-        const auto normalSpacing = Constants::Pin::kSpacing * zoomLevel;
+        const auto pins = ConnectionManager::GetNodePins(node.GetName());
+        std::vector<NodePin> inputPins, outputPins;
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
 
-        // We need to calculate the parameter height, but this requires pin information
-        // For now, let's use a reasonable estimate based on ImageInputNode's known pins
-        const float estimatedParameterHeight = extendedPinHeight + normalSpacing; // filepath pin
+        const float parameterAreaHeight =
+            NodeDimensionCalculator::CalculateBaseContentHeight(inputPins, outputPins, zoomLevel) - (padding * 2);
 
         // Add spacing to ensure the image appears clearly below parameters
         const float extraSpacing = 10.0f * zoomLevel;
-        const float previewY = nodePos.y + titleHeight + padding + estimatedParameterHeight + extraSpacing;
+        const float previewY = nodePos.y + titleHeight + padding + parameterAreaHeight + extraSpacing;
 
         // Calculate full-width preview size
         const float nodeContentWidth = nodeSize.x - (padding * 2);

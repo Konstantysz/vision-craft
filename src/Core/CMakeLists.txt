@@ -8,13 +8,15 @@ find_package(spdlog CONFIG REQUIRED)
 
 add_library(Core STATIC
     Application.cpp
-    Window.cpp)
+    Window.cpp
+    Texture.cpp)
 
 target_include_directories(Core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-target_link_libraries(Core PUBLIC 
+target_link_libraries(Core PUBLIC
+    glad::glad
     glfw
     glm::glm
     spdlog::spdlog)

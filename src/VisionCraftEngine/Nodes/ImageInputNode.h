@@ -5,8 +5,10 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
-// Include constants for magic number elimination
-#include "../../VisionCraftApp/Layers/NodeEditorConstants.h"
+// Include Engine constants
+#include "../EngineConstants.h"
+// Include RAII texture
+#include "Texture.h"
 
 namespace VisionCraft::Engine
 {
@@ -27,10 +29,6 @@ namespace VisionCraft::Engine
          */
         ImageInputNode(NodeId id, const std::string &name = "Image Input");
 
-        /**
-         * @brief Virtual destructor.
-         */
-        virtual ~ImageInputNode();
 
         /**
          * @brief Processes the node by loading the specified image.
@@ -55,7 +53,7 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] bool HasValidImage() const
         {
-            return !outputImage.empty() && textureId != 0;
+            return !outputImage.empty() && texture.IsValid();
         }
 
         /**
@@ -64,7 +62,7 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] GLuint GetTextureId() const
         {
-            return textureId;
+            return texture.Get();
         }
 
         /**
@@ -109,20 +107,15 @@ namespace VisionCraft::Engine
         void UpdateTexture();
 
         /**
-         * @brief Cleans up OpenGL texture resources.
-         */
-        void CleanupTexture();
-
-        /**
          * @brief Renders the file path input field.
          * @return Selected file path if changed, empty string otherwise
          */
         std::string RenderFilePathInput();
 
         cv::Mat outputImage;        ///< Loaded image data
-        GLuint textureId = 0;       ///< OpenGL texture ID for display
+        Core::Texture texture;      ///< RAII-managed OpenGL texture for display
         std::string lastLoadedPath; ///< Last successfully loaded file path
-        char filePathBuffer[Constants::Special::kFilePathBufferSize] =
+        char filePathBuffer[Constants::Buffers::kFilePathBufferSize] =
             ""; ///< Buffer for file path input (ImGui requirement)
     };
 } // namespace VisionCraft::Engine

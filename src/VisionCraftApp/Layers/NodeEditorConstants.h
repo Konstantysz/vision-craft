@@ -288,9 +288,6 @@ namespace VisionCraft::Constants
 
         /// @brief Buffer size for string parameter input widgets
         constexpr size_t kStringBufferSize = 256;
-
-        /// @brief Buffer size for file path input widgets
-        constexpr size_t kFilePathBufferSize = 512;
     } // namespace Special
 
     // ========================================
@@ -318,57 +315,6 @@ namespace VisionCraft::Constants
         } // namespace Float
     } // namespace Input
 
-    // ========================================
-    // NODE-SPECIFIC CONSTANTS
-    // ========================================
-
-    /**
-     * @brief ImageInputNode-specific constants.
-     */
-    namespace ImageInputNode
-    {
-        /**
-         * @brief UI layout constants for ImageInputNode.
-         */
-        namespace UI
-        {
-            /// @brief Width of Browse and Load buttons
-            constexpr float kButtonWidth = 55.0f;
-
-            /// @brief Spacing between UI elements
-            constexpr float kSpacing = 5.0f;
-        } // namespace UI
-
-        /**
-         * @brief Image preview constants.
-         */
-        namespace Preview
-        {
-            /// @brief Maximum width for compact image preview
-            constexpr float kMaxWidth = 120.0f;
-
-            /// @brief Maximum height for compact image preview
-            constexpr float kMaxHeight = 80.0f;
-
-            /// @brief Spacing around image preview
-            constexpr float kSpacing = 10.0f;
-
-            /// @brief Center alignment factor (0.5 = 50%)
-            constexpr float kCenterAlignFactor = 0.5f;
-        } // namespace Preview
-
-        /**
-         * @brief Status text colors (ImVec4 format).
-         */
-        namespace StatusColors
-        {
-            /// @brief Success color (green) for loaded image
-            constexpr ImVec4 kSuccess = ImVec4(0.0f, 0.8f, 0.0f, 1.0f);
-
-            /// @brief Warning color (yellow) for no image
-            constexpr ImVec4 kWarning = ImVec4(0.8f, 0.8f, 0.0f, 1.0f);
-        } // namespace StatusColors
-    } // namespace ImageInputNode
 
     /**
      * @brief NodeRenderer-specific constants.

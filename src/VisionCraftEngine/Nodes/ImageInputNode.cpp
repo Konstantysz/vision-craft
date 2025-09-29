@@ -8,8 +8,8 @@
 #include <imgui.h>
 #include <opencv2/opencv.hpp>
 
-// Include constants for magic number elimination
-#include "../../VisionCraftApp/Layers/NodeEditorConstants.h"
+// Include Engine constants
+#include "../EngineConstants.h"
 
 
 #ifdef _WIN32
@@ -64,10 +64,6 @@ namespace VisionCraft::Engine
         LoadImageFromPath(filepath.string());
     }
 
-    ImageInputNode::~ImageInputNode()
-    {
-        CleanupTexture();
-    }
 
     void ImageInputNode::LoadImageFromPath(const std::string &filepath)
     {
@@ -113,20 +109,22 @@ namespace VisionCraft::Engine
     {
         if (outputImage.empty())
         {
-            CleanupTexture();
+            texture.Reset(); // RAII automatically handles cleanup
             return;
         }
-
-        // Clean up previous texture
-        CleanupTexture();
 
         // Convert BGR to RGB for OpenGL
         cv::Mat rgbImage;
         cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
 
-        // Generate and bind texture
-        glGenTextures(1, &textureId);
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        // Create new texture (automatically cleans up previous)
+        if (!texture.Create())
+        {
+            return;
+        }
+
+        // Bind and configure texture
+        glBindTexture(GL_TEXTURE_2D, texture.Get());
 
         // Set texture parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -141,14 +139,6 @@ namespace VisionCraft::Engine
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    void ImageInputNode::CleanupTexture()
-    {
-        if (textureId != 0)
-        {
-            glDeleteTextures(1, &textureId);
-            textureId = 0;
-        }
-    }
 
     std::string ImageInputNode::OpenFileBrowser()
     {
@@ -280,15 +270,24 @@ namespace VisionCraft::Engine
             {
                 filename = filename.substr(0, 17) + "...";
             }
-            ImGui::TextColored(Constants::ImageInputNode::StatusColors::kSuccess, "✓ %s", filename.c_str());
+            ImGui::TextColored(ImVec4(Constants::ImageInputNode::StatusColors::kSuccessColor[0],
+                                   Constants::ImageInputNode::StatusColors::kSuccessColor[1],
+                                   Constants::ImageInputNode::StatusColors::kSuccessColor[2],
+                                   Constants::ImageInputNode::StatusColors::kSuccessColor[3]),
+                "✓ %s",
+                filename.c_str());
         }
         else if (strlen(filePathBuffer) > 0)
         {
-            ImGui::TextColored(Constants::ImageInputNode::StatusColors::kWarning, "⚠ No image");
+            ImGui::TextColored(ImVec4(Constants::ImageInputNode::StatusColors::kWarningColor[0],
+                                   Constants::ImageInputNode::StatusColors::kWarningColor[1],
+                                   Constants::ImageInputNode::StatusColors::kWarningColor[2],
+                                   Constants::ImageInputNode::StatusColors::kWarningColor[3]),
+                "⚠ No image");
         }
 
         // Display compact image preview if available
-        if (HasValidImage() && textureId != 0)
+        if (HasValidImage())
         {
             // Calculate small preview size (max width x height maintaining aspect ratio)
             const float maxPreviewWidth = Constants::ImageInputNode::Preview::kMaxWidth;
@@ -313,8 +312,10 @@ namespace VisionCraft::Engine
                     + (regionWidth - previewWidth) * Constants::ImageInputNode::Preview::kCenterAlignFactor);
             }
 
-            ImGui::Image(
-                static_cast<ImTextureID>(textureId), ImVec2(previewWidth, previewHeight), ImVec2(0, 0), ImVec2(1, 1));
+            ImGui::Image(static_cast<ImTextureID>(texture.Get()),
+                ImVec2(previewWidth, previewHeight),
+                ImVec2(0, 0),
+                ImVec2(1, 1));
 
             // Show dimensions on hover
             if (ImGui::IsItemHovered())

@@ -1,4 +1,6 @@
 #include "NodeRenderer.h"
+#include "DefaultNodeRenderingStrategy.h"
+#include "ImageInputNodeRenderingStrategy.h"
 #include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
 
@@ -590,73 +592,11 @@ namespace VisionCraft
 
     void NodeRenderer::RenderCustomNodeContent(Engine::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize)
     {
-        // Check if this is an ImageInputNode and render full-width image preview
-        if (auto *imageNode = dynamic_cast<Engine::ImageInputNode *>(node))
-        {
-            // Display image preview if available (below all parameters)
-            if (imageNode->HasValidImage() && imageNode->GetTextureId() != 0)
-            {
-                const float titleHeight = Constants::Node::kTitleHeight * canvas_.GetZoomLevel();
-                const float padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
+        if (!node)
+            return;
 
-                // Calculate actual parameter area height
-                const auto pins = connectionManager_.GetNodePins(node->GetName());
-                std::vector<NodePin> inputPins, outputPins;
-                std::copy_if(pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) {
-                    return pin.isInput;
-                });
-                std::copy_if(pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) {
-                    return !pin.isInput;
-                });
-
-                const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas_.GetZoomLevel();
-                const auto extendedPinHeight = Constants::Pin::kHeight * canvas_.GetZoomLevel();
-                const auto compactSpacing = Constants::Pin::kCompactSpacing * canvas_.GetZoomLevel();
-                const auto normalSpacing = Constants::Pin::kSpacing * canvas_.GetZoomLevel();
-
-                float inputColumnHeight = 0;
-                for (const auto &pin : inputPins)
-                {
-                    const bool needsInputWidget = pin.dataType != PinDataType::Image;
-                    const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
-                    const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
-                    inputColumnHeight += pinHeight + spacing;
-                }
-
-                const auto outputColumnHeight = outputPins.size() * (compactPinHeight + compactSpacing);
-                const auto parameterAreaHeight = std::max(inputColumnHeight, outputColumnHeight);
-
-                // Add extra spacing to ensure the image appears clearly below parameters
-                const float extraSpacing = 10.0f * canvas_.GetZoomLevel();
-                const float previewY = nodePos.y + titleHeight + padding + parameterAreaHeight + extraSpacing;
-
-                // Calculate full-width preview size (use full node width minus padding)
-                const float nodeContentWidth = nodeSize.x - (padding * 2);
-
-                // Calculate actual preview dimensions - full width, preserve aspect ratio
-                auto [previewWidth, previewHeight] = imageNode->CalculatePreviewDimensions(nodeContentWidth, 0);
-
-                if (previewWidth > 0 && previewHeight > 0)
-                {
-                    // Always position at left edge with padding - use full width
-                    ImGui::SetCursorScreenPos(ImVec2(nodePos.x + padding, previewY));
-
-                    ImGui::Image(static_cast<ImTextureID>(imageNode->GetTextureId()),
-                        ImVec2(previewWidth, previewHeight),
-                        ImVec2(0, 0),
-                        ImVec2(1, 1));
-
-                    // Show tooltip with image info on hover
-                    if (ImGui::IsItemHovered())
-                    {
-                        auto outputImage = imageNode->GetOutputImage();
-                        float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
-                        ImGui::SetTooltip(
-                            "%dx%d pixels\nAspect ratio: %.2f", outputImage.cols, outputImage.rows, imageAspect);
-                    }
-                }
-            }
-        }
+        auto strategy = CreateRenderingStrategy(node);
+        strategy->RenderCustomContent(*node, nodePos, nodeSize, canvas_.GetZoomLevel());
     }
 
     NodeDimensions NodeRenderer::CalculateNodeDimensions(const std::vector<NodePin> &pins,
@@ -722,6 +662,16 @@ namespace VisionCraft
             inputPins.size(),
             outputPins.size(),
             0 };
+    }
+
+    std::unique_ptr<NodeRenderingStrategy> NodeRenderer::CreateRenderingStrategy(const Engine::Node *node)
+    {
+        if (node && node->GetName() == "Image Input")
+        {
+            return std::make_unique<ImageInputNodeRenderingStrategy>();
+        }
+
+        return std::make_unique<DefaultNodeRenderingStrategy>();
     }
 
 } // namespace VisionCraft

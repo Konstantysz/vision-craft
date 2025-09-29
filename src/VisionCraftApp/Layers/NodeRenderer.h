@@ -4,6 +4,7 @@
 #include "ConnectionManager.h"
 #include "Node.h"
 #include "NodeEditorTypes.h"
+#include "NodeRenderingStrategy.h"
 
 #include <functional>
 #include <string>
@@ -190,6 +191,12 @@ namespace VisionCraft
             const Engine::Node *node = nullptr);
 
     private:
+        /**
+         * @brief Creates appropriate rendering strategy for the given node.
+         * @param node The node to create strategy for
+         * @return Unique pointer to the appropriate strategy
+         */
+        [[nodiscard]] static std::unique_ptr<NodeRenderingStrategy> CreateRenderingStrategy(const Engine::Node *node);
         CanvasController &canvas_;
         ConnectionManager &connectionManager_;
     };

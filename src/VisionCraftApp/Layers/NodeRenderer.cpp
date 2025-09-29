@@ -156,20 +156,23 @@ namespace VisionCraft
             const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
             const auto currentSpacing = needsInputWidget ? normalSpacing : compactSpacing;
 
-            const auto pinPos = ImVec2(columnX, currentY + currentPinHeight * 0.5f);
+            const auto pinPos =
+                ImVec2(columnX, currentY + currentPinHeight * Constants::NodeRenderer::PinLayout::kCenterFactor);
 
             ImVec2 labelPos;
             if (isInputColumn)
             {
                 labelPos = ImVec2(columnX + pinRadius + textOffset,
-                    currentY + currentPinHeight * 0.5f - 6.0f * canvas_.GetZoomLevel());
+                    currentY + currentPinHeight * Constants::NodeRenderer::PinLayout::kCenterFactor
+                        - Constants::NodeRenderer::PinLayout::kTextVerticalOffset * canvas_.GetZoomLevel());
             }
             else
             {
                 const auto displayName = FormatParameterName(pin.name);
                 const auto textSize = ImGui::CalcTextSize(displayName.c_str());
                 labelPos = ImVec2(columnX - pinRadius - textSize.x - textOffset,
-                    currentY + currentPinHeight * 0.5f - 6.0f * canvas_.GetZoomLevel());
+                    currentY + currentPinHeight * Constants::NodeRenderer::PinLayout::kCenterFactor
+                        - Constants::NodeRenderer::PinLayout::kTextVerticalOffset * canvas_.GetZoomLevel());
             }
 
             const auto state = getPinInteractionState(node->GetId(), pin.name);
@@ -212,12 +215,16 @@ namespace VisionCraft
         if (state.isActive)
         {
             borderColor = Constants::Colors::Pin::kActive;
-            drawList->AddCircleFilled(position, radius + 3.0f, Constants::Colors::Pin::kActive);
+            drawList->AddCircleFilled(position,
+                radius + Constants::NodeRenderer::PinEffects::kActiveRadiusExpansion,
+                Constants::Colors::Pin::kActive);
         }
         else if (state.isHovered)
         {
             borderColor = Constants::Colors::Pin::kHover;
-            drawList->AddCircleFilled(position, radius + 2.5f, Constants::Colors::Pin::kHover);
+            drawList->AddCircleFilled(position,
+                radius + Constants::NodeRenderer::PinEffects::kHoverRadiusExpansion,
+                Constants::Colors::Pin::kHover);
         }
 
         drawList->AddCircleFilled(position, radius, pinColor);
@@ -292,11 +299,12 @@ namespace VisionCraft
         const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
         const auto totalWidth = nodeSize.x - (2 * padding);
 
-        layout.columnWidth = totalWidth * 0.5f;
+        layout.columnWidth = totalWidth * Constants::NodeRenderer::ColumnLayout::kColumnWidthFactor;
         layout.leftColumnX = padding;
         layout.rightColumnX = nodeSize.x - padding - layout.columnWidth;
         layout.rowHeight = (Constants::Parameter::kHeight + Constants::Parameter::kSpacing) * canvas_.GetZoomLevel();
-        layout.maxRows = std::max(1.0f, std::floor(nodeSize.y / layout.rowHeight));
+        layout.maxRows =
+            std::max(Constants::NodeRenderer::ColumnLayout::kMinRows, std::floor(nodeSize.y / layout.rowHeight));
 
         return layout;
     }
@@ -386,7 +394,8 @@ namespace VisionCraft
         }
 
         case PinDataType::Float: {
-            float value = static_cast<float>(node->GetParamOr<double>(pin.name, 0.0));
+            float value = static_cast<float>(
+                node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
 
             ImGui::PushItemWidth(inputWidth);
             if (ImGui::InputFloat(widgetId.c_str(),
@@ -453,11 +462,12 @@ namespace VisionCraft
         float pinRadius)
     {
         const auto textOffset = Constants::Pin::kTextOffset * canvas_.GetZoomLevel();
-        const auto inputVerticalOffset = 18.0f * canvas_.GetZoomLevel();
+        const auto inputVerticalOffset =
+            Constants::NodeRenderer::ParameterInput::kVerticalOffset * canvas_.GetZoomLevel();
         const auto inputPosX = pinPos.x + pinRadius + textOffset;
         const auto inputPosY = pinPos.y + inputVerticalOffset;
         const auto inputPos = ImVec2(inputPosX, inputPosY);
-        const auto inputWidth = 100.0f * canvas_.GetZoomLevel();
+        const auto inputWidth = Constants::NodeRenderer::ParameterInput::kInputWidth * canvas_.GetZoomLevel();
 
         ImGui::SetCursorScreenPos(inputPos);
 
@@ -481,10 +491,15 @@ namespace VisionCraft
         }
 
         case PinDataType::Float: {
-            float value = static_cast<float>(node->GetParamOr<double>(pin.name, 0.0));
+            float value = static_cast<float>(
+                node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
 
             ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputFloat(widgetId.c_str(), &value, 0.1f, 1.0f, "%.2f"))
+            if (ImGui::InputFloat(widgetId.c_str(),
+                    &value,
+                    Constants::NodeRenderer::ParameterInput::kFloatStep,
+                    Constants::NodeRenderer::ParameterInput::kFloatFastStep,
+                    Constants::NodeRenderer::ParameterInput::kFloatFormat))
             {
                 node->SetParam(pin.name, static_cast<double>(value));
             }
@@ -540,8 +555,9 @@ namespace VisionCraft
                 ImGui::PopItemWidth();
 
                 // Now position buttons to the right using absolute positioning
-                const float buttonWidth = 35.0f * canvas_.GetZoomLevel();
-                const float spacing = 5.0f * canvas_.GetZoomLevel();
+                const float buttonWidth =
+                    Constants::NodeRenderer::ParameterInput::kButtonWidth * canvas_.GetZoomLevel();
+                const float spacing = Constants::NodeRenderer::ParameterInput::kSpacing * canvas_.GetZoomLevel();
                 const float buttonHeight = ImGui::GetFrameHeight();
 
                 // Calculate button position to the right of the textbox
@@ -610,11 +626,19 @@ namespace VisionCraft
 
     std::unique_ptr<NodeRenderingStrategy> NodeRenderer::CreateRenderingStrategy(const Engine::Node *node)
     {
-        if (node && node->GetName() == "Image Input")
+        if (!node)
+        {
+            return std::make_unique<DefaultNodeRenderingStrategy>();
+        }
+
+        // Dependency injection: App layer decides which strategy to use based on node type
+        // This eliminates the layering violation where Engine layer included App layer files
+        if (const auto *imageNode = dynamic_cast<const Engine::ImageInputNode *>(node))
         {
             return std::make_unique<ImageInputNodeRenderingStrategy>();
         }
 
+        // Default strategy for all other node types
         return std::make_unique<DefaultNodeRenderingStrategy>();
     }
 

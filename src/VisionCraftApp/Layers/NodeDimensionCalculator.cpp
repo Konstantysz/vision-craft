@@ -1,6 +1,5 @@
 #include "NodeDimensionCalculator.h"
 #include "NodeEditorConstants.h"
-#include "Nodes/ImageInputNode.h"
 #include <algorithm>
 
 namespace VisionCraft
@@ -54,24 +53,12 @@ namespace VisionCraft
 
         const auto contentHeight = CalculateBaseContentHeight(inputPins, outputPins, zoomLevel);
 
-        // Add extra height for ImageInputNode image preview - EXACT DIMENSIONS PRE-CALCULATED!
         float extraHeight = 0;
-        if (node && node->GetName() == "Image Input")
+        if (node)
         {
-            const auto *imageInputNode = dynamic_cast<const Engine::ImageInputNode *>(node);
-            if (imageInputNode && imageInputNode->HasValidImage())
-            {
-                // Calculate EXACT same dimensions that will be used during rendering
-                // This ensures ImGui knows the final node size from frame 1
-                const float nodeWidth = Constants::Node::kWidth * zoomLevel;
-                const float nodeContentWidth = nodeWidth - (padding * 2);
-                auto [previewWidth, actualPreviewHeight] =
-                    imageInputNode->CalculatePreviewDimensions(nodeContentWidth, 0);
-
-                // Use EXACT same spacing calculation as in RenderCustomNodeContent
-                const float imagePreviewSpacing = 10.0f * zoomLevel; // This matches extraSpacing in rendering
-                extraHeight = actualPreviewHeight + imagePreviewSpacing;
-            }
+            const float nodeWidth = Constants::Node::kWidth * zoomLevel;
+            const float nodeContentWidth = nodeWidth - (padding * 2);
+            extraHeight = node->CalculateExtraHeight(nodeContentWidth, zoomLevel);
         }
 
         const auto totalHeight = titleHeight + contentHeight + extraHeight + padding;

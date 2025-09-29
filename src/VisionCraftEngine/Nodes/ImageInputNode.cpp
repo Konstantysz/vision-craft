@@ -8,9 +8,17 @@
 #include <imgui.h>
 #include <opencv2/opencv.hpp>
 
+// Include constants for magic number elimination
+#include "../../VisionCraftApp/Layers/NodeEditorConstants.h"
+
+
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <commdlg.h>
 #include <windows.h>
 #else
@@ -222,8 +230,8 @@ namespace VisionCraft::Engine
     void ImageInputNode::RenderCustomUI()
     {
         const float availableWidth = ImGui::GetContentRegionAvail().x;
-        const float buttonWidth = 55.0f;
-        const float spacing = 5.0f;
+        const float buttonWidth = Constants::ImageInputNode::UI::kButtonWidth;
+        const float spacing = Constants::ImageInputNode::UI::kSpacing;
         const float inputWidth = availableWidth - (buttonWidth * 2) - (spacing * 2);
 
         // File path input field with proper sizing
@@ -272,19 +280,19 @@ namespace VisionCraft::Engine
             {
                 filename = filename.substr(0, 17) + "...";
             }
-            ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.0f, 1.0f), "✓ %s", filename.c_str());
+            ImGui::TextColored(Constants::ImageInputNode::StatusColors::kSuccess, "✓ %s", filename.c_str());
         }
         else if (strlen(filePathBuffer) > 0)
         {
-            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.0f, 1.0f), "⚠ No image");
+            ImGui::TextColored(Constants::ImageInputNode::StatusColors::kWarning, "⚠ No image");
         }
 
         // Display compact image preview if available
         if (HasValidImage() && textureId != 0)
         {
-            // Calculate small preview size (max 120x80 maintaining aspect ratio)
-            const float maxPreviewWidth = 120.0f;
-            const float maxPreviewHeight = 80.0f;
+            // Calculate small preview size (max width x height maintaining aspect ratio)
+            const float maxPreviewWidth = Constants::ImageInputNode::Preview::kMaxWidth;
+            const float maxPreviewHeight = Constants::ImageInputNode::Preview::kMaxHeight;
 
             float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
             float previewWidth = maxPreviewWidth;
@@ -300,7 +308,9 @@ namespace VisionCraft::Engine
             float regionWidth = ImGui::GetContentRegionAvail().x;
             if (previewWidth < regionWidth)
             {
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (regionWidth - previewWidth) * 0.5f);
+                ImGui::SetCursorPosX(
+                    ImGui::GetCursorPosX()
+                    + (regionWidth - previewWidth) * Constants::ImageInputNode::Preview::kCenterAlignFactor);
             }
 
             ImGui::Image(
@@ -331,6 +341,22 @@ namespace VisionCraft::Engine
         // Let height be whatever it needs to be to preserve aspect ratio
         // The node will resize itself to accommodate the image
         return { previewWidth, previewHeight };
+    }
+
+
+    float ImageInputNode::CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const
+    {
+        if (!HasValidImage())
+        {
+            return 0.0f;
+        }
+
+        // Calculate actual preview dimensions using the same method as rendering
+        auto [previewWidth, actualPreviewHeight] = CalculatePreviewDimensions(nodeContentWidth, 0);
+
+        // Use EXACT same spacing calculation as in rendering
+        const float imagePreviewSpacing = Constants::ImageInputNode::Preview::kSpacing * zoomLevel;
+        return actualPreviewHeight + imagePreviewSpacing;
     }
 
 } // namespace VisionCraft::Engine

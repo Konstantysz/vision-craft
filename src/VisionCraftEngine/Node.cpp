@@ -109,4 +109,12 @@ namespace VisionCraft::Engine
     template int Node::GetValidatedParam<int>(const std::string &, int, const ValidationRange<int> &) const;
     template double Node::GetValidatedParam<double>(const std::string &, double, const ValidationRange<double> &) const;
 
+
+    float Node::CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const
+    {
+        // Default implementation: no extra height needed
+        // Derived classes can override this for custom content
+        return 0.0f;
+    }
+
 } // namespace VisionCraft::Engine

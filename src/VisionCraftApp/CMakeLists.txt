@@ -10,7 +10,10 @@ add_executable(VisionCraftApp
     Layers/CanvasController.cpp
     Layers/ConnectionManager.cpp
     Layers/PropertyPanelLayer.cpp
-    Layers/GraphExecutionLayer.cpp)
+    Layers/GraphExecutionLayer.cpp
+    Layers/NodeDimensionCalculator.cpp
+    Layers/DefaultNodeRenderingStrategy.cpp
+    Layers/ImageInputNodeRenderingStrategy.cpp)
 
 target_compile_features(VisionCraftApp PRIVATE cxx_std_20)
 

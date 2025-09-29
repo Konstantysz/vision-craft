@@ -5,6 +5,9 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
+// Include constants for magic number elimination
+#include "../../VisionCraftApp/Layers/NodeEditorConstants.h"
+
 namespace VisionCraft::Engine
 {
     /**
@@ -83,7 +86,15 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] std::pair<float, float> CalculatePreviewDimensions(float nodeContentWidth, float maxHeight) const;
 
-        char filePathBuffer[512] = ""; ///< Buffer for file path input (public for NodeRenderer access)
+
+        /**
+         * @brief Calculates extra height needed for image preview.
+         * Overrides base class to provide polymorphic dimension calculation.
+         * @param nodeContentWidth Available content width
+         * @param zoomLevel Current zoom level
+         * @return Extra height required for image preview
+         */
+        [[nodiscard]] float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const override;
 
     private:
         /**
@@ -111,5 +122,7 @@ namespace VisionCraft::Engine
         cv::Mat outputImage;        ///< Loaded image data
         GLuint textureId = 0;       ///< OpenGL texture ID for display
         std::string lastLoadedPath; ///< Last successfully loaded file path
+        char filePathBuffer[Constants::Special::kFilePathBufferSize] =
+            ""; ///< Buffer for file path input (ImGui requirement)
     };
 } // namespace VisionCraft::Engine

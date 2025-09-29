@@ -8,6 +8,7 @@
 
 #include "NodeParameter.h"
 
+
 namespace VisionCraft::Engine
 {
     /**
@@ -152,6 +153,15 @@ namespace VisionCraft::Engine
          * @brief Abstract method for processing node data. Must be implemented by derived classes.
          */
         virtual void Process() = 0;
+
+        /**
+         * @brief Calculates extra height needed for node-specific content.
+         * Uses polymorphism instead of dynamic_cast chains.
+         * @param nodeContentWidth Available content width
+         * @param zoomLevel Current zoom level
+         * @return Extra height required for custom content (0 if none)
+         */
+        [[nodiscard]] virtual float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const;
 
     protected:
         ParameterStorage parameters; ///< Modern type-safe parameter storage

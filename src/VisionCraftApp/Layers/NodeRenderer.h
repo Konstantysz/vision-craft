@@ -170,6 +170,80 @@ namespace VisionCraft
         void RenderParameterInputWidget(Engine::Node *node, const NodePin &pin, const ImVec2 &pinPos, float pinRadius);
 
         /**
+         * @brief Renders a string input widget.
+         * @param node Pointer to the node
+         * @param pin The parameter pin
+         * @param widgetId Unique widget ID
+         * @param inputWidth Width of the input widget
+         */
+        void RenderStringInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+
+        /**
+         * @brief Renders a float input widget.
+         * @param node Pointer to the node
+         * @param pin The parameter pin
+         * @param widgetId Unique widget ID
+         * @param inputWidth Width of the input widget
+         */
+        void RenderFloatInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+
+        /**
+         * @brief Renders an integer input widget.
+         * @param node Pointer to the node
+         * @param pin The parameter pin
+         * @param widgetId Unique widget ID
+         * @param inputWidth Width of the input widget
+         */
+        void RenderIntInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+
+        /**
+         * @brief Renders a boolean checkbox widget.
+         * @param node Pointer to the node
+         * @param pin The parameter pin
+         * @param widgetId Unique widget ID
+         */
+        void RenderBoolInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId);
+
+        /**
+         * @brief Renders a path input widget with optional file browser buttons.
+         * @param node Pointer to the node
+         * @param pin The parameter pin
+         * @param widgetId Unique widget ID
+         * @param inputWidth Width of the input widget
+         */
+        void RenderPathInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+
+        /**
+         * @brief Renders node background and border.
+         * @param worldPos Screen position of the node
+         * @param nodeSize Size of the node
+         * @param isSelected Whether the node is selected
+         */
+        void RenderNodeBackground(const ImVec2 &worldPos, const ImVec2 &nodeSize, bool isSelected);
+
+        /**
+         * @brief Renders node title bar background.
+         * @param worldPos Screen position of the node
+         * @param nodeSize Size of the node
+         */
+        void RenderNodeTitleBar(const ImVec2 &worldPos, const ImVec2 &nodeSize);
+
+        /**
+         * @brief Renders node title text.
+         * @param node Pointer to the node
+         * @param worldPos Screen position of the node
+         */
+        void RenderNodeTitleText(Engine::Node *node, const ImVec2 &worldPos);
+
+        /**
+         * @brief Separates pins into input and output vectors.
+         * @param pins All pins for the node
+         * @return Pair of (input pins, output pins)
+         */
+        [[nodiscard]] std::pair<std::vector<NodePin>, std::vector<NodePin>> SeparateInputOutputPins(
+            const std::vector<NodePin> &pins);
+
+        /**
          * @brief Renders custom node content (e.g., image preview for ImageInputNode).
          * @param node Pointer to the node
          * @param nodePos Position of the node

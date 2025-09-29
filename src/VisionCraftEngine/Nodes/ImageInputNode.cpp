@@ -5,7 +5,6 @@
 #include <cctype>
 #include <cstring>
 #include <filesystem>
-#include <imgui.h>
 #include <opencv2/opencv.hpp>
 
 // Include Engine constants
@@ -19,8 +18,10 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-#include <commdlg.h>
+// clang-format off
 #include <windows.h>
+#include <commdlg.h>
+// clang-format on
 #else
 #include <cstdlib>
 #include <cstring>
@@ -64,6 +65,15 @@ namespace VisionCraft::Engine
         LoadImageFromPath(filepath.string());
     }
 
+    bool ImageInputNode::HasValidImage() const
+    {
+        return !outputImage.empty() && texture.IsValid();
+    }
+
+    GLuint ImageInputNode::GetTextureId() const
+    {
+        return texture.Get();
+    }
 
     void ImageInputNode::LoadImageFromPath(const std::string &filepath)
     {
@@ -192,155 +202,20 @@ namespace VisionCraft::Engine
 #endif
     }
 
-    std::string ImageInputNode::RenderFilePathInput()
-    {
-        // Create unique ID for this node's input field
-        std::string inputId = "##ImagePath_" + std::to_string(static_cast<int>(GetId()));
 
-        if (ImGui::InputText(
-                inputId.c_str(), filePathBuffer, sizeof(filePathBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            // Validate that the path exists and is an image file
-            std::filesystem::path filepath(filePathBuffer);
-            if (std::filesystem::exists(filepath))
-            {
-                std::string extension = filepath.extension().string();
-                std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-
-                if (extension == ".jpg" || extension == ".jpeg" || extension == ".png" || extension == ".bmp"
-                    || extension == ".tiff" || extension == ".tif" || extension == ".webp")
-                {
-                    return std::string(filePathBuffer);
-                }
-            }
-        }
-        return "";
-    }
-
-    void ImageInputNode::RenderCustomUI()
-    {
-        const float availableWidth = ImGui::GetContentRegionAvail().x;
-        const float buttonWidth = Constants::ImageInputNode::UI::kButtonWidth;
-        const float spacing = Constants::ImageInputNode::UI::kSpacing;
-        const float inputWidth = availableWidth - (buttonWidth * 2) - (spacing * 2);
-
-        // File path input field with proper sizing
-        ImGui::PushItemWidth(inputWidth);
-        std::string pathFromInput = RenderFilePathInput();
-        ImGui::PopItemWidth();
-
-        // Browse button
-        ImGui::SameLine(0, spacing);
-        std::string browseId = "Browse##" + std::to_string(static_cast<int>(GetId()));
-        if (ImGui::Button(browseId.c_str(), ImVec2(buttonWidth, 0)))
-        {
-            std::string selectedPath = OpenFileBrowser();
-            if (!selectedPath.empty())
-            {
-                // Update the input buffer
-                strncpy(filePathBuffer, selectedPath.c_str(), sizeof(filePathBuffer) - 1);
-                filePathBuffer[sizeof(filePathBuffer) - 1] = '\0';
-                pathFromInput = selectedPath;
-            }
-        }
-
-        // Load button
-        ImGui::SameLine(0, spacing);
-        std::string loadId = "Load##" + std::to_string(static_cast<int>(GetId()));
-        if (ImGui::Button(loadId.c_str(), ImVec2(buttonWidth, 0)))
-        {
-            if (strlen(filePathBuffer) > 0)
-            {
-                pathFromInput = std::string(filePathBuffer);
-            }
-        }
-
-        // Process image loading if path was selected/entered
-        if (!pathFromInput.empty())
-        {
-            SetParam("filepath", std::filesystem::path(pathFromInput));
-            Process(); // Reload the image
-        }
-
-        // Display current file status (compact)
-        if (!lastLoadedPath.empty())
-        {
-            std::string filename = std::filesystem::path(lastLoadedPath).filename().string();
-            if (filename.length() > 20)
-            {
-                filename = filename.substr(0, 17) + "...";
-            }
-            ImGui::TextColored(ImVec4(Constants::ImageInputNode::StatusColors::kSuccessColor[0],
-                                   Constants::ImageInputNode::StatusColors::kSuccessColor[1],
-                                   Constants::ImageInputNode::StatusColors::kSuccessColor[2],
-                                   Constants::ImageInputNode::StatusColors::kSuccessColor[3]),
-                "✓ %s",
-                filename.c_str());
-        }
-        else if (strlen(filePathBuffer) > 0)
-        {
-            ImGui::TextColored(ImVec4(Constants::ImageInputNode::StatusColors::kWarningColor[0],
-                                   Constants::ImageInputNode::StatusColors::kWarningColor[1],
-                                   Constants::ImageInputNode::StatusColors::kWarningColor[2],
-                                   Constants::ImageInputNode::StatusColors::kWarningColor[3]),
-                "⚠ No image");
-        }
-
-        // Display compact image preview if available
-        if (HasValidImage())
-        {
-            // Calculate small preview size (max width x height maintaining aspect ratio)
-            const float maxPreviewWidth = Constants::ImageInputNode::Preview::kMaxWidth;
-            const float maxPreviewHeight = Constants::ImageInputNode::Preview::kMaxHeight;
-
-            float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
-            float previewWidth = maxPreviewWidth;
-            float previewHeight = maxPreviewWidth / imageAspect;
-
-            if (previewHeight > maxPreviewHeight)
-            {
-                previewHeight = maxPreviewHeight;
-                previewWidth = maxPreviewHeight * imageAspect;
-            }
-
-            // Center the image preview
-            float regionWidth = ImGui::GetContentRegionAvail().x;
-            if (previewWidth < regionWidth)
-            {
-                ImGui::SetCursorPosX(
-                    ImGui::GetCursorPosX()
-                    + (regionWidth - previewWidth) * Constants::ImageInputNode::Preview::kCenterAlignFactor);
-            }
-
-            ImGui::Image(static_cast<ImTextureID>(texture.Get()),
-                ImVec2(previewWidth, previewHeight),
-                ImVec2(0, 0),
-                ImVec2(1, 1));
-
-            // Show dimensions on hover
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::SetTooltip("%dx%d pixels", outputImage.cols, outputImage.rows);
-            }
-        }
-    }
-
-    std::pair<float, float> ImageInputNode::CalculatePreviewDimensions(float nodeContentWidth, float maxHeight) const
+    std::pair<float, float> ImageInputNode::CalculatePreviewDimensions(float nodeContentWidth,
+        [[maybe_unused]] float maxHeight) const
     {
         if (!HasValidImage())
         {
             return { 0.0f, 0.0f };
         }
 
-        // Get image aspect ratio
         float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
 
-        // ALWAYS use full width and preserve aspect ratio - no distortion!
         float previewWidth = nodeContentWidth;
         float previewHeight = previewWidth / imageAspect;
 
-        // Let height be whatever it needs to be to preserve aspect ratio
-        // The node will resize itself to accommodate the image
         return { previewWidth, previewHeight };
     }
 
@@ -352,10 +227,8 @@ namespace VisionCraft::Engine
             return 0.0f;
         }
 
-        // Calculate actual preview dimensions using the same method as rendering
         auto [previewWidth, actualPreviewHeight] = CalculatePreviewDimensions(nodeContentWidth, 0);
 
-        // Use EXACT same spacing calculation as in rendering
         const float imagePreviewSpacing = Constants::ImageInputNode::Preview::kSpacing * zoomLevel;
         return actualPreviewHeight + imagePreviewSpacing;
     }

@@ -22,11 +22,25 @@ namespace VisionCraft
         Engine::NodeId selectedNodeId,
         std::function<PinInteractionState(Engine::NodeId, const std::string &)> getPinInteractionState)
     {
-        auto *drawList = ImGui::GetWindowDrawList();
         const auto worldPos = canvas_.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
         const auto pins = connectionManager_.GetNodePins(node->GetName());
         const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas_.GetZoomLevel(), node);
         const auto isSelected = (node->GetId() == selectedNodeId);
+
+        RenderNodeBackground(worldPos, dimensions.size, isSelected);
+        RenderNodeTitleBar(worldPos, dimensions.size);
+        RenderNodeTitleText(node, worldPos);
+
+        auto [inputPins, outputPins] = SeparateInputOutputPins(pins);
+        RenderPinsInColumn(node, inputPins, worldPos, dimensions, true, getPinInteractionState);
+        RenderPinsInColumn(node, outputPins, worldPos, dimensions, false, getPinInteractionState);
+
+        RenderCustomNodeContent(node, worldPos, dimensions.size);
+    }
+
+    void NodeRenderer::RenderNodeBackground(const ImVec2 &worldPos, const ImVec2 &nodeSize, bool isSelected)
+    {
+        auto *drawList = ImGui::GetWindowDrawList();
         const auto borderColor =
             isSelected ? Constants::Colors::Node::kBorderSelected : Constants::Colors::Node::kBorderNormal;
         const auto borderThickness =
@@ -34,32 +48,48 @@ namespace VisionCraft
         const auto nodeRounding = Constants::Node::kRounding * canvas_.GetZoomLevel();
 
         drawList->AddRectFilled(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y),
+            ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y),
             Constants::Colors::Node::kBackground,
             nodeRounding);
+
         drawList->AddRect(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + dimensions.size.y),
+            ImVec2(worldPos.x + nodeSize.x, worldPos.y + nodeSize.y),
             borderColor,
             nodeRounding,
             0,
             borderThickness * canvas_.GetZoomLevel());
+    }
 
+    void NodeRenderer::RenderNodeTitleBar(const ImVec2 &worldPos, const ImVec2 &nodeSize)
+    {
+        auto *drawList = ImGui::GetWindowDrawList();
         const auto titleHeight = Constants::Node::kTitleHeight * canvas_.GetZoomLevel();
+        const auto nodeRounding = Constants::Node::kRounding * canvas_.GetZoomLevel();
+
         drawList->AddRectFilled(worldPos,
-            ImVec2(worldPos.x + dimensions.size.x, worldPos.y + titleHeight),
+            ImVec2(worldPos.x + nodeSize.x, worldPos.y + titleHeight),
             Constants::Colors::Node::kTitle,
             nodeRounding,
             ImDrawFlags_RoundCornersTop);
+    }
 
+    void NodeRenderer::RenderNodeTitleText(Engine::Node *node, const ImVec2 &worldPos)
+    {
         if (canvas_.GetZoomLevel() > Constants::Zoom::kMinForText)
         {
+            auto *drawList = ImGui::GetWindowDrawList();
             const auto textPos = ImVec2(worldPos.x + Constants::Node::kPadding * canvas_.GetZoomLevel(),
                 worldPos.y + Constants::Node::Text::kOffset * canvas_.GetZoomLevel());
             drawList->AddText(textPos, Constants::Colors::Node::kText, node->GetName().c_str());
         }
+    }
 
+    std::pair<std::vector<NodePin>, std::vector<NodePin>> NodeRenderer::SeparateInputOutputPins(
+        const std::vector<NodePin> &pins)
+    {
         std::vector<NodePin> inputPins;
         std::vector<NodePin> outputPins;
+
         for (const auto &pin : pins)
         {
             if (pin.isInput)
@@ -72,11 +102,7 @@ namespace VisionCraft
             }
         }
 
-        RenderPinsInColumn(node, inputPins, worldPos, dimensions, true, getPinInteractionState);
-        RenderPinsInColumn(node, outputPins, worldPos, dimensions, false, getPinInteractionState);
-
-        // Render custom node content
-        RenderCustomNodeContent(node, worldPos, dimensions.size);
+        return { inputPins, outputPins };
     }
 
     void NodeRenderer::RenderNodeParametersInColumns(Engine::Node *node,
@@ -362,7 +388,6 @@ namespace VisionCraft
         float columnWidth)
     {
         const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
-        const auto pinRadius = Constants::Pin::kRadius * canvas_.GetZoomLevel();
 
         const auto labelText = FitTextInColumn(FormatParameterName(pin.name), columnWidth - padding);
         auto *drawList = ImGui::GetWindowDrawList();
@@ -378,75 +403,25 @@ namespace VisionCraft
 
         switch (pin.dataType)
         {
-        case PinDataType::String: {
-            std::string paramValue = node->GetParamOr<std::string>(pin.name, "");
-            char buffer[Constants::Special::kStringBufferSize];
-            strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
-            buffer[sizeof(buffer) - 1] = '\0';
-
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
-            {
-                node->SetParam(pin.name, std::string(buffer));
-            }
-            ImGui::PopItemWidth();
+        case PinDataType::String:
+            RenderStringInput(node, pin, widgetId, inputWidth);
             break;
-        }
 
-        case PinDataType::Float: {
-            float value = static_cast<float>(
-                node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
-
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputFloat(widgetId.c_str(),
-                    &value,
-                    Constants::Input::Float::kStep,
-                    Constants::Input::Float::kFastStep,
-                    Constants::Input::Float::kFormat))
-            {
-                node->SetParam(pin.name, static_cast<double>(value));
-            }
-            ImGui::PopItemWidth();
+        case PinDataType::Float:
+            RenderFloatInput(node, pin, widgetId, inputWidth);
             break;
-        }
 
-        case PinDataType::Int: {
-            int value = node->GetParamOr<int>(pin.name, 0);
-
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputInt(widgetId.c_str(), &value))
-            {
-                node->SetParam(pin.name, value);
-            }
-            ImGui::PopItemWidth();
+        case PinDataType::Int:
+            RenderIntInput(node, pin, widgetId, inputWidth);
             break;
-        }
 
-        case PinDataType::Bool: {
-            bool value = node->GetParamOr<bool>(pin.name, false);
-
-            if (ImGui::Checkbox(widgetId.c_str(), &value))
-            {
-                node->SetParam(pin.name, value);
-            }
+        case PinDataType::Bool:
+            RenderBoolInput(node, pin, widgetId);
             break;
-        }
 
-        case PinDataType::Path: {
-            auto pathValue = node->GetParamOr<std::filesystem::path>(pin.name, std::filesystem::path{});
-            std::string pathStr = pathValue.string();
-            char buffer[Constants::Special::kStringBufferSize];
-            strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
-            buffer[sizeof(buffer) - 1] = '\0';
-
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
-            {
-                node->SetParam(pin.name, std::filesystem::path(buffer));
-            }
-            ImGui::PopItemWidth();
+        case PinDataType::Path:
+            RenderPathInput(node, pin, widgetId, inputWidth);
             break;
-        }
 
         default: {
             std::string paramValue = "Unknown";
@@ -475,135 +450,150 @@ namespace VisionCraft
 
         switch (pin.dataType)
         {
-        case PinDataType::String: {
-            std::string paramValue = node->GetParamOr<std::string>(pin.name, "");
-            char buffer[256];
-            strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
-            buffer[sizeof(buffer) - 1] = '\0';
+        case PinDataType::String:
+            RenderStringInput(node, pin, widgetId, inputWidth);
+            break;
+        case PinDataType::Float:
+            RenderFloatInput(node, pin, widgetId, inputWidth);
+            break;
+        case PinDataType::Int:
+            RenderIntInput(node, pin, widgetId, inputWidth);
+            break;
+        case PinDataType::Bool:
+            RenderBoolInput(node, pin, widgetId);
+            break;
+        case PinDataType::Path:
+            RenderPathInput(node, pin, widgetId, inputWidth);
+            break;
+        default:
+            break;
+        }
+    }
+
+    void NodeRenderer::RenderStringInput(Engine::Node *node,
+        const NodePin &pin,
+        const std::string &widgetId,
+        float inputWidth)
+    {
+        std::string paramValue = node->GetParamOr<std::string>(pin.name, "");
+        char buffer[256];
+        strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
+        buffer[sizeof(buffer) - 1] = '\0';
+
+        ImGui::PushItemWidth(inputWidth);
+        if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+        {
+            node->SetParam(pin.name, std::string(buffer));
+        }
+        ImGui::PopItemWidth();
+    }
+
+    void NodeRenderer::RenderFloatInput(Engine::Node *node,
+        const NodePin &pin,
+        const std::string &widgetId,
+        float inputWidth)
+    {
+        float value = static_cast<float>(
+            node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
+
+        ImGui::PushItemWidth(inputWidth);
+        if (ImGui::InputFloat(widgetId.c_str(),
+                &value,
+                Constants::NodeRenderer::ParameterInput::kFloatStep,
+                Constants::NodeRenderer::ParameterInput::kFloatFastStep,
+                Constants::NodeRenderer::ParameterInput::kFloatFormat))
+        {
+            node->SetParam(pin.name, static_cast<double>(value));
+        }
+        ImGui::PopItemWidth();
+    }
+
+    void NodeRenderer::RenderIntInput(Engine::Node *node,
+        const NodePin &pin,
+        const std::string &widgetId,
+        float inputWidth)
+    {
+        int value = node->GetParamOr<int>(pin.name, 0);
+
+        ImGui::PushItemWidth(inputWidth);
+        if (ImGui::InputInt(widgetId.c_str(), &value))
+        {
+            node->SetParam(pin.name, value);
+        }
+        ImGui::PopItemWidth();
+    }
+
+    void NodeRenderer::RenderBoolInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId)
+    {
+        bool value = node->GetParamOr<bool>(pin.name, false);
+
+        if (ImGui::Checkbox(widgetId.c_str(), &value))
+        {
+            node->SetParam(pin.name, value);
+        }
+    }
+
+    void NodeRenderer::RenderPathInput(Engine::Node *node,
+        const NodePin &pin,
+        const std::string &widgetId,
+        float inputWidth)
+    {
+        auto pathValue = node->GetParamOr<std::filesystem::path>(pin.name, std::filesystem::path{});
+        std::string pathStr = pathValue.string();
+        char buffer[256];
+        strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
+        buffer[sizeof(buffer) - 1] = '\0';
+
+        bool isImageInputFilepath = (pin.name == "filepath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
+
+        if (isImageInputFilepath)
+        {
+            ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
             ImGui::PushItemWidth(inputWidth);
             if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
             {
-                node->SetParam(pin.name, std::string(buffer));
+                node->SetParam(pin.name, std::filesystem::path(buffer));
             }
             ImGui::PopItemWidth();
-            break;
-        }
 
-        case PinDataType::Float: {
-            float value = static_cast<float>(
-                node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
+            const float buttonWidth = Constants::NodeRenderer::ParameterInput::kButtonWidth * canvas_.GetZoomLevel();
+            const float spacing = Constants::NodeRenderer::ParameterInput::kSpacing * canvas_.GetZoomLevel();
+            const float buttonHeight = ImGui::GetFrameHeight();
 
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputFloat(widgetId.c_str(),
-                    &value,
-                    Constants::NodeRenderer::ParameterInput::kFloatStep,
-                    Constants::NodeRenderer::ParameterInput::kFloatFastStep,
-                    Constants::NodeRenderer::ParameterInput::kFloatFormat))
+            ImVec2 buttonPos = ImVec2(cursorPos.x + inputWidth + spacing, cursorPos.y);
+
+            ImGui::SetCursorScreenPos(buttonPos);
+            const std::string browseId = "...";
+            if (ImGui::Button(browseId.c_str(), ImVec2(buttonWidth, buttonHeight)))
             {
-                node->SetParam(pin.name, static_cast<double>(value));
-            }
-            ImGui::PopItemWidth();
-            break;
-        }
-
-        case PinDataType::Int: {
-            int value = node->GetParamOr<int>(pin.name, 0);
-
-            ImGui::PushItemWidth(inputWidth);
-            if (ImGui::InputInt(widgetId.c_str(), &value))
-            {
-                node->SetParam(pin.name, value);
-            }
-            ImGui::PopItemWidth();
-            break;
-        }
-
-        case PinDataType::Bool: {
-            bool value = node->GetParamOr<bool>(pin.name, false);
-
-            if (ImGui::Checkbox(widgetId.c_str(), &value))
-            {
-                node->SetParam(pin.name, value);
-            }
-            break;
-        }
-
-        case PinDataType::Path: {
-            auto pathValue = node->GetParamOr<std::filesystem::path>(pin.name, std::filesystem::path{});
-            std::string pathStr = pathValue.string();
-            char buffer[256];
-            strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
-            buffer[sizeof(buffer) - 1] = '\0';
-
-            // Check if this is an ImageInputNode with filepath parameter
-            bool isImageInputFilepath =
-                (pin.name == "filepath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
-
-            if (isImageInputFilepath)
-            {
-                // Special handling for ImageInputNode filepath - keep original textbox width
-                // Store current cursor position before rendering textbox
-                ImVec2 cursorPos = ImGui::GetCursorScreenPos();
-
-                // Render the textbox at normal width first
-                ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+                auto *imageNode = static_cast<Engine::ImageInputNode *>(node);
+                std::string selectedPath = imageNode->OpenFileBrowser();
+                if (!selectedPath.empty())
                 {
-                    node->SetParam(pin.name, std::filesystem::path(buffer));
-                }
-                ImGui::PopItemWidth();
-
-                // Now position buttons to the right using absolute positioning
-                const float buttonWidth =
-                    Constants::NodeRenderer::ParameterInput::kButtonWidth * canvas_.GetZoomLevel();
-                const float spacing = Constants::NodeRenderer::ParameterInput::kSpacing * canvas_.GetZoomLevel();
-                const float buttonHeight = ImGui::GetFrameHeight();
-
-                // Calculate button position to the right of the textbox
-                ImVec2 buttonPos = ImVec2(cursorPos.x + inputWidth + spacing, cursorPos.y);
-
-                // Browse button
-                ImGui::SetCursorScreenPos(buttonPos);
-                const std::string browseId = "..."; // + std::to_string(static_cast<int>(node->GetId()));
-                if (ImGui::Button(browseId.c_str(), ImVec2(buttonWidth, buttonHeight)))
-                {
-                    auto *imageNode = static_cast<Engine::ImageInputNode *>(node);
-                    std::string selectedPath = imageNode->OpenFileBrowser();
-                    if (!selectedPath.empty())
-                    {
-                        strncpy_s(buffer, selectedPath.c_str(), sizeof(buffer) - 1);
-                        buffer[sizeof(buffer) - 1] = '\0';
-                        node->SetParam(pin.name, std::filesystem::path(selectedPath));
-                        node->Process(); // Trigger processing
-                    }
-                }
-
-                // Load button
-                ImVec2 loadButtonPos = ImVec2(buttonPos.x + buttonWidth + spacing, buttonPos.y);
-                ImGui::SetCursorScreenPos(loadButtonPos);
-                const std::string loadId = "Load"; // + std::to_string(static_cast<int>(node->GetId()));
-                if (ImGui::Button(loadId.c_str(), ImVec2(buttonWidth, buttonHeight)))
-                {
-                    // Force reprocessing with current parameter value
+                    strncpy_s(buffer, selectedPath.c_str(), sizeof(buffer) - 1);
+                    buffer[sizeof(buffer) - 1] = '\0';
+                    node->SetParam(pin.name, std::filesystem::path(selectedPath));
                     node->Process();
                 }
             }
-            else
-            {
-                // Standard path input for other nodes
-                ImGui::PushItemWidth(inputWidth);
-                if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
-                {
-                    node->SetParam(pin.name, std::filesystem::path(buffer));
-                }
-                ImGui::PopItemWidth();
-            }
-            break;
-        }
 
-        default:
-            break;
+            ImVec2 loadButtonPos = ImVec2(buttonPos.x + buttonWidth + spacing, buttonPos.y);
+            ImGui::SetCursorScreenPos(loadButtonPos);
+            const std::string loadId = "Load";
+            if (ImGui::Button(loadId.c_str(), ImVec2(buttonWidth, buttonHeight)))
+            {
+                node->Process();
+            }
+        }
+        else
+        {
+            ImGui::PushItemWidth(inputWidth);
+            if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
+            {
+                node->SetParam(pin.name, std::filesystem::path(buffer));
+            }
+            ImGui::PopItemWidth();
         }
     }
 
@@ -620,7 +610,6 @@ namespace VisionCraft
         float zoomLevel,
         const Engine::Node *node)
     {
-        // Delegate to the utility class - eliminates DRY violations!
         return NodeDimensionCalculator::CalculateNodeDimensions(pins, zoomLevel, node);
     }
 
@@ -631,14 +620,11 @@ namespace VisionCraft
             return std::make_unique<DefaultNodeRenderingStrategy>();
         }
 
-        // Dependency injection: App layer decides which strategy to use based on node type
-        // This eliminates the layering violation where Engine layer included App layer files
         if (const auto *imageNode = dynamic_cast<const Engine::ImageInputNode *>(node))
         {
             return std::make_unique<ImageInputNodeRenderingStrategy>();
         }
 
-        // Default strategy for all other node types
         return std::make_unique<DefaultNodeRenderingStrategy>();
     }
 

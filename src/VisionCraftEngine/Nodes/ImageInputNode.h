@@ -5,9 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 
-// Include Engine constants
-#include "../EngineConstants.h"
-// Include RAII texture
+#include "EngineConstants.h"
 #include "Texture.h"
 
 namespace VisionCraft::Engine
@@ -51,24 +49,14 @@ namespace VisionCraft::Engine
          * @brief Checks if an image has been successfully loaded AND texture is ready.
          * @return True if image is loaded and texture is available for rendering, false otherwise
          */
-        [[nodiscard]] bool HasValidImage() const
-        {
-            return !outputImage.empty() && texture.IsValid();
-        }
+        [[nodiscard]] bool HasValidImage() const;
 
         /**
          * @brief Gets the OpenGL texture ID for displaying the image.
          * @return OpenGL texture ID, or 0 if no texture is available
          */
-        [[nodiscard]] GLuint GetTextureId() const
-        {
-            return texture.Get();
-        }
+        [[nodiscard]] GLuint GetTextureId() const;
 
-        /**
-         * @brief Renders the custom UI for this node (file browser and image preview).
-         */
-        void RenderCustomUI();
 
         /**
          * @brief Opens a file browser dialog for image selection.
@@ -106,11 +94,6 @@ namespace VisionCraft::Engine
          */
         void UpdateTexture();
 
-        /**
-         * @brief Renders the file path input field.
-         * @return Selected file path if changed, empty string otherwise
-         */
-        std::string RenderFilePathInput();
 
         cv::Mat outputImage;        ///< Loaded image data
         Core::Texture texture;      ///< RAII-managed OpenGL texture for display

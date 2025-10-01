@@ -16,9 +16,9 @@ namespace VisionCraft
     {
     public:
         /**
-         * @brief Default constructor.
+         * @brief Constructor that subscribes to graph execution events.
          */
-        GraphExecutionLayer() = default;
+        GraphExecutionLayer();
 
         /**
          * @brief Virtual destructor.
@@ -50,6 +50,14 @@ namespace VisionCraft
         void OnRender() override;
 
     private:
+        /**
+         * @brief Executes the node graph.
+         *
+         * This method is called when a GraphExecuteEvent is published.
+         * It triggers the actual graph execution and updates the execution state.
+         */
+        void ExecuteGraph();
+
         bool isExecuting = false;       ///< Whether the graph is currently executing
         bool showResultsWindow = false; ///< Whether to display the results window
     };

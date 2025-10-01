@@ -37,6 +37,7 @@ target_link_libraries(VisionCraftApp
 )
 
 target_include_directories(VisionCraftApp PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${imgui_SOURCE_DIR}
     ${glad_SOURCE_DIR}/include
     ${glfw_SOURCE_DIR}/include

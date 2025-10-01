@@ -2,8 +2,18 @@
 
 #include <imgui.h>
 
+#include "Application.h"
+#include "Events/GraphExecuteEvent.h"
+#include "Logger.h"
+
 namespace VisionCraft
 {
+    GraphExecutionLayer::GraphExecutionLayer()
+    {
+        Core::Application::Get().GetEventBus().Subscribe<GraphExecuteEvent>(
+            [this](const GraphExecuteEvent &event) { ExecuteGraph(); });
+    }
+
     void GraphExecutionLayer::OnEvent(Core::Event &event)
     {
     }
@@ -12,14 +22,21 @@ namespace VisionCraft
     {
     }
 
+    void GraphExecutionLayer::ExecuteGraph()
+    {
+        LOG_INFO("Graph execution triggered via EventBus!");
+        isExecuting = true;
+        showResultsWindow = true;
+        // TODO: Implement actual graph execution logic
+    }
+
     void GraphExecutionLayer::OnRender()
     {
         ImGui::Begin("Execution");
 
         if (ImGui::Button("Execute Graph"))
         {
-            isExecuting = !isExecuting;
-            // TODO: Implement graph execution
+            Core::Application::Get().GetEventBus().Publish(GraphExecuteEvent{});
         }
 
         ImGui::SameLine();

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "EventBus.h"
 #include "Layer.h"
 #include "Window.h"
 
@@ -99,6 +100,7 @@ namespace Core
         {
         }
 
+    public:
         /**
          * @brief Gets the singleton instance of the application.
          * @return Reference to the current application instance
@@ -111,10 +113,20 @@ namespace Core
          */
         [[nodiscard]] static float GetTime();
 
+        /**
+         * @brief Gets the application's event bus.
+         * @return Reference to the event bus for publishing and subscribing to events
+         */
+        [[nodiscard]] EventBus &GetEventBus()
+        {
+            return eventBus;
+        }
+
     private:
         ApplicationSpecification specification;         ///< Application configuration
         std::vector<std::unique_ptr<Layer>> layerStack; ///< Stack of application layers
         std::shared_ptr<Window> window;                 ///< Main application window
         bool isRunning = false;                         ///< Flag indicating if the application is running
+        EventBus eventBus;                              ///< Event bus for inter-layer communication
     };
 } // namespace Core

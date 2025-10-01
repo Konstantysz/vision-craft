@@ -13,6 +13,7 @@ add_library(VisionCraftEngine STATIC
     Nodes/CannyEdgeNode.cpp
     Nodes/ThresholdNode.cpp
     Nodes/ImageOutputNode.cpp
+    Nodes/PreviewNode.cpp
 )
 
 target_include_directories(VisionCraftEngine PUBLIC

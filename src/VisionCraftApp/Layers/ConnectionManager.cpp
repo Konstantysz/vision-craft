@@ -468,6 +468,11 @@ namespace VisionCraft
                     { "maxValue", PinDataType::Float, true },  // Parameter input
                     { "type", PinDataType::String, true },     // Parameter input
                     { "Output", PinDataType::Image, false }    // Data output
+                } },
+            { "Preview",
+                {
+                    { "Input", PinDataType::Image, true },  // Data input
+                    { "Output", PinDataType::Image, false } // Data output (passthrough)
                 } }
         };
 

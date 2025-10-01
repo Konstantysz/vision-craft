@@ -13,7 +13,8 @@ add_executable(VisionCraftApp
     Layers/GraphExecutionLayer.cpp
     Layers/NodeDimensionCalculator.cpp
     Layers/DefaultNodeRenderingStrategy.cpp
-    Layers/ImageInputNodeRenderingStrategy.cpp)
+    Layers/ImageInputNodeRenderingStrategy.cpp
+    Layers/PreviewNodeRenderingStrategy.cpp)
 
 target_compile_features(VisionCraftApp PRIVATE cxx_std_20)
 

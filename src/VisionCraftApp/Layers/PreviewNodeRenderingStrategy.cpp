@@ -1,0 +1,62 @@
+#include "PreviewNodeRenderingStrategy.h"
+#include "ConnectionManager.h"
+#include "NodeDimensionCalculator.h"
+#include "NodeEditorConstants.h"
+#include "Nodes/PreviewNode.h"
+#include <algorithm>
+
+namespace VisionCraft
+{
+    void PreviewNodeRenderingStrategy::RenderCustomContent(Engine::Node &node,
+        const ImVec2 &nodePos,
+        const ImVec2 &nodeSize,
+        float zoomLevel)
+    {
+        auto &previewNode = static_cast<Engine::PreviewNode &>(node);
+        if (!previewNode.HasValidImage() || previewNode.GetTextureId() == 0)
+        {
+            return;
+        }
+
+        const float titleHeight = Constants::Node::kTitleHeight * zoomLevel;
+        const float padding = Constants::Node::kPadding * zoomLevel;
+
+        const auto pins = ConnectionManager::GetNodePins(node.GetName());
+        std::vector<NodePin> inputPins, outputPins;
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
+        std::copy_if(
+            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+
+        const float parameterAreaHeight =
+            NodeDimensionCalculator::CalculateBaseContentHeight(inputPins, outputPins, zoomLevel) - (padding * 2);
+
+        // Add spacing to ensure the image appears clearly below parameters
+        const float extraSpacing = 10.0f * zoomLevel;
+        const float previewY = nodePos.y + titleHeight + padding + parameterAreaHeight + extraSpacing;
+
+        // Calculate full-width preview size
+        const float nodeContentWidth = nodeSize.x - (padding * 2);
+        auto [previewWidth, previewHeight] = previewNode.CalculatePreviewDimensions(nodeContentWidth, 0);
+
+        if (previewWidth > 0 && previewHeight > 0)
+        {
+            // Position at left edge with padding
+            ImGui::SetCursorScreenPos(ImVec2(nodePos.x + padding, previewY));
+
+            ImGui::Image(static_cast<ImTextureID>(previewNode.GetTextureId()),
+                ImVec2(previewWidth, previewHeight),
+                ImVec2(0, 0),
+                ImVec2(1, 1));
+
+            // Show tooltip with image info on hover
+            if (ImGui::IsItemHovered())
+            {
+                auto outputImage = previewNode.GetOutputImage();
+                float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
+                ImGui::SetTooltip("%dx%d pixels\nAspect ratio: %.2f", outputImage.cols, outputImage.rows, imageAspect);
+            }
+        }
+    }
+
+} // namespace VisionCraft

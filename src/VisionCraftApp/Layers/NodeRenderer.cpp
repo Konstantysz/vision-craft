@@ -4,6 +4,8 @@
 #include "NodeDimensionCalculator.h"
 #include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
+#include "Nodes/PreviewNode.h"
+#include "PreviewNodeRenderingStrategy.h"
 
 #include <algorithm>
 #include <cmath>
@@ -623,6 +625,11 @@ namespace VisionCraft
         if (const auto *imageNode = dynamic_cast<const Engine::ImageInputNode *>(node))
         {
             return std::make_unique<ImageInputNodeRenderingStrategy>();
+        }
+
+        if (const auto *previewNode = dynamic_cast<const Engine::PreviewNode *>(node))
+        {
+            return std::make_unique<PreviewNodeRenderingStrategy>();
         }
 
         return std::make_unique<DefaultNodeRenderingStrategy>();

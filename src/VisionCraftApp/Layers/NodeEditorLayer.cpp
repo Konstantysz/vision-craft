@@ -12,6 +12,7 @@
 #include "Nodes/GrayscaleNode.h"
 #include "Nodes/ImageInputNode.h"
 #include "Nodes/ImageOutputNode.h"
+#include "Nodes/PreviewNode.h"
 #include "Nodes/ThresholdNode.h"
 
 
@@ -206,6 +207,12 @@ namespace VisionCraft
                 ImGui::CloseCurrentPopup();
             }
 
+            if (ImGui::MenuItem("Preview"))
+            {
+                CreateNodeAtPosition("Preview", contextMenuPos);
+                ImGui::CloseCurrentPopup();
+            }
+
             ImGui::Separator();
 
             if (ImGui::MenuItem("Grayscale"))
@@ -260,6 +267,10 @@ namespace VisionCraft
         else if (nodeType == "Threshold")
         {
             newNode = std::make_unique<Engine::ThresholdNode>(nodeId, "Threshold");
+        }
+        else if (nodeType == "Preview")
+        {
+            newNode = std::make_unique<Engine::PreviewNode>(nodeId, "Preview");
         }
 
         if (newNode)

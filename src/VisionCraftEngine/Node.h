@@ -165,74 +165,98 @@ namespace VisionCraft::Engine
         [[nodiscard]] virtual float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const;
 
         /**
-         * @brief Creates an input slot with the given name.
-         * @param slotName Name of the input slot (e.g., "Input", "Image")
+         * @brief Creates input slot without default value.
+         * @param slotName Name of the input slot
          * @return Reference to the created slot
-         *
-         * Use this in derived class constructors to declare input slots.
-         * If slot already exists, returns existing slot.
          */
         Slot &CreateInputSlot(const std::string &slotName);
 
         /**
-         * @brief Creates an output slot with the given name.
-         * @param slotName Name of the output slot (e.g., "Output", "Result")
+         * @brief Creates input slot with default value.
+         * @tparam T Type of the default value
+         * @param slotName Name of the input slot
+         * @param defaultValue Default value when not connected
          * @return Reference to the created slot
-         *
-         * Use this in derived class constructors to declare output slots.
-         * If slot already exists, returns existing slot.
+         */
+        template<typename T> Slot &CreateInputSlot(const std::string &slotName, T defaultValue);
+
+        /**
+         * @brief Creates output slot.
+         * @param slotName Name of the output slot
+         * @return Reference to the created slot
          */
         Slot &CreateOutputSlot(const std::string &slotName);
 
         /**
-         * @brief Gets an input slot by name (const).
+         * @brief Gets input slot.
          * @param slotName Name of the input slot
          * @return Const reference to the input slot
-         * @throws std::out_of_range if slot doesn't exist
          */
         [[nodiscard]] const Slot &GetInputSlot(const std::string &slotName) const;
 
         /**
-         * @brief Gets an output slot by name (const).
+         * @brief Gets output slot.
          * @param slotName Name of the output slot
          * @return Const reference to the output slot
-         * @throws std::out_of_range if slot doesn't exist
          */
         [[nodiscard]] const Slot &GetOutputSlot(const std::string &slotName) const;
 
         /**
-         * @brief Sets data in an input slot.
+         * @brief Sets data in input slot.
          * @param slotName Name of the input slot
-         * @param data Data to set in the slot
+         * @param data Data to set
          * @throws std::out_of_range if slot doesn't exist
-         *
-         * Use this to write data to input slots. Clear, explicit mutation.
          */
         void SetInputSlotData(const std::string &slotName, NodeData data);
 
         /**
-         * @brief Sets data in an output slot.
+         * @brief Sets data in output slot.
          * @param slotName Name of the output slot
-         * @param data Data to set in the slot
+         * @param data Data to set
          * @throws std::out_of_range if slot doesn't exist
-         *
-         * Use this to write data to output slots. Clear, explicit mutation.
          */
         void SetOutputSlotData(const std::string &slotName, NodeData data);
 
         /**
-         * @brief Clears data in an input slot.
+         * @brief Clears input slot data.
          * @param slotName Name of the input slot
          * @throws std::out_of_range if slot doesn't exist
          */
         void ClearInputSlot(const std::string &slotName);
 
         /**
-         * @brief Clears data in an output slot.
+         * @brief Clears output slot data.
          * @param slotName Name of the output slot
          * @throws std::out_of_range if slot doesn't exist
          */
         void ClearOutputSlot(const std::string &slotName);
+
+        /**
+         * @brief Gets input value with automatic fallback to default.
+         * @tparam T Expected type
+         * @param slotName Name of the input slot
+         * @return Connected value if available, otherwise default value
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        template<typename T> [[nodiscard]] std::optional<T> GetInputValue(const std::string &slotName) const
+        {
+            return GetInputSlot(slotName).GetValueOrDefault<T>();
+        }
+
+        /**
+         * @brief Sets default value for input slot.
+         * @param slotName Name of the input slot
+         * @param defaultValue New default value
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        void SetInputSlotDefault(const std::string &slotName, NodeData defaultValue);
+
+        /**
+         * @brief Checks if input slot is connected.
+         * @param slotName Name of the slot
+         * @return True if connected
+         */
+        [[nodiscard]] bool IsInputSlotConnected(const std::string &slotName) const;
 
         /**
          * @brief Checks if an input slot exists.
@@ -290,5 +314,13 @@ namespace VisionCraft::Engine
      * @brief Alias for a unique pointer to a Node.
      */
     using NodePtr = std::unique_ptr<Node>;
+
+    // Explicit instantiations for CreateInputSlot
+    extern template Slot &Node::CreateInputSlot<double>(const std::string &, double);
+    extern template Slot &Node::CreateInputSlot<float>(const std::string &, float);
+    extern template Slot &Node::CreateInputSlot<int>(const std::string &, int);
+    extern template Slot &Node::CreateInputSlot<bool>(const std::string &, bool);
+    extern template Slot &Node::CreateInputSlot<std::string>(const std::string &, std::string);
+    extern template Slot &Node::CreateInputSlot<std::filesystem::path>(const std::string &, std::filesystem::path);
 
 } // namespace VisionCraft::Engine

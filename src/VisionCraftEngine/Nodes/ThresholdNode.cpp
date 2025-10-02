@@ -6,19 +6,16 @@ namespace VisionCraft::Engine
 {
     ThresholdNode::ThresholdNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        // Create input and output slots
         CreateInputSlot("Input");
+        CreateInputSlot("Threshold", 127.0);
+        CreateInputSlot("MaxValue", 255.0);
+        CreateInputSlot("Type", std::string{ "THRESH_BINARY" });
         CreateOutputSlot("Output");
-
-        SetParam("threshold", 127.0);
-        SetParam("maxValue", 255.0);
-        SetParam("type", std::string{ "THRESH_BINARY" });
     }
 
     void ThresholdNode::Process()
     {
-        // Get input image from slot
-        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {
             LOG_WARN("ThresholdNode {}: No input image provided", GetName());
@@ -28,25 +25,13 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Store input
         inputImage = *inputData;
 
         try
         {
-            const ValidationRange<double> kThresholdRange{ 0.0, 255.0 };
-            const StringValidation kTypeValidation{ { "THRESH_BINARY",
-                                                        "THRESH_BINARY_INV",
-                                                        "THRESH_TRUNC",
-                                                        "THRESH_TOZERO",
-                                                        "THRESH_TOZERO_INV",
-                                                        "THRESH_OTSU",
-                                                        "THRESH_TRIANGLE" },
-                true };
-
-            const auto threshold = GetValidatedParam<double>("threshold", 127.0, kThresholdRange);
-            const auto maxValue = GetValidatedParam<double>("maxValue", 255.0, kThresholdRange);
-            const auto typeStr = GetValidatedString("type", "THRESH_BINARY", kTypeValidation);
-
+            const auto threshold = GetInputValue<double>("Threshold").value_or(127.0);
+            const auto maxValue = GetInputValue<double>("MaxValue").value_or(255.0);
+            const auto typeStr = GetInputValue<std::string>("Type").value_or("THRESH_BINARY");
             int thresholdType = GetThresholdType(typeStr);
 
             cv::Mat grayImage;
@@ -61,7 +46,6 @@ namespace VisionCraft::Engine
 
             double actualThreshold = cv::threshold(grayImage, outputImage, threshold, maxValue, thresholdType);
 
-            // Write to output slot
             SetOutputSlotData("Output", outputImage);
 
             LOG_INFO("ThresholdNode {}: Applied thresholding (threshold: {}, actual: {}, max: {}, type: {})",

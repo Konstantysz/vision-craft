@@ -5,19 +5,15 @@ namespace VisionCraft::Engine
 {
     GrayscaleNode::GrayscaleNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        // Create slots for data flow
         CreateInputSlot("Input");
+        CreateInputSlot("Method", std::string{ "BGR2GRAY" });
+        CreateInputSlot("PreserveAlpha", false);
         CreateOutputSlot("Output");
-
-        // Set default parameters
-        SetParam("method", std::string{ "BGR2GRAY" });
-        SetParam("preserveAlpha", false);
     }
 
     void GrayscaleNode::Process()
     {
-        // Get input image from slot
-        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {
             LOG_WARN("GrayscaleNode {}: No input image provided", GetName());
@@ -29,10 +25,8 @@ namespace VisionCraft::Engine
 
         try
         {
-            const StringValidation kMethodValidation{ { "BGR2GRAY", "RGB2GRAY", "BGRA2GRAY", "RGBA2GRAY" }, true };
-
-            const auto methodStr = GetValidatedString("method", "BGR2GRAY", kMethodValidation);
-            const auto preserveAlpha = GetBoolParam("preserveAlpha", false);
+            const auto methodStr = GetInputValue<std::string>("Method").value_or("BGR2GRAY");
+            const auto preserveAlpha = GetInputValue<bool>("PreserveAlpha").value_or(false);
 
             cv::Mat outputImage;
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <variant>
@@ -15,9 +16,12 @@ namespace VisionCraft::Engine
      *
      * Current supported types:
      * - cv::Mat: Images (the primary data type for vision processing)
-     * - float: Scalar values (thresholds, parameters, etc.)
+     * - double: Double precision scalar values (thresholds, parameters, etc.)
+     * - float: Single precision scalar values
      * - int: Integer values (counts, indices, etc.)
+     * - bool: Boolean values (flags, toggles, etc.)
      * - std::string: Text data (filenames, labels, etc.)
+     * - std::filesystem::path: File paths
      * - std::vector<cv::Point>: Future support for contours, keypoints, etc.
      *
      * @note std::variant is stack-allocated and has zero runtime overhead compared to dynamic_cast
@@ -25,9 +29,12 @@ namespace VisionCraft::Engine
      */
     using NodeData = std::variant<std::monostate, // Empty/uninitialized state
         cv::Mat,                                  // Images
-        float,                                    // Scalar values
+        double,                                   // Double precision scalars
+        float,                                    // Single precision scalars
         int,                                      // Integer values
+        bool,                                     // Boolean values
         std::string,                              // Text data
+        std::filesystem::path,                    // File paths
         std::vector<cv::Point>                    // Contours, keypoints (future)
         >;
 

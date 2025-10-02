@@ -6,18 +6,16 @@ namespace VisionCraft::Engine
 {
     ImageOutputNode::ImageOutputNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        // Create input slot (output nodes don't produce data for other nodes)
         CreateInputSlot("Input");
-
-        SetParam("savePath", std::filesystem::path{});
-        SetParam("autoSave", false);
-        SetParam("format", std::string{ "png" });
+        CreateInputSlot("SavePath", std::filesystem::path{});
+        CreateInputSlot("AutoSave", false);
+        CreateInputSlot("Format", std::string{ "png" });
     }
 
     void ImageOutputNode::Process()
     {
         // Get input image from slot
-        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {
             LOG_WARN("ImageOutputNode {}: No input image provided", GetName());
@@ -26,15 +24,14 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Store input
         inputImage = *inputData;
 
         try
         {
             displayImage = inputImage.clone();
 
-            const auto autoSave = GetBoolParam("autoSave", false);
-            const auto savePath = GetPath("savePath");
+            const auto autoSave = GetInputValue<bool>("AutoSave").value_or(false);
+            const auto savePath = GetInputValue<std::filesystem::path>("SavePath").value_or(std::filesystem::path{});
 
             if (autoSave && !savePath.empty())
             {
@@ -84,8 +81,7 @@ namespace VisionCraft::Engine
                 LOG_INFO("ImageOutputNode {}: Created directory '{}'", GetName(), dir.string());
             }
 
-            const StringValidation kFormatValidation{ { "png", "jpg", "jpeg", "bmp", "tiff" }, true };
-            const auto format = GetValidatedString("format", "png", kFormatValidation);
+            const auto format = GetInputValue<std::string>("Format").value_or("png");
 
             std::vector<int> compressionParams;
             if (format == "jpg" || format == "jpeg")

@@ -7,46 +7,27 @@
 namespace VisionCraft::Engine
 {
     /**
-     * @brief Type-safe data slot for node input/output connections.
+     * @brief Type-safe data slot with optional default values.
      *
-     * Slot uses std::variant for type-safe, zero-cost data storage.
-     * Unlike the old dynamic_cast approach, this:
-     * - Has zero heap allocation overhead
-     * - Provides compile-time type safety
-     * - Eliminates need for NodeEditor to know about concrete node types
-     * - Supports pattern matching with std::visit
-     *
-     * Example usage:
-     * @code
-     * // Setting data (in Process())
-     * GetOutputSlot("Output").SetData(processedImage);
-     *
-     * // Getting data (in Process())
-     * auto input = GetInputSlot("Input").GetData<cv::Mat>();
-     * if (input) {
-     *     // Process the image...
-     * }
-     *
-     * // Checking if slot has data
-     * if (GetInputSlot("Input").HasData()) {
-     *     // ...
-     * }
-     * @endcode
+     * Connected data overrides defaults. Zero-cost std::variant storage.
      */
     class Slot
     {
     public:
         /**
-         * @brief Constructs an empty slot.
+         * @brief Default constructor for slots without defaults.
          */
         Slot() = default;
 
         /**
+         * @brief Constructs a slot with a default value.
+         * @param defaultValue Default value used when slot is not connected
+         */
+        explicit Slot(std::optional<NodeData> defaultValue);
+
+        /**
          * @brief Sets the data in this slot.
          * @param data The data to store (any type in NodeData variant)
-         *
-         * This will replace any existing data in the slot.
-         * Pass by value for optimal move semantics with std::variant.
          */
         void SetData(NodeData data);
 
@@ -54,14 +35,6 @@ namespace VisionCraft::Engine
          * @brief Gets typed data from this slot.
          * @tparam T The expected type (must be one of the types in NodeData)
          * @return Optional containing the data if type matches, std::nullopt otherwise
-         *
-         * Example:
-         * @code
-         * auto image = slot.GetData<cv::Mat>();
-         * if (image) {
-         *     // Use *image
-         * }
-         * @endcode
          */
         template<typename T> [[nodiscard]] std::optional<T> GetData() const
         {
@@ -86,8 +59,6 @@ namespace VisionCraft::Engine
         /**
          * @brief Gets the type index of the currently stored data.
          * @return Index into the variant (0 = monostate/empty, 1 = cv::Mat, etc.)
-         *
-         * Useful for debugging or introspection.
          */
         [[nodiscard]] size_t GetTypeIndex() const;
 
@@ -101,8 +72,58 @@ namespace VisionCraft::Engine
             return std::holds_alternative<T>(data);
         }
 
+        /**
+         * @brief Sets the default value for this slot (used when not connected).
+         * @param defaultValue The default value to use
+         */
+        void SetDefaultValue(NodeData defaultValue);
+
+        /**
+         * @brief Gets the default value for this slot.
+         * @tparam T The expected type of the default value
+         * @return Optional containing the default value if type matches
+         */
+        template<typename T> [[nodiscard]] std::optional<T> GetDefaultValue() const
+        {
+            if (defaultValue && std::holds_alternative<T>(*defaultValue))
+            {
+                return std::get<T>(*defaultValue);
+            }
+            return std::nullopt;
+        }
+
+        /**
+         * @brief Checks if this slot has a default value.
+         * @return True if a default value is set
+         */
+        [[nodiscard]] bool HasDefaultValue() const;
+
+        /**
+         * @brief Gets value with automatic fallback to default.
+         * @tparam T The expected type
+         * @return Connected data if available, otherwise default value
+         */
+        template<typename T> [[nodiscard]] std::optional<T> GetValueOrDefault() const
+        {
+            if (HasData())
+            {
+                auto connectedData = GetData<T>();
+                if (connectedData)
+                    return connectedData;
+            }
+
+            return GetDefaultValue<T>();
+        }
+
+        /**
+         * @brief Checks if this slot is currently connected (has runtime data).
+         * @return True if slot has connected data, false if using defaults
+         */
+        [[nodiscard]] bool IsConnected() const;
+
     private:
-        NodeData data; ///< The variant holding the actual data
+        NodeData data;                        ///< Runtime data from connected node
+        std::optional<NodeData> defaultValue; ///< UI-editable default value
     };
 
 } // namespace VisionCraft::Engine

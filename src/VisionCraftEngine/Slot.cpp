@@ -2,6 +2,10 @@
 
 namespace VisionCraft::Engine
 {
+    Slot::Slot(std::optional<NodeData> defaultValue) : defaultValue(std::move(defaultValue))
+    {
+    }
+
     void Slot::SetData(NodeData data)
     {
         this->data = std::move(data);
@@ -21,6 +25,21 @@ namespace VisionCraft::Engine
     size_t Slot::GetTypeIndex() const
     {
         return data.index();
+    }
+
+    void Slot::SetDefaultValue(NodeData defaultValue)
+    {
+        this->defaultValue = std::move(defaultValue);
+    }
+
+    bool Slot::HasDefaultValue() const
+    {
+        return defaultValue.has_value();
+    }
+
+    bool Slot::IsConnected() const
+    {
+        return HasData();
     }
 
 } // namespace VisionCraft::Engine

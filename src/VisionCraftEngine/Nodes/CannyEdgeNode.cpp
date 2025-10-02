@@ -6,20 +6,18 @@ namespace VisionCraft::Engine
 {
     CannyEdgeNode::CannyEdgeNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        // Create input and output slots
         CreateInputSlot("Input");
+        CreateInputSlot("LowThreshold", 50.0);
+        CreateInputSlot("HighThreshold", 150.0);
+        CreateInputSlot("ApertureSize", 3);
+        CreateInputSlot("L2Gradient", false);
         CreateOutputSlot("Output");
-
-        SetParam("lowThreshold", 50.0);
-        SetParam("highThreshold", 150.0);
-        SetParam("apertureSize", 3);
-        SetParam("l2Gradient", false);
     }
 
     void CannyEdgeNode::Process()
     {
         // Get input image from slot
-        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {
             LOG_WARN("CannyEdgeNode {}: No input image provided", GetName());
@@ -29,17 +27,14 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Store input
         inputImage = *inputData;
 
         try
         {
-            const ValidationRange<double> kThresholdValidation{ 0.0 };
-
-            const auto lowThreshold = GetValidatedParam<double>("lowThreshold", 50.0, kThresholdValidation);
-            const auto highThreshold = GetValidatedParam<double>("highThreshold", 150.0, kThresholdValidation);
-            const auto apertureSize = GetParamOr<int>("apertureSize", 3);
-            const auto l2Gradient = GetBoolParam("l2Gradient", false);
+            const auto lowThreshold = GetInputValue<double>("LowThreshold").value_or(50.0);
+            const auto highThreshold = GetInputValue<double>("HighThreshold").value_or(150.0);
+            const auto apertureSize = GetInputValue<int>("ApertureSize").value_or(3);
+            const auto l2Gradient = GetInputValue<bool>("L2Gradient").value_or(false);
 
             if (apertureSize != 3 && apertureSize != 5 && apertureSize != 7) [[unlikely]]
             {

@@ -9,12 +9,7 @@
 namespace VisionCraft
 {
     /**
-     * @brief Layer that handles execution of the node graph and displays results.
-     *
-     * GraphExecutionLayer manages the execution of the computer vision pipeline
-     * defined by the node graph. It handles running the processing chain, managing
-     * execution state, and displaying results in a dedicated results window. This
-     * layer provides the runtime functionality for the node editor.
+     * @brief Layer for graph execution and results display.
      */
     class GraphExecutionLayer : public Core::Layer
     {
@@ -30,35 +25,25 @@ namespace VisionCraft
         virtual ~GraphExecutionLayer() = default;
 
         /**
-         * @brief Handles graph execution events.
-         * @param event The event to handle
-         *
-         * Processes events related to graph execution triggers and result display.
+         * @brief Handles execution events.
+         * @param event Event to handle
          */
         void OnEvent(Core::Event &event) override;
 
         /**
-         * @brief Updates the graph execution state.
-         * @param deltaTime Time elapsed since the last update
-         *
-         * Monitors execution progress and handles asynchronous processing updates.
+         * @brief Updates execution state.
+         * @param deltaTime Time since last update
          */
         void OnUpdate(float deltaTime) override;
 
         /**
-         * @brief Renders the graph execution interface and results.
-         *
-         * Displays execution controls, progress indicators, and results window
-         * showing the output of the computer vision processing pipeline.
+         * @brief Renders execution interface and results.
          */
         void OnRender() override;
 
     private:
         /**
-         * @brief Executes the node graph.
-         *
-         * This method is called when a GraphExecuteEvent is published.
-         * It delegates to NodeEditor::Execute() which handles the execution logic.
+         * @brief Executes node graph.
          */
         void ExecuteGraph();
 

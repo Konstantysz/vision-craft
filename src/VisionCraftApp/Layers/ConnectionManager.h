@@ -9,29 +9,10 @@
 #include <unordered_map>
 #include <vector>
 
-/**
- * @file ConnectionManager.h
- * @brief Connection management component for the node editor.
- *
- * This class handles all connection-related operations including creation,
- * validation, rendering, and interaction handling. It follows the Single
- * Responsibility Principle by separating connection logic from the main node editor.
- */
-
 namespace VisionCraft
 {
     /**
-     * @brief Component responsible for connection management in the node editor.
-     *
-     * The ConnectionManager handles:
-     * - Connection creation and validation
-     * - Connection rendering (bezier curves)
-     * - Mouse interactions for connection dragging
-     * - Pin position calculations
-     * - Connection state management
-     *
-     * This component follows the Single Responsibility Principle and can be
-     * easily tested in isolation or replaced with different connection behaviors.
+     * @brief Connection management for creation, validation, and rendering.
      */
     class ConnectionManager
     {
@@ -48,66 +29,66 @@ namespace VisionCraft
 
         /**
          * @brief Handles mouse interactions for connection creation.
-         * @param nodeEditor Reference to the node editor backend
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
+         * @param canvas Canvas controller
          */
         void HandleConnectionInteractions(Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas);
 
         /**
-         * @brief Renders all connections and connection preview.
-         * @param nodeEditor Reference to the node editor backend
+         * @brief Renders connections and connection preview.
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
+         * @param canvas Canvas controller
          */
         void RenderConnections(const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas);
 
         /**
-         * @brief Creates a connection between two pins.
-         * @param outputPin Source pin (must be output)
-         * @param inputPin Target pin (must be input)
-         * @param nodeEditor Reference to node editor for validation and syncing
-         * @return True if connection was created successfully
+         * @brief Creates connection between pins.
+         * @param outputPin Source pin
+         * @param inputPin Target pin
+         * @param nodeEditor Node editor for validation
+         * @return True if created
          */
         bool CreateConnection(const PinId &outputPin, const PinId &inputPin, Engine::NodeEditor &nodeEditor);
 
         /**
-         * @brief Validates if a connection between two pins is allowed.
-         * @param outputPin Source pin (must be output)
-         * @param inputPin Target pin (must be input)
-         * @param nodeEditor Reference to node editor for pin validation
-         * @return True if connection is valid
+         * @brief Validates connection between pins.
+         * @param outputPin Source pin
+         * @param inputPin Target pin
+         * @param nodeEditor Node editor for validation
+         * @return True if valid
          */
         [[nodiscard]] bool IsConnectionValid(const PinId &outputPin,
             const PinId &inputPin,
             const Engine::NodeEditor &nodeEditor) const;
 
         /**
-         * @brief Checks if a pin has any connections.
-         * @param pin The pin to check
-         * @return True if the pin is connected to another pin
+         * @brief Checks if pin is connected.
+         * @param pin Pin to check
+         * @return True if connected
          */
         [[nodiscard]] bool IsPinConnected(const PinId &pin) const;
 
         /**
-         * @brief Determines if a pin needs input widget space (and extended spacing).
-         * @param nodeId ID of the node
-         * @param pin The pin to check
-         * @return True if pin needs input widget space
+         * @brief Checks if pin needs input widget.
+         * @param nodeId Node ID
+         * @param pin Pin to check
+         * @return True if needs widget
          */
         [[nodiscard]] bool PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const;
 
         /**
-         * @brief Finds a pin at the given mouse position.
-         * @param mousePos Mouse position in screen coordinates
-         * @param nodeEditor Reference to the node editor backend
+         * @brief Finds pin at position.
+         * @param mousePos Mouse position
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
-         * @return PinId if found, otherwise invalid PinId (nodeId = -1)
+         * @param canvas Canvas controller
+         * @return PinId if found, invalid otherwise
          */
         [[nodiscard]] PinId FindPinAtPosition(const ImVec2 &mousePos,
             const Engine::NodeEditor &nodeEditor,
@@ -115,13 +96,13 @@ namespace VisionCraft
             const CanvasController &canvas) const;
 
         /**
-         * @brief Finds a pin at the specified position within a specific node only.
-         * @param mousePos Mouse position in screen coordinates
-         * @param nodeId ID of the node to search within
-         * @param nodeEditor Reference to the node editor backend
+         * @brief Finds pin at position within specific node.
+         * @param mousePos Mouse position
+         * @param nodeId Node to search within
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
-         * @return PinId if found, otherwise invalid PinId (nodeId = -1)
+         * @param canvas Canvas controller
+         * @return PinId if found, invalid otherwise
          */
         [[nodiscard]] PinId FindPinAtPositionInNode(const ImVec2 &mousePos,
             Engine::NodeId nodeId,
@@ -130,12 +111,12 @@ namespace VisionCraft
             const CanvasController &canvas) const;
 
         /**
-         * @brief Gets the world position of a specific pin.
-         * @param pinId The pin to locate
-         * @param nodeEditor Reference to the node editor backend
+         * @brief Returns pin world position.
+         * @param pinId Pin to locate
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
-         * @return World position of the pin center
+         * @param canvas Canvas controller
+         * @return Pin world position
          */
         [[nodiscard]] ImVec2 GetPinWorldPosition(const PinId &pinId,
             const Engine::NodeEditor &nodeEditor,
@@ -143,49 +124,49 @@ namespace VisionCraft
             const CanvasController &canvas) const;
 
         /**
-         * @brief Gets all active connections.
-         * @return Vector of all connections
+         * @brief Returns all connections.
+         * @return Connections vector
          */
         [[nodiscard]] const std::vector<NodeConnection> &GetConnections() const;
 
         /**
-         * @brief Gets the current connection state.
-         * @return Current connection creation state
+         * @brief Returns connection creation state.
+         * @return Connection state
          */
         [[nodiscard]] const ConnectionState &GetConnectionState() const;
 
         /**
-         * @brief Gets the pins for a specific node type.
-         * @param nodeType Type of node
-         * @return Vector of pins for the node
+         * @brief Returns pins for node type.
+         * @param nodeType Node type
+         * @return Pins vector
          */
         [[nodiscard]] static std::vector<NodePin> GetNodePins(const std::string &nodeType);
 
         /**
-         * @brief Check if currently creating a connection.
-         * @return True if in connection creation mode
+         * @brief Checks if creating connection.
+         * @return True if creating
          */
         [[nodiscard]] bool IsCreatingConnection() const;
 
         /**
-         * @brief Get the starting pin of current connection being created.
-         * @return PinId of start pin, or invalid pin if not creating connection
+         * @brief Returns start pin of current connection.
+         * @return Start pin
          */
         [[nodiscard]] const PinId &GetStartPin() const;
 
     private:
         /**
-         * @brief Removes any existing connection to the given input pin.
-         * @param inputPin The input pin to disconnect
+         * @brief Removes connection to input pin.
+         * @param inputPin Input pin to disconnect
          */
         void RemoveConnectionToInput(const PinId &inputPin);
 
         /**
-         * @brief Renders a single connection as a bezier curve.
-         * @param connection The connection to render
-         * @param nodeEditor Reference to the node editor backend
+         * @brief Renders single connection.
+         * @param connection Connection to render
+         * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
-         * @param canvas Reference to canvas controller
+         * @param canvas Canvas controller
          */
         void RenderConnection(const NodeConnection &connection,
             const Engine::NodeEditor &nodeEditor,

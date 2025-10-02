@@ -5,12 +5,7 @@
 namespace VisionCraft
 {
     /**
-     * @brief Layer that provides the main docking space for the application.
-     *
-     * DockSpaceLayer creates a fullscreen ImGui dockspace that serves as the main
-     * container for all other UI panels in the application. It provides the foundation
-     * for the dockable interface where users can arrange panels like Canvas, Properties,
-     * and other tools. The layer also includes a menu bar for application-wide actions.
+     * @brief Layer providing fullscreen dockspace and menu bar.
      */
     class DockSpaceLayer : public Core::Layer
     {
@@ -26,23 +21,19 @@ namespace VisionCraft
         virtual ~DockSpaceLayer() = default;
 
         /**
-         * @brief Handles events for the dockspace.
-         * @param event The event to handle
+         * @brief Handles dockspace events.
+         * @param event Event to handle
          */
         void OnEvent(Core::Event &event) override;
 
         /**
-         * @brief Updates the dockspace state.
-         * @param deltaTime Time elapsed since the last update
+         * @brief Updates dockspace state.
+         * @param deltaTime Time since last update
          */
         void OnUpdate(float deltaTime) override;
 
         /**
-         * @brief Renders the dockspace and menu bar.
-         *
-         * Creates a fullscreen dockspace window that fills the entire viewport
-         * and provides docking targets for other panels. Also renders the main
-         * menu bar with application commands.
+         * @brief Renders dockspace and menu bar.
          */
         void OnRender() override;
 

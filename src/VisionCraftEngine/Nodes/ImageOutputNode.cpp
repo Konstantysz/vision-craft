@@ -14,7 +14,6 @@ namespace VisionCraft::Engine
 
     void ImageOutputNode::Process()
     {
-        // Get input image from slot
         auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {

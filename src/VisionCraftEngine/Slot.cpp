@@ -13,7 +13,6 @@ namespace VisionCraft::Engine
 
     bool Slot::HasData() const
     {
-        // std::monostate is index 0 - means empty/uninitialized
         return data.index() != 0;
     }
 

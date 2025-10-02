@@ -66,7 +66,6 @@ namespace VisionCraft::Engine
                 }
             }
 
-            // Write result to output slot
             SetOutputSlotData("Output", outputImage);
         }
         catch (const cv::Exception &e)

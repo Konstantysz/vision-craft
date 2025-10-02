@@ -71,8 +71,8 @@ namespace VisionCraft
     };
 
     /**
-     * @brief Represents a connection between two pins.
-     * Note: Each input pin can only have ONE connection, but output pins can have multiple connections.
+     * @brief Connection between two pins.
+     * @note Each input pin can only have ONE connection, but output pins can have multiple.
      */
     struct NodeConnection
     {

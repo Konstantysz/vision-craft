@@ -10,10 +10,7 @@
 namespace Core
 {
     /**
-     * @brief Configuration structure for creating a window.
-     *
-     * This structure contains all the necessary configuration options for initializing
-     * a window, including dimensions, title, and various rendering options.
+     * @brief Configuration for creating a window.
      */
     struct WindowSpecification
     {
@@ -25,18 +22,14 @@ namespace Core
     };
 
     /**
-     * @brief Cross-platform window wrapper using GLFW.
-     *
-     * Window provides a high-level interface for creating and managing application windows.
-     * It handles GLFW window creation, OpenGL context setup, and basic window operations.
-     * The window automatically initializes OpenGL using GLAD when created.
+     * @brief GLFW window wrapper with OpenGL context.
      */
     class Window
     {
     public:
         /**
-         * @brief Constructs a window with the given specification.
-         * @param spec Configuration options for the window
+         * @brief Constructs window.
+         * @param spec Window configuration
          */
         explicit Window(const WindowSpecification &spec);
 
@@ -46,50 +39,35 @@ namespace Core
         ~Window();
 
         /**
-         * @brief Creates the GLFW window and initializes OpenGL context.
-         *
-         * This method creates the actual GLFW window, sets up the OpenGL context,
-         * and initializes GLAD for OpenGL function loading.
+         * @brief Creates the GLFW window and initializes OpenGL.
          */
         void Create();
 
         /**
-         * @brief Destroys the GLFW window and cleans up resources.
-         *
-         * This method destroys the GLFW window and releases associated resources.
-         * Should be called before application termination.
+         * @brief Destroys the window.
          */
         void Destroy();
 
         /**
-         * @brief Updates the window and swaps the front and back buffers.
-         *
-         * This method should be called at the end of each frame to present
-         * the rendered content to the screen.
+         * @brief Updates the window and swaps buffers.
          */
         void Update();
 
         /**
-         * @brief Gets the current framebuffer size in pixels.
-         * @return 2D vector containing the framebuffer width and height
-         *
-         * The framebuffer size may differ from the window size on high-DPI displays.
+         * @brief Returns the framebuffer size.
+         * @return Framebuffer size
          */
         [[nodiscard]] glm::vec2 GetFrameBufferSize() const;
 
         /**
          * @brief Checks if the window should close.
-         * @return True if the window close flag is set, false otherwise
-         *
-         * This typically happens when the user clicks the window's close button.
+         * @return True if should close
          */
         [[nodiscard]] bool ShouldClose() const;
 
         /**
-         * @brief Gets the underlying GLFW window handle.
-         * @return Pointer to the GLFW window handle
-         *
-         * This provides direct access to the GLFW window for advanced operations.
+         * @brief Returns the GLFW window handle.
+         * @return GLFW window handle
          */
         [[nodiscard]] GLFWwindow *GetHandle() const;
 

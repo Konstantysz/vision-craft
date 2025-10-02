@@ -634,10 +634,8 @@ namespace VisionCraft
 
     void NodeRenderer::RenderFileBrowser()
     {
-        // Open dialog only once when requested
         if (fileBrowserOpen && !ImGuiFileDialog::Instance()->IsOpened("ChooseImageDlgKey"))
         {
-            // Open file dialog with image filters and devices button for drive switching
             IGFD::FileDialogConfig config;
             config.path = ".";
             config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ShowDevicesButton;
@@ -647,7 +645,6 @@ namespace VisionCraft
             fileBrowserOpen = false;
         }
 
-        // Display file dialog with a reasonable minimum size
         ImVec2 minSize = ImVec2(800, 500);
         ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
 

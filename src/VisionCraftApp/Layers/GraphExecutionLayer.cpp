@@ -41,8 +41,8 @@ namespace VisionCraft
 
         if (isExecuting)
         {
-            ImGui::Text("Executing...");
             // TODO: Show execution progress
+            ImGui::Text("Executing...");
         }
 
         ImGui::End();
@@ -70,7 +70,6 @@ namespace VisionCraft
         auto &app = static_cast<VisionCraftApplication &>(Core::Application::Get());
         auto &nodeEditor = app.GetNodeEditor();
 
-        // Execute the graph (backend handles all the complexity)
         const bool success = nodeEditor.Execute();
 
         isExecuting = false;

@@ -9,19 +9,14 @@ namespace VisionCraft::Engine
 {
     /**
      * @brief Node for previewing images while passing them through.
-     *
-     * PreviewNode acts as a passthrough node that displays the input image
-     * in the GUI while forwarding it unchanged to its output. This allows
-     * users to visualize intermediate results in the processing pipeline
-     * without affecting the data flow.
      */
     class PreviewNode : public Node
     {
     public:
         /**
-         * @brief Constructs a PreviewNode with the given ID and name.
-         * @param id Unique identifier for this node
-         * @param name Display name for this node
+         * @brief Constructs preview node.
+         * @param id Node ID
+         * @param name Node name
          */
         PreviewNode(NodeId id, const std::string &name = "Preview");
 
@@ -31,57 +26,53 @@ namespace VisionCraft::Engine
         virtual ~PreviewNode() = default;
 
         /**
-         * @brief Processes the node by passing input to output.
-         *
-         * Simply forwards the input image to the output without modification,
-         * while updating the internal texture for GUI display.
+         * @brief Processes node by passing input to output.
          */
         void Process() override;
 
         /**
-         * @brief Sets the input image for preview.
-         * @param image Input image to preview and pass through
+         * @brief Sets input image.
+         * @param image Input image
          */
         void SetInputImage(const cv::Mat &image);
 
         /**
-         * @brief Gets the output image (same as input).
-         * @return OpenCV Mat containing the pass-through image
+         * @brief Returns output image.
+         * @return Pass-through image
          */
         [[nodiscard]] const cv::Mat &GetOutputImage() const;
 
         /**
-         * @brief Checks if an image is available for preview.
-         * @return True if image is valid and texture is ready for rendering
+         * @brief Checks if image is available for preview.
+         * @return True if valid and texture is ready
          */
         [[nodiscard]] bool HasValidImage() const;
 
         /**
-         * @brief Gets the OpenGL texture ID for displaying the preview.
-         * @return OpenGL texture ID, or 0 if no texture is available
+         * @brief Returns OpenGL texture ID.
+         * @return Texture ID
          */
         [[nodiscard]] GLuint GetTextureId() const;
 
         /**
-         * @brief Calculates the actual preview dimensions for rendering.
-         * @param nodeContentWidth Available width for the preview (node width minus padding)
-         * @param maxHeight Maximum allowed height for the preview
-         * @return Pair of (width, height) for the actual preview dimensions
+         * @brief Calculates preview dimensions for rendering.
+         * @param nodeContentWidth Available content width
+         * @param maxHeight Maximum height
+         * @return Preview dimensions (width, height)
          */
         [[nodiscard]] std::pair<float, float> CalculatePreviewDimensions(float nodeContentWidth, float maxHeight) const;
 
         /**
-         * @brief Calculates extra height needed for image preview.
-         * Overrides base class to provide polymorphic dimension calculation.
+         * @brief Calculates extra height for image preview.
          * @param nodeContentWidth Available content width
          * @param zoomLevel Current zoom level
-         * @return Extra height required for image preview
+         * @return Extra height required
          */
         [[nodiscard]] float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const override;
 
     private:
         /**
-         * @brief Updates the OpenGL texture from the current image.
+         * @brief Updates OpenGL texture from current image.
          */
         void UpdateTexture();
 

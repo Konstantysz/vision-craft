@@ -137,10 +137,7 @@ namespace VisionCraft
         }
 
         RemoveConnectionToInput(inputPin);
-
         connections.push_back({ outputPin, inputPin });
-
-        // Sync with backend NodeEditor
         nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
 
         return true;
@@ -278,7 +275,6 @@ namespace VisionCraft
         for (std::size_t i = 0; i < inputPins.size(); ++i)
         {
             const auto &pin = inputPins[i];
-            // Use helper function for consistent logic
             const bool needsInputWidget = PinNeedsInputWidget(nodeId, pin);
             const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
             const auto currentSpacing = needsInputWidget ? normalSpacing : compactSpacing;
@@ -398,47 +394,31 @@ namespace VisionCraft
     std::vector<NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
     {
         static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
-            { "Image Input",
-                {
-                    { "filepath", PinDataType::Path, true }, // Parameter input (temporary - for basic functionality)
-                    { "Output", PinDataType::Image, false }  // Data output
-                } },
+            { "Image Input", { { "filepath", PinDataType::Path, true }, { "Output", PinDataType::Image, false } } },
             { "Image Output",
-                {
-                    { "Input", PinDataType::Image, true },   // Data input
-                    { "savePath", PinDataType::Path, true }, // Parameter input
-                    { "autoSave", PinDataType::Bool, true }, // Parameter input
-                    { "format", PinDataType::String, true }  // Parameter input
-                } },
+                { { "Input", PinDataType::Image, true },
+                    { "savePath", PinDataType::Path, true },
+                    { "autoSave", PinDataType::Bool, true },
+                    { "format", PinDataType::String, true } } },
             { "Grayscale",
-                {
-                    { "Input", PinDataType::Image, true },        // Data input
-                    { "method", PinDataType::String, true },      // Parameter input
-                    { "preserveAlpha", PinDataType::Bool, true }, // Parameter input
-                    { "Output", PinDataType::Image, false }       // Data output
-                } },
+                { { "Input", PinDataType::Image, true },
+                    { "method", PinDataType::String, true },
+                    { "preserveAlpha", PinDataType::Bool, true },
+                    { "Output", PinDataType::Image, false } } },
             { "Canny Edge",
-                {
-                    { "Input", PinDataType::Image, true },         // Data input
-                    { "lowThreshold", PinDataType::Float, true },  // Parameter input
-                    { "highThreshold", PinDataType::Float, true }, // Parameter input
-                    { "apertureSize", PinDataType::Int, true },    // Parameter input
-                    { "l2Gradient", PinDataType::Bool, true },     // Parameter input
-                    { "Output", PinDataType::Image, false }        // Data output
-                } },
+                { { "Input", PinDataType::Image, true },
+                    { "lowThreshold", PinDataType::Float, true },
+                    { "highThreshold", PinDataType::Float, true },
+                    { "apertureSize", PinDataType::Int, true },
+                    { "l2Gradient", PinDataType::Bool, true },
+                    { "Output", PinDataType::Image, false } } },
             { "Threshold",
-                {
-                    { "Input", PinDataType::Image, true },     // Data input
-                    { "threshold", PinDataType::Float, true }, // Parameter input
-                    { "maxValue", PinDataType::Float, true },  // Parameter input
-                    { "type", PinDataType::String, true },     // Parameter input
-                    { "Output", PinDataType::Image, false }    // Data output
-                } },
-            { "Preview",
-                {
-                    { "Input", PinDataType::Image, true },  // Data input
-                    { "Output", PinDataType::Image, false } // Data output (passthrough)
-                } }
+                { { "Input", PinDataType::Image, true },
+                    { "threshold", PinDataType::Float, true },
+                    { "maxValue", PinDataType::Float, true },
+                    { "type", PinDataType::String, true },
+                    { "Output", PinDataType::Image, false } } },
+            { "Preview", { { "Input", PinDataType::Image, true }, { "Output", PinDataType::Image, false } } }
         };
 
         auto it = nodePinDefinitions.find(nodeName);
@@ -494,7 +474,6 @@ namespace VisionCraft
         const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
         const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
         const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
-
         drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
     }
 } // namespace VisionCraft

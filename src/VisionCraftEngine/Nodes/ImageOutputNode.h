@@ -7,18 +7,14 @@ namespace VisionCraft::Engine
 {
     /**
      * @brief Node for displaying and saving processed images.
-     *
-     * ImageOutputNode serves as the final destination for processed images in the
-     * pipeline. It can display images in the results panel and optionally save
-     * them to disk.
      */
     class ImageOutputNode : public Node
     {
     public:
         /**
-         * @brief Constructs an ImageOutputNode with the given ID and name.
-         * @param id Unique identifier for this node
-         * @param name Display name for this node
+         * @brief Constructs image output node.
+         * @param id Node ID
+         * @param name Node name
          */
         ImageOutputNode(NodeId id, const std::string &name = "Image Output");
 
@@ -28,16 +24,13 @@ namespace VisionCraft::Engine
         virtual ~ImageOutputNode() = default;
 
         /**
-         * @brief Processes the input image for display/saving.
-         *
-         * Prepares the input image for display and optionally saves it to disk
-         * if a save path is specified in the parameters.
+         * @brief Processes input image for display/saving.
          */
         void Process() override;
 
         /**
-         * @brief Sets the input image for output.
-         * @param image Input image to display/save
+         * @brief Sets input image.
+         * @param image Input image
          */
         void SetInputImage(const cv::Mat &image)
         {
@@ -45,8 +38,8 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Gets the image for display.
-         * @return OpenCV Mat containing the image to display
+         * @brief Returns display image.
+         * @return Image to display
          */
         [[nodiscard]] const cv::Mat &GetDisplayImage() const
         {
@@ -54,8 +47,8 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Checks if the node has a valid image to display.
-         * @return True if display image is valid, false otherwise
+         * @brief Checks if node has valid image.
+         * @return True if display image is valid
          */
         [[nodiscard]] bool HasValidImage() const
         {
@@ -63,8 +56,8 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Gets the last save status.
-         * @return True if last save operation was successful, false otherwise
+         * @brief Returns last save status.
+         * @return True if last save was successful
          */
         [[nodiscard]] bool GetLastSaveStatus() const
         {
@@ -77,9 +70,9 @@ namespace VisionCraft::Engine
         bool lastSaveSuccessful = false; ///< Status of last save operation
 
         /**
-         * @brief Saves the image to the specified file path.
-         * @param filepath Path where to save the image
-         * @return True if save was successful, false otherwise
+         * @brief Saves image to file.
+         * @param filepath Save path
+         * @return True if successful
          */
         bool SaveImage(const std::string &filepath);
     };

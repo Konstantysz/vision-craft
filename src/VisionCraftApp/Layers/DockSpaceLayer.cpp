@@ -61,9 +61,9 @@ namespace VisionCraft
         {
             if (ImGui::BeginMenu("File"))
             {
+                // TODO: Signal application to close
                 if (ImGui::MenuItem("Exit"))
                 {
-                    // TODO: Signal application to close
                 }
                 ImGui::EndMenu();
             }

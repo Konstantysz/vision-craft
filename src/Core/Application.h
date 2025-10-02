@@ -10,10 +10,7 @@
 namespace Core
 {
     /**
-     * @brief Configuration structure for creating an application.
-     *
-     * This structure contains all the necessary configuration options for initializing
-     * an application, including the application name and window specifications.
+     * @brief Configuration for creating an application.
      */
     struct ApplicationSpecification
     {
@@ -22,33 +19,15 @@ namespace Core
     };
 
     /**
-     * @brief Abstract base class for all applications.
-     *
-     * Application serves as the foundation for creating GUI applications with layer-based architecture.
-     * It manages the main application loop, window lifecycle, and layer stack. Derived classes should
-     * override the virtual BeginFrame() and EndFrame() methods to implement custom frame processing
-     * (e.g., ImGui initialization and rendering).
-     *
-     * @note Architecture Pattern: Service Locator (Pseudo-Singleton)
-     * This class uses a Service Locator pattern rather than a true Singleton:
-     * - Constructor is public to allow derived classes (e.g., VisionCraftApplication)
-     * - Get() returns a global instance pointer set during construction
-     * - Only ONE instance should be created (enforced by convention, not compiler)
-     *
-     * TODO: Consider refactoring to one of these patterns:
-     * 1. True Singleton - Make constructor private, use static instance
-     * 2. Dependency Injection - Remove Get(), pass Application& to components that need it
-     * 3. Add runtime check in constructor to prevent multiple instances
+     * @brief Base class for applications with layer-based architecture.
+     * @note Only ONE instance should exist at a time (Service Locator pattern).
      */
     class Application
     {
     public:
         /**
-         * @brief Constructs an application with the given specification.
-         * @param specification Configuration options for the application
-         *
-         * @warning Only ONE Application instance should exist at a time.
-         * Creating multiple instances leads to undefined behavior with Get().
+         * @brief Constructs an application.
+         * @param specification Application configuration
          */
         explicit Application(const ApplicationSpecification &specification = ApplicationSpecification());
 
@@ -59,26 +38,18 @@ namespace Core
 
         /**
          * @brief Starts the main application loop.
-         *
-         * This method runs the main loop that handles events, updates layers,
-         * and renders frames until the application is stopped.
          */
         void Run();
 
         /**
          * @brief Stops the application loop.
-         *
-         * This method sets the running flag to false, causing the main loop to exit.
          */
         void Stop();
 
     protected:
         /**
-         * @brief Adds a layer to the application's layer stack.
-         * @tparam TLayer Type of layer to add (must derive from Layer)
-         *
-         * The layer will be default-constructed and added to the end of the layer stack.
-         * Layers are processed in the order they are added.
+         * @brief Adds a layer to the layer stack.
+         * @tparam TLayer Layer type (must derive from Layer)
          */
         template<typename TLayer>
             requires std::is_base_of_v<Layer, TLayer>
@@ -89,16 +60,13 @@ namespace Core
         }
 
         /**
-         * @brief Gets the current framebuffer size.
-         * @return 2D vector containing width and height of the framebuffer
+         * @brief Returns the framebuffer size.
+         * @return Framebuffer size
          */
         [[nodiscard]] glm::vec2 GetFramebufferSize() const;
 
         /**
          * @brief Called at the beginning of each frame.
-         *
-         * Override this method in derived classes to implement custom frame initialization
-         * logic (e.g., ImGui frame setup).
          */
         virtual void BeginFrame()
         {
@@ -106,9 +74,6 @@ namespace Core
 
         /**
          * @brief Called at the end of each frame.
-         *
-         * Override this method in derived classes to implement custom frame finalization
-         * logic (e.g., ImGui rendering and presentation).
          */
         virtual void EndFrame()
         {
@@ -116,20 +81,20 @@ namespace Core
 
     public:
         /**
-         * @brief Gets the singleton instance of the application.
-         * @return Reference to the current application instance
+         * @brief Returns the application instance.
+         * @return Application instance
          */
         [[nodiscard]] static Application &Get();
 
         /**
-         * @brief Gets the current time in seconds.
-         * @return Current time as a float
+         * @brief Returns the current time in seconds.
+         * @return Current time
          */
         [[nodiscard]] static float GetTime();
 
         /**
-         * @brief Gets the application's event bus.
-         * @return Reference to the event bus for publishing and subscribing to events
+         * @brief Returns the event bus.
+         * @return Event bus
          */
         [[nodiscard]] EventBus &GetEventBus();
 

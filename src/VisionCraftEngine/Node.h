@@ -18,17 +18,14 @@ namespace VisionCraft::Engine
 
     /**
      * @brief Abstract base class for all nodes in the editor.
-     *
-     * Node represents a single block in the dataflow graph. It stores its unique identifier, name, and parameters.
-     * Derived classes should implement the Process() method to define node-specific processing logic.
      */
     class Node
     {
     public:
         /**
-         * @brief Construct a new Node object.
-         * @param id Unique identifier for the node.
-         * @param name Name of the node.
+         * @brief Constructs a node.
+         * @param id Unique identifier
+         * @param name Node name
          */
         Node(NodeId id, std::string name);
 
@@ -38,71 +35,69 @@ namespace VisionCraft::Engine
         virtual ~Node() = default;
 
         /**
-         * @brief Get the unique identifier of the node.
-         * @return NodeId The node's ID.
+         * @brief Returns the node's unique ID.
+         * @return Node ID
          */
         [[nodiscard]] NodeId GetId() const;
 
         /**
-         * @brief Get the name of the node.
-         * @return const std::string& The node's name.
+         * @brief Returns the node's name.
+         * @return Node name
          */
         [[nodiscard]] const std::string &GetName() const;
 
         /**
-         * @brief Abstract method for processing node data. Must be implemented by derived classes.
+         * @brief Processes node data. Must be implemented by derived classes.
          */
         virtual void Process() = 0;
 
         /**
-         * @brief Calculates extra height needed for node-specific content.
-         * Uses polymorphism instead of dynamic_cast chains.
+         * @brief Calculates extra height for node-specific content.
          * @param nodeContentWidth Available content width
          * @param zoomLevel Current zoom level
-         * @return Extra height required for custom content (0 if none)
+         * @return Extra height required (0 if none)
          */
         [[nodiscard]] virtual float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const;
 
         /**
          * @brief Creates input slot without default value.
-         * @param slotName Name of the input slot
-         * @return Reference to the created slot
+         * @param slotName Slot name
+         * @return Created slot
          */
         Slot &CreateInputSlot(const std::string &slotName);
 
         /**
          * @brief Creates input slot with default value.
-         * @tparam T Type of the default value
-         * @param slotName Name of the input slot
+         * @param slotName Slot name
          * @param defaultValue Default value when not connected
-         * @return Reference to the created slot
+         * @return Created slot
          */
         template<typename T> Slot &CreateInputSlot(const std::string &slotName, T defaultValue);
 
         /**
          * @brief Creates output slot.
-         * @param slotName Name of the output slot
-         * @return Reference to the created slot
+         * @param slotName Slot name
+         * @return Created slot
          */
         Slot &CreateOutputSlot(const std::string &slotName);
 
         /**
-         * @brief Gets input slot.
-         * @param slotName Name of the input slot
-         * @return Const reference to the input slot
+         * @brief Returns input slot.
+         * @param slotName Slot name
+         * @return Input slot
          */
         [[nodiscard]] const Slot &GetInputSlot(const std::string &slotName) const;
 
         /**
-         * @brief Gets output slot.
-         * @param slotName Name of the output slot
-         * @return Const reference to the output slot
+         * @brief Returns output slot.
+         * @param slotName Slot name
+         * @return Output slot
          */
         [[nodiscard]] const Slot &GetOutputSlot(const std::string &slotName) const;
 
         /**
          * @brief Sets data in input slot.
-         * @param slotName Name of the input slot
+         * @param slotName Slot name
          * @param data Data to set
          * @throws std::out_of_range if slot doesn't exist
          */
@@ -110,7 +105,7 @@ namespace VisionCraft::Engine
 
         /**
          * @brief Sets data in output slot.
-         * @param slotName Name of the output slot
+         * @param slotName Slot name
          * @param data Data to set
          * @throws std::out_of_range if slot doesn't exist
          */
@@ -118,22 +113,21 @@ namespace VisionCraft::Engine
 
         /**
          * @brief Clears input slot data.
-         * @param slotName Name of the input slot
+         * @param slotName Slot name
          * @throws std::out_of_range if slot doesn't exist
          */
         void ClearInputSlot(const std::string &slotName);
 
         /**
          * @brief Clears output slot data.
-         * @param slotName Name of the output slot
+         * @param slotName Slot name
          * @throws std::out_of_range if slot doesn't exist
          */
         void ClearOutputSlot(const std::string &slotName);
 
         /**
-         * @brief Gets input value with automatic fallback to default.
-         * @tparam T Expected type
-         * @param slotName Name of the input slot
+         * @brief Returns input value with automatic fallback to default.
+         * @param slotName Slot name
          * @return Connected value if available, otherwise default value
          * @throws std::out_of_range if slot doesn't exist
          */
@@ -144,7 +138,7 @@ namespace VisionCraft::Engine
 
         /**
          * @brief Sets default value for input slot.
-         * @param slotName Name of the input slot
+         * @param slotName Slot name
          * @param defaultValue New default value
          * @throws std::out_of_range if slot doesn't exist
          */
@@ -152,22 +146,22 @@ namespace VisionCraft::Engine
 
         /**
          * @brief Checks if input slot is connected.
-         * @param slotName Name of the slot
+         * @param slotName Slot name
          * @return True if connected
          */
         [[nodiscard]] bool IsInputSlotConnected(const std::string &slotName) const;
 
         /**
-         * @brief Checks if an input slot exists.
-         * @param slotName Name of the slot to check
-         * @return True if the input slot exists
+         * @brief Checks if input slot exists.
+         * @param slotName Slot name
+         * @return True if exists
          */
         [[nodiscard]] bool HasInputSlot(const std::string &slotName) const;
 
         /**
-         * @brief Checks if an output slot exists.
-         * @param slotName Name of the slot to check
-         * @return True if the output slot exists
+         * @brief Checks if output slot exists.
+         * @param slotName Slot name
+         * @return True if exists
          */
         [[nodiscard]] bool HasOutputSlot(const std::string &slotName) const;
 

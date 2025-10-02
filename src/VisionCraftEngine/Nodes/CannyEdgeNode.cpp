@@ -16,7 +16,6 @@ namespace VisionCraft::Engine
 
     void CannyEdgeNode::Process()
     {
-        // Get input image from slot
         auto inputData = GetInputValue<cv::Mat>("Input");
         if (!inputData || inputData->empty())
         {
@@ -61,8 +60,6 @@ namespace VisionCraft::Engine
             }
 
             cv::Canny(grayImage, outputImage, lowThreshold, highThreshold, apertureSize, l2Gradient);
-
-            // Write to output slot
             SetOutputSlotData("Output", outputImage);
 
             LOG_INFO("CannyEdgeNode {}: Applied Canny edge detection (low: {}, high: {}, aperture: {}, l2: {})",

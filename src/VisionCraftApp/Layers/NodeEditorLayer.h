@@ -15,11 +15,7 @@
 namespace VisionCraft
 {
     /**
-     * @brief Node editor layer.
-     *
-     * NodeEditorLayer implements the complete node editing experience combining
-     * canvas management (pan/zoom/grid) with node rendering and interactions.
-     * Similar to UE Blueprints, everything is contained in a single unified interface.
+     * @brief Node editor layer with canvas, rendering, and interactions.
      */
     class NodeEditorLayer : public Core::Layer
     {
@@ -35,78 +31,72 @@ namespace VisionCraft
         virtual ~NodeEditorLayer() = default;
 
         /**
-         * @brief Handles canvas input events.
-         * @param event The event to handle (mouse, keyboard, etc.)
-         *
-         * Processes mouse wheel events for zooming and mouse drag events for panning.
+         * @brief Handles input events.
+         * @param event Event to handle
          */
         void OnEvent(Core::Event &event) override;
 
         /**
-         * @brief Updates the canvas state.
-         * @param deltaTime Time elapsed since the last update
+         * @brief Updates editor state.
+         * @param deltaTime Time since last update
          */
         void OnUpdate(float deltaTime) override;
 
         /**
-         * @brief Renders the canvas and grid.
-         *
-         * Draws the infinite grid background and provides the drawing surface
-         * for the node editor. Uses ImGui's draw list for custom rendering.
+         * @brief Renders canvas and nodes.
          */
         void OnRender() override;
 
     private:
         /**
-         * @brief Renders all nodes in the editor.
+         * @brief Renders all nodes.
          */
         void RenderNodes();
 
         /**
-         * @brief Renders a single node.
-         * @param node Pointer to the node to render
-         * @param nodePos Position of the node
+         * @brief Renders single node.
+         * @param node Node to render
+         * @param nodePos Node position
          */
         void RenderNode(Engine::Node *node, const NodePosition &nodePos);
 
         /**
-         * @brief Tests if a mouse position hits a node.
-         * @param mousePos Mouse position in screen coordinates
-         * @param nodePos Node position in world coordinates
-         * @param nodeSize Node size in pixels
-         * @return True if mouse hits the node
+         * @brief Checks if mouse is over node.
+         * @param mousePos Mouse position
+         * @param nodePos Node position
+         * @param nodeSize Node size
+         * @return True if over node
          */
         [[nodiscard]] bool
             IsMouseOverNode(const ImVec2 &mousePos, const NodePosition &nodePos, const ImVec2 &nodeSize) const;
 
         /**
-         * @brief Handles mouse interactions for node selection and dragging.
+         * @brief Handles mouse interactions.
          */
         void HandleMouseInteractions();
 
         /**
-         * @brief Detects which pin is currently under the mouse cursor.
+         * @brief Detects hovered pin.
          */
         void DetectHoveredPin();
 
         /**
-         * @brief Gets the interaction state for a specific pin.
-         * @param nodeId ID of the node containing the pin
-         * @param pinName Name of the pin
-         * @return PinInteractionState containing hover and active flags
+         * @brief Returns pin interaction state.
+         * @param nodeId Node ID
+         * @param pinName Pin name
+         * @return Pin interaction state
          */
         [[nodiscard]] PinInteractionState GetPinInteractionState(Engine::NodeId nodeId,
             const std::string &pinName) const;
 
-
         /**
-         * @brief Render a pin with its label text.
-         * @param pin The pin to render
-         * @param pinPos Screen position of the pin
-         * @param labelPos Screen position of the label
-         * @param pinRadius Radius of the pin circle
-         * @param zoomLevel Current zoom level
-         * @param state Pin interaction state (hover/active)
+         * @brief Renders pin with label.
+         * @param pin Pin to render
+         * @param pinPos Pin position
+         * @param labelPos Label position
+         * @param pinRadius Pin radius
+         * @param zoomLevel Zoom level
+         * @param state Interaction state
          */
         void RenderPinWithLabel(const NodePin &pin,
             const ImVec2 &pinPos,
@@ -116,45 +106,40 @@ namespace VisionCraft
             const PinInteractionState &state) const;
 
         /**
-         * @brief Renders the context menu for creating nodes.
+         * @brief Renders context menu.
          */
         void RenderContextMenu();
 
         /**
-         * @brief Creates a new node of the specified type at the given position.
-         * @param nodeType Type of node to create
-         * @param position Position to place the node
+         * @brief Creates node at position.
+         * @param nodeType Node type
+         * @param position Position to place node
          */
         void CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position);
 
-
         /**
-         * @brief Gets the color for a specific data type.
-         * @param dataType The data type
-         * @return ImU32 color value
+         * @brief Returns data type color.
+         * @param dataType Data type
+         * @return Color
          */
         [[nodiscard]] ImU32 GetDataTypeColor(PinDataType dataType) const;
 
-
         /**
-         * @brief Finds the topmost node at the given mouse position.
-         * @param mousePos Mouse position in screen coordinates
-         * @return Node ID if found, or -1 if no node at position
+         * @brief Finds node at position.
+         * @param mousePos Mouse position
+         * @return Node ID or -1
          */
         [[nodiscard]] Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
 
         /**
-         * @brief Gets the shared NodeEditor instance from VisionCraftApplication.
-         * @return Reference to the shared NodeEditor
-         *
-         * @note This helper encapsulates the Service Locator pattern access.
-         * See Application.h for architectural notes about this pattern.
+         * @brief Returns shared node editor.
+         * @return Node editor
          */
         [[nodiscard]] Engine::NodeEditor &GetNodeEditor();
 
         /**
-         * @brief Gets the shared NodeEditor instance from VisionCraftApplication (const version).
-         * @return Const reference to the shared NodeEditor
+         * @brief Returns shared node editor.
+         * @return Node editor
          */
         [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
 

@@ -29,8 +29,7 @@ namespace Core
 
     bool Texture::Create()
     {
-        Cleanup(); // Clean up any existing texture first
-
+        Cleanup();
         glGenTextures(1, &textureId_);
         return textureId_ != 0;
     }

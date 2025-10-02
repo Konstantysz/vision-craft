@@ -103,7 +103,6 @@ namespace VisionCraft::Engine
     {
         LOG_INFO("Executing graph with {} nodes", nodes.size());
 
-        // Get execution order using topological sort
         const auto executionOrder = TopologicalSort();
         if (executionOrder.empty() && !nodes.empty())
         {
@@ -113,7 +112,6 @@ namespace VisionCraft::Engine
 
         LOG_INFO("Execution order determined: {} nodes", executionOrder.size());
 
-        // Execute nodes in topological order
         for (const auto nodeId : executionOrder)
         {
             auto *node = GetNode(nodeId);
@@ -122,7 +120,6 @@ namespace VisionCraft::Engine
 
             try
             {
-                // First, pass data from all incoming connections
                 for (const auto &conn : connections)
                 {
                     if (conn.to == nodeId)
@@ -132,7 +129,6 @@ namespace VisionCraft::Engine
                     }
                 }
 
-                // Then execute the node
                 LOG_INFO("Processing node: {} (ID: {})", node->GetName(), nodeId);
                 node->Process();
             }
@@ -156,18 +152,15 @@ namespace VisionCraft::Engine
     {
         const auto nodeIds = GetNodeIds();
 
-        // Build adjacency list and in-degree map
         std::unordered_map<NodeId, std::vector<NodeId>> adjList;
         std::unordered_map<NodeId, int> inDegree;
 
-        // Initialize all nodes with 0 in-degree
         for (const auto nodeId : nodeIds)
         {
             inDegree[nodeId] = 0;
             adjList[nodeId] = {};
         }
 
-        // Build graph from connections
         for (const auto &conn : connections)
         {
             adjList[conn.from].push_back(conn.to);
@@ -178,7 +171,6 @@ namespace VisionCraft::Engine
         std::queue<NodeId> queue;
         std::vector<NodeId> executionOrder;
 
-        // Add all nodes with in-degree 0 to queue
         for (const auto nodeId : nodeIds)
         {
             if (inDegree[nodeId] == 0)
@@ -187,14 +179,12 @@ namespace VisionCraft::Engine
             }
         }
 
-        // Process nodes
         while (!queue.empty())
         {
             const auto currentNode = queue.front();
             queue.pop();
             executionOrder.push_back(currentNode);
 
-            // Decrease in-degree of neighbors
             for (const auto neighbor : adjList[currentNode])
             {
                 inDegree[neighbor]--;
@@ -205,7 +195,6 @@ namespace VisionCraft::Engine
             }
         }
 
-        // Check for cycles
         if (executionOrder.size() != nodeIds.size())
         {
             LOG_ERROR("Cycle detected in node graph! Cannot execute.");

@@ -7,18 +7,14 @@ namespace VisionCraft::Engine
 {
     /**
      * @brief Node for image thresholding operations.
-     *
-     * ThresholdNode applies various thresholding techniques to input images,
-     * converting them to binary images based on configurable threshold values
-     * and methods.
      */
     class ThresholdNode : public Node
     {
     public:
         /**
-         * @brief Constructs a ThresholdNode with the given ID and name.
-         * @param id Unique identifier for this node
-         * @param name Display name for this node
+         * @brief Constructs threshold node.
+         * @param id Node ID
+         * @param name Node name
          */
         ThresholdNode(NodeId id, const std::string &name = "Threshold");
 
@@ -28,17 +24,13 @@ namespace VisionCraft::Engine
         virtual ~ThresholdNode() = default;
 
         /**
-         * @brief Processes the input image using thresholding.
-         *
-         * Applies thresholding with configurable threshold value, maximum value,
-         * and thresholding type. The input image is automatically converted to
-         * grayscale if needed.
+         * @brief Processes input image using thresholding.
          */
         void Process() override;
 
         /**
-         * @brief Sets the input image for processing.
-         * @param image Input image to process
+         * @brief Sets input image.
+         * @param image Input image
          */
         void SetInputImage(const cv::Mat &image)
         {
@@ -46,8 +38,8 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Gets the processed threshold image.
-         * @return OpenCV Mat containing the thresholded binary image
+         * @brief Returns processed image.
+         * @return Thresholded image
          */
         const cv::Mat &GetOutputImage() const
         {
@@ -55,8 +47,8 @@ namespace VisionCraft::Engine
         }
 
         /**
-         * @brief Checks if the node has valid output.
-         * @return True if output image is valid, false otherwise
+         * @brief Checks if node has valid output.
+         * @return True if output is valid
          */
         bool HasValidOutput() const
         {
@@ -64,12 +56,12 @@ namespace VisionCraft::Engine
         }
 
     private:
-        cv::Mat inputImage;  ///< Input image for thresholding
-        cv::Mat outputImage; ///< Resulting thresholded image
+        cv::Mat inputImage;  ///< Input image
+        cv::Mat outputImage; ///< Thresholded image
 
         /**
          * @brief Converts threshold type string to OpenCV constant.
-         * @param typeStr String representation of threshold type
+         * @param typeStr Threshold type string
          * @return OpenCV threshold type constant
          */
         int GetThresholdType(const std::string &typeStr) const;

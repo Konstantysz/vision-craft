@@ -9,21 +9,16 @@ namespace VisionCraft::Engine
 {
 
     /**
-     * @brief Structure representing a connection between two nodes.
-     *
-     * Holds the IDs of the source and destination nodes.
+     * @brief Connection between two nodes.
      */
     struct Connection
     {
-        NodeId from; ///< ID of the source node
-        NodeId to;   ///< ID of the destination node
+        NodeId from; ///< Source node ID
+        NodeId to;   ///< Destination node ID
     };
 
     /**
-     * @brief Manages nodes and their connections in the editor backend.
-     *
-     * NodeEditor is responsible for storing, adding, removing, and connecting nodes.
-     * It provides an API for manipulating the node graph and is independent of any GUI framework.
+     * @brief Manages nodes and their connections.
      */
     class NodeEditor
     {
@@ -34,95 +29,88 @@ namespace VisionCraft::Engine
         NodeEditor();
 
         /**
-         * @brief Add a node to the editor.
-         * @param node Unique pointer to the node to add.
-         * @return NodeId The assigned ID of the node.
+         * @brief Adds node to editor.
+         * @param node Node to add
+         * @return Assigned node ID
          */
         NodeId AddNode(NodePtr node);
 
         /**
-         * @brief Remove a node from the editor.
-         * @param id ID of the node to remove.
-         * @return true if the node was removed, false otherwise.
+         * @brief Removes node from editor.
+         * @param id Node ID
+         * @return True if removed
          */
         [[nodiscard]] bool RemoveNode(NodeId id);
 
         /**
-         * @brief Get a pointer to a node by its ID.
-         * @param id ID of the node.
-         * @return Node* Pointer to the node, or nullptr if not found.
+         * @brief Returns pointer to node.
+         * @param id Node ID
+         * @return Pointer to node, or nullptr if not found
          */
         [[nodiscard]] Node *GetNode(NodeId id);
 
         /**
-         * @brief Get a const pointer to a node by its ID.
-         * @param id ID of the node.
-         * @return const Node* Const pointer to the node, or nullptr if not found.
+         * @brief Returns const pointer to node.
+         * @param id Node ID
+         * @return Const pointer to node, or nullptr if not found
          */
         [[nodiscard]] const Node *GetNode(NodeId id) const;
 
         /**
-         * @brief Get a vector of all node IDs in the editor.
-         * @return std::vector<NodeId> Vector of node IDs.
+         * @brief Returns all node IDs.
+         * @return Vector of node IDs
          */
         [[nodiscard]] std::vector<NodeId> GetNodeIds() const;
 
         /**
-         * @brief Add a connection between two nodes.
-         * @param from ID of the source node.
-         * @param to ID of the destination node.
+         * @brief Adds connection between nodes.
+         * @param from Source node ID
+         * @param to Destination node ID
          */
         void AddConnection(NodeId from, NodeId to);
 
         /**
-         * @brief Remove a connection between two nodes.
-         * @param from ID of the source node.
-         * @param to ID of the destination node.
-         * @return true if the connection was removed, false otherwise.
+         * @brief Removes connection between nodes.
+         * @param from Source node ID
+         * @param to Destination node ID
+         * @return True if removed
          */
         [[nodiscard]] bool RemoveConnection(NodeId from, NodeId to);
 
         /**
-         * @brief Get all connections in the editor.
-         * @return const std::vector<Connection>& Vector of connections.
+         * @brief Returns all connections.
+         * @return Vector of connections
          */
         [[nodiscard]] const std::vector<Connection> &GetConnections() const;
 
         /**
-         * @brief Remove all nodes and connections from the editor.
+         * @brief Removes all nodes and connections.
          */
         void Clear();
 
         /**
-         * @brief Executes the node graph in dependency order.
-         * @return True if execution succeeded, false if cycle detected
-         *
-         * This method:
-         * 1. Performs topological sort to determine execution order
-         * 2. Passes data between connected nodes
-         * 3. Calls Process() on each node in correct order
+         * @brief Executes node graph in dependency order.
+         * @return True if succeeded, false if cycle detected
+         * @note Performs topological sort, passes data between nodes, and calls Process() in order.
          */
         bool Execute();
 
     private:
         /**
-         * @brief Performs topological sort on the node graph.
-         * @return Vector of node IDs in execution order, or empty if cycle detected
+         * @brief Performs topological sort on node graph.
+         * @return Node IDs in execution order, or empty if cycle detected
          */
         [[nodiscard]] std::vector<NodeId> TopologicalSort() const;
 
         /**
-         * @brief Passes data from one node to another based on their types.
+         * @brief Passes data between nodes using slot system.
          * @param fromNode Source node
          * @param toNode Destination node
-         *
-         * TODO: Replace dynamic_cast approach with proper polymorphic interface
-         * or data port system for cleaner, extensible design
          */
         static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
-        std::unordered_map<NodeId, NodePtr> nodes; ///< Map of node IDs to node pointers
-        std::vector<Connection> connections;       ///< List of connections
-        NodeId nextId;                             ///< Next available node ID
+        std::unordered_map<NodeId, NodePtr> nodes; ///< Node storage
+        std::vector<Connection> connections;       ///< Connections
+        NodeId nextId;                             ///< Next available ID
     };
 
 } // namespace VisionCraft::Engine

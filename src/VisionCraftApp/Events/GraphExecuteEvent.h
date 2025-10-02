@@ -5,11 +5,7 @@
 namespace VisionCraft
 {
     /**
-     * @brief Event triggered when the node graph should be executed.
-     *
-     * This event is published when a user requests execution of the node graph
-     * (e.g., by clicking an "Execute" button). The GraphExecutionLayer subscribes
-     * to this event to trigger the actual graph processing.
+     * @brief Event for triggering graph execution.
      */
     class GraphExecuteEvent : public Core::Event
     {

@@ -19,7 +19,6 @@ namespace VisionCraft
         // TODO: Show properties of selected node
         ImGui::Text("Properties Panel");
         ImGui::Separator();
-
         ImGui::Text("No node selected");
 
         ImGui::End();

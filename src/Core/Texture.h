@@ -6,10 +6,6 @@ namespace Core
 {
     /**
      * @brief RAII-managed OpenGL texture.
-     *
-     * Provides automatic resource management for OpenGL textures, ensuring
-     * proper cleanup even in the presence of exceptions. Follows RAII principles
-     * with move semantics for efficient resource transfer.
      */
     class Texture
     {
@@ -20,8 +16,8 @@ namespace Core
         Texture() = default;
 
         /**
-         * @brief Constructor that takes ownership of an existing texture.
-         * @param textureId OpenGL texture ID to manage (0 for invalid texture)
+         * @brief Constructs texture from ID.
+         * @param textureId OpenGL texture ID
          */
         explicit Texture(GLuint textureId);
 
@@ -41,39 +37,39 @@ namespace Core
         Texture &operator=(const Texture &) = delete;
 
         /**
-         * @brief Move constructor - transfers ownership.
-         * @param other Source wrapper to move from
+         * @brief Move constructor.
+         * @param other Source texture
          */
         Texture(Texture &&other) noexcept;
 
         /**
-         * @brief Move assignment - transfers ownership.
-         * @param other Source wrapper to move from
-         * @return Reference to this wrapper
+         * @brief Move assignment.
+         * @param other Source texture
+         * @return This texture
          */
         Texture &operator=(Texture &&other) noexcept;
 
         /**
-         * @brief Creates a new OpenGL texture and takes ownership.
-         * @return True if texture creation succeeded, false otherwise
+         * @brief Creates a new OpenGL texture.
+         * @return True if successful
          */
         bool Create();
 
         /**
-         * @brief Releases the current texture and takes ownership of a new one.
-         * @param textureId New texture ID to manage
+         * @brief Resets to a new texture ID.
+         * @param textureId New texture ID
          */
         void Reset(GLuint textureId = 0);
 
         /**
-         * @brief Releases ownership of the texture without deleting it.
-         * @return The texture ID that was being managed
+         * @brief Releases ownership without deleting.
+         * @return Texture ID
          */
         GLuint Release();
 
         /**
-         * @brief Gets the OpenGL texture ID.
-         * @return Texture ID (0 if invalid)
+         * @brief Returns the texture ID.
+         * @return Texture ID
          */
         [[nodiscard]] GLuint Get() const
         {
@@ -81,38 +77,27 @@ namespace Core
         }
 
         /**
-         * @brief Checks if the wrapper holds a valid texture.
-         * @return True if texture is valid (non-zero), false otherwise
+         * @brief Checks if texture is valid.
+         * @return True if valid
          */
         [[nodiscard]] bool IsValid() const
         {
             return textureId_ != 0;
         }
 
-        /**
-         * @brief Implicit conversion to GLuint for OpenGL calls.
-         * @return Texture ID
-         */
         operator GLuint() const
         {
             return textureId_;
         }
 
-        /**
-         * @brief Boolean conversion for validity checking.
-         * @return True if texture is valid, false otherwise
-         */
         explicit operator bool() const
         {
             return IsValid();
         }
 
     private:
-        GLuint textureId_ = 0; ///< OpenGL texture ID (0 = invalid)
+        GLuint textureId_ = 0; ///< OpenGL texture ID
 
-        /**
-         * @brief Internal cleanup helper.
-         */
         void Cleanup();
     };
 

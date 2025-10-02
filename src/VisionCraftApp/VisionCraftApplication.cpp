@@ -102,8 +102,6 @@ namespace VisionCraft
     void VisionCraftApplication::ShutdownImGui()
     {
         // TODO: Fix GLFW shutdown order - ImGui backends are calling GLFW functions after glfwTerminate()
-        // This causes GLFW errors during application shutdown. Need to coordinate shutdown order
-        // between Application and ImGui layers.
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();

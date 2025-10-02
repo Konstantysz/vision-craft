@@ -6,14 +6,12 @@ namespace VisionCraft::Engine
 {
     PreviewNode::PreviewNode(NodeId id, const std::string &name) : Node(id, name)
     {
-        // Create input and output slots
         CreateInputSlot("Input");
         CreateOutputSlot("Output");
     }
 
     void PreviewNode::Process()
     {
-        // Get input image from slot
         auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
         if (!inputData || inputData->empty())
         {
@@ -24,16 +22,9 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Store input for texture/preview access
         inputImage = *inputData;
-
-        // Simply pass through the input to output
         outputImage = inputImage.clone();
-
-        // Update texture for GUI display
         UpdateTexture();
-
-        // Write to output slot
         SetOutputSlotData("Output", outputImage);
 
         LOG_INFO("PreviewNode {}: Processing image ({}x{}, {} channels)",
@@ -71,29 +62,21 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Convert BGR to RGB for OpenGL
         cv::Mat rgbImage;
         cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
 
-        // Create new texture (automatically cleans up previous)
         if (!texture.Create())
         {
             return;
         }
 
-        // Bind and configure texture
         glBindTexture(GL_TEXTURE_2D, texture.Get());
-
-        // Set texture parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        // Upload texture data
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB, rgbImage.cols, rgbImage.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbImage.data);
-
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 

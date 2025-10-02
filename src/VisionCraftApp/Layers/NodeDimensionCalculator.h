@@ -7,36 +7,36 @@
 namespace VisionCraft
 {
     /**
-     * @brief Utility class for calculating node dimensions consistently across the application.
+     * @brief Utility for calculating node dimensions.
      */
     class NodeDimensionCalculator
     {
     public:
         /**
-         * @brief Calculates pin column height for input or output pins.
-         * @param pins Vector of pins to calculate height for
-         * @param zoomLevel Current zoom level
-         * @return Total height needed for the pin column
+         * @brief Calculates pin column height.
+         * @param pins Pins
+         * @param zoomLevel Zoom level
+         * @return Column height
          */
         [[nodiscard]] static float CalculatePinColumnHeight(const std::vector<NodePin> &pins, float zoomLevel);
 
         /**
-         * @brief Calculates the base content height (pins + padding).
-         * @param inputPins Input pins for the node
-         * @param outputPins Output pins for the node
-         * @param zoomLevel Current zoom level
-         * @return Base content height without extra node-specific content
+         * @brief Calculates base content height.
+         * @param inputPins Input pins
+         * @param outputPins Output pins
+         * @param zoomLevel Zoom level
+         * @return Base content height
          */
         [[nodiscard]] static float CalculateBaseContentHeight(const std::vector<NodePin> &inputPins,
             const std::vector<NodePin> &outputPins,
             float zoomLevel);
 
         /**
-         * @brief Calculates complete node dimensions.
-         * @param pins Vector of all pins for this node
-         * @param zoomLevel Current zoom level
-         * @param node Pointer to the node (for node-specific sizing)
-         * @return Complete calculated node dimensions
+         * @brief Calculates node dimensions.
+         * @param pins Pins
+         * @param zoomLevel Zoom level
+         * @param node Node
+         * @return Node dimensions
          */
         [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins,
             float zoomLevel,

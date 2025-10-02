@@ -1,14 +1,12 @@
 #include "ImageInputNode.h"
 #include "Logger.h"
 
+#include "../EngineConstants.h"
 #include <algorithm>
 #include <cctype>
 #include <cstring>
 #include <filesystem>
 #include <opencv2/opencv.hpp>
-
-// Include Engine constants
-#include "../EngineConstants.h"
 
 
 #ifdef _WIN32
@@ -84,11 +82,9 @@ namespace VisionCraft::Engine
                 return;
             }
 
-            // Update texture for display
             UpdateTexture();
             lastLoadedPath = filepath;
 
-            // Success logging with structured information
             LOG_INFO("ImageInputNode {}: Successfully loaded image from '{}' ({}x{}, {} channels, {} bytes)",
                 GetName(),
                 filepath,
@@ -113,33 +109,25 @@ namespace VisionCraft::Engine
     {
         if (outputImage.empty())
         {
-            texture.Reset(); // RAII automatically handles cleanup
+            texture.Reset();
             return;
         }
 
-        // Convert BGR to RGB for OpenGL
         cv::Mat rgbImage;
         cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
 
-        // Create new texture (automatically cleans up previous)
         if (!texture.Create())
         {
             return;
         }
 
-        // Bind and configure texture
         glBindTexture(GL_TEXTURE_2D, texture.Get());
-
-        // Set texture parameters
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        // Upload texture data
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB, rgbImage.cols, rgbImage.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbImage.data);
-
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 

@@ -7,18 +7,14 @@ namespace VisionCraft::Engine
 {
     /**
      * @brief Node for converting images to grayscale.
-     *
-     * GrayscaleNode converts color images to grayscale using OpenCV's color
-     * conversion functions. It automatically handles different input formats
-     * and provides options for different conversion methods.
      */
     class GrayscaleNode : public Node
     {
     public:
         /**
-         * @brief Constructs a GrayscaleNode with the given ID and name.
-         * @param id Unique identifier for this node
-         * @param name Display name for this node
+         * @brief Constructs grayscale conversion node.
+         * @param id Node ID
+         * @param name Node name
          */
         GrayscaleNode(NodeId id, const std::string &name = "Grayscale");
 
@@ -28,18 +24,14 @@ namespace VisionCraft::Engine
         virtual ~GrayscaleNode() = default;
 
         /**
-         * @brief Processes the input image by converting it to grayscale.
-         *
-         * Reads input from the "Input" slot, converts to grayscale,
-         * and writes the result to the "Output" slot.
-         * If the input is already grayscale, it passes through unchanged.
+         * @brief Processes input image by converting to grayscale.
          */
         void Process() override;
 
     private:
         /**
-         * @brief Converts conversion method string to OpenCV constant.
-         * @param methodStr String representation of conversion method
+         * @brief Converts method string to OpenCV constant.
+         * @param methodStr Conversion method string
          * @return OpenCV color conversion constant
          */
         int GetConversionMethod(const std::string &methodStr) const;

@@ -31,17 +31,13 @@ namespace VisionCraft
         const float parameterAreaHeight =
             NodeDimensionCalculator::CalculateBaseContentHeight(inputPins, outputPins, zoomLevel) - (padding * 2);
 
-        // Add spacing to ensure the image appears clearly below parameters
         const float extraSpacing = 10.0f * zoomLevel;
         const float previewY = nodePos.y + titleHeight + padding + parameterAreaHeight + extraSpacing;
-
-        // Calculate full-width preview size
         const float nodeContentWidth = nodeSize.x - (padding * 2);
         auto [previewWidth, previewHeight] = previewNode.CalculatePreviewDimensions(nodeContentWidth, 0);
 
         if (previewWidth > 0 && previewHeight > 0)
         {
-            // Position at left edge with padding
             ImGui::SetCursorScreenPos(ImVec2(nodePos.x + padding, previewY));
 
             ImGui::Image(static_cast<ImTextureID>(previewNode.GetTextureId()),
@@ -49,7 +45,6 @@ namespace VisionCraft
                 ImVec2(0, 0),
                 ImVec2(1, 1));
 
-            // Show tooltip with image info on hover
             if (ImGui::IsItemHovered())
             {
                 auto outputImage = previewNode.GetOutputImage();

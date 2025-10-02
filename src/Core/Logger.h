@@ -11,16 +11,14 @@
 namespace Core
 {
     /**
-     * @brief Modern C++20 wrapper around spdlog with type safety.
-     *
-     * Provides compile-time format string validation and automatic source location.
+     * @brief Type-safe logging wrapper around spdlog.
      */
     class Logger
     {
     public:
         /**
-         * @brief Gets the singleton logger instance.
-         * @return Reference to the default logger instance
+         * @brief Returns the logger instance.
+         * @return Logger instance
          */
         static Logger &Get()
         {
@@ -29,7 +27,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe trace logging with automatic source location.
+         * @brief Trace logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -42,7 +40,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe debug logging with automatic source location.
+         * @brief Debug logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -55,7 +53,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe info logging with automatic source location.
+         * @brief Info logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -68,7 +66,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe warning logging with automatic source location.
+         * @brief Warning logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -81,7 +79,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe error logging with automatic source location.
+         * @brief Error logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -94,7 +92,7 @@ namespace Core
         }
 
         /**
-         * @brief Type-safe critical logging with automatic source location.
+         * @brief Critical logging.
          * @tparam Args Format argument types
          * @param format Format string
          * @param args Format arguments
@@ -107,8 +105,8 @@ namespace Core
         }
 
         /**
-         * @brief Direct access to underlying spdlog instance.
-         * @return Reference to spdlog logger
+         * @brief Returns the spdlog instance.
+         * @return spdlog logger
          */
         spdlog::logger &GetSpdlog()
         {
@@ -129,7 +127,7 @@ namespace Core
 
         /**
          * @brief Sets the log level.
-         * @param level spdlog log level
+         * @param level Log level
          */
         void SetLevel(spdlog::level::level_enum level)
         {
@@ -138,7 +136,7 @@ namespace Core
 
     private:
         /**
-         * @brief Private constructor for singleton pattern.
+         * @brief Constructs logger.
          * @param spdlogger spdlog logger instance
          */
         explicit Logger(std::shared_ptr<spdlog::logger> spdlogger) : logger_(std::move(spdlogger))
@@ -148,7 +146,7 @@ namespace Core
         /**
          * @brief Extracts filename from full path.
          * @param loc Source location
-         * @return Just the filename without directory path
+         * @return Filename without path
          */
         static std::string_view GetFileName(const std::source_location &loc)
         {
@@ -171,49 +169,37 @@ namespace Core
 } // namespace Core
 
 /**
- * @brief Logs a trace-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for detailed diagnostic information, typically only of interest when diagnosing problems.
+ * @brief Trace logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_TRACE(...) ::Core::Logger::Get().Trace(__VA_ARGS__)
 
 /**
- * @brief Logs a debug-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for information that is diagnostically helpful to developers.
+ * @brief Debug logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_DEBUG(...) ::Core::Logger::Get().Debug(__VA_ARGS__)
 
 /**
- * @brief Logs an info-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for general information about application flow and state.
+ * @brief Info logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_INFO(...) ::Core::Logger::Get().Info(__VA_ARGS__)
 
 /**
- * @brief Logs a warning-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for potentially harmful situations that don't prevent the application from continuing.
+ * @brief Warning logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_WARN(...) ::Core::Logger::Get().Warn(__VA_ARGS__)
 
 /**
- * @brief Logs an error-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for error events that might still allow the application to continue running.
+ * @brief Error logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_ERROR(...) ::Core::Logger::Get().Error(__VA_ARGS__)
 
 /**
- * @brief Logs a critical-level message.
- * @param ... Format string and arguments (printf-style)
- *
- * Use for very severe error events that might cause the application to abort.
+ * @brief Critical logging macro.
+ * @param ... Format string and arguments
  */
 #define LOG_CRITICAL(...) ::Core::Logger::Get().Critical(__VA_ARGS__)

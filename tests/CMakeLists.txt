@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.26)
 
 add_executable(TestVisionCraftNodes
     TestNodes.cpp
-    TestNodeParameter.cpp
     TestNodeEditor.cpp
     TestSlot.cpp
 )

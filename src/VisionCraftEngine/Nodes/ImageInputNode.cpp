@@ -149,66 +149,6 @@ namespace VisionCraft::Engine
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-
-    std::string ImageInputNode::OpenFileBrowser()
-    {
-        // TODO: File dialog is VERY SLOW (PowerShell startup overhead)
-        // Consider alternatives:
-        // 1. Native Win32 API (but requires careful header management to avoid conflicts)
-        // 2. Portable library like NFD (Native File Dialog)
-        // 3. ImGui file browser (no native dialog, but fast)
-
-        // Simple approach: use system command for file dialog
-        // This avoids Windows header conflicts while still providing a file dialog
-#ifdef _WIN32
-        // Use PowerShell to open file dialog
-        std::string command =
-            R"(powershell -Command "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.OpenFileDialog; $f.Filter = 'Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif;*.webp|All Files|*.*'; $f.Title = 'Select Image File'; if($f.ShowDialog() -eq 'OK') { $f.FileName }")";
-
-        FILE *pipe = _popen(command.c_str(), "r");
-        if (!pipe)
-            return "";
-
-        char buffer[512];
-        std::string result = "";
-        while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
-        {
-            result += buffer;
-        }
-        _pclose(pipe);
-
-        // Remove trailing whitespace/newlines
-        result.erase(result.find_last_not_of(" \t\n\r\f\v") + 1);
-
-        return result.empty() ? "" : result;
-#else
-        // Linux: use zenity if available
-        std::string command =
-            "zenity --file-selection --file-filter='Image files | *.jpg *.jpeg *.png *.bmp *.tiff *.tif *.webp' "
-            "2>/dev/null";
-        FILE *pipe = popen(command.c_str(), "r");
-        if (!pipe)
-            return "";
-
-        char buffer[512];
-        std::string result = "";
-        while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
-        {
-            result += buffer;
-        }
-        pclose(pipe);
-
-        // Remove trailing newlines
-        if (!result.empty() && result.back() == '\n')
-        {
-            result.pop_back();
-        }
-
-        return result.empty() ? "" : result;
-#endif
-    }
-
-
     std::pair<float, float> ImageInputNode::CalculatePreviewDimensions(float nodeContentWidth,
         [[maybe_unused]] float maxHeight) const
     {

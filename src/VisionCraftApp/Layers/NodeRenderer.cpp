@@ -7,6 +7,8 @@
 #include "Nodes/PreviewNode.h"
 #include "PreviewNodeRenderingStrategy.h"
 
+#include <ImGuiFileDialog.h>
+
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -38,6 +40,7 @@ namespace VisionCraft
         RenderPinsInColumn(node, outputPins, worldPos, dimensions, false, getPinInteractionState);
 
         RenderCustomNodeContent(node, worldPos, dimensions.size);
+        RenderFileBrowser();
     }
 
     void NodeRenderer::RenderNodeBackground(const ImVec2 &worldPos, const ImVec2 &nodeSize, bool isSelected)
@@ -569,15 +572,9 @@ namespace VisionCraft
             const std::string browseId = "...";
             if (ImGui::Button(browseId.c_str(), ImVec2(buttonWidth, buttonHeight)))
             {
-                auto *imageNode = static_cast<Engine::ImageInputNode *>(node);
-                std::string selectedPath = imageNode->OpenFileBrowser();
-                if (!selectedPath.empty())
-                {
-                    strncpy_s(buffer, selectedPath.c_str(), sizeof(buffer) - 1);
-                    buffer[sizeof(buffer) - 1] = '\0';
-                    node->SetParam(pin.name, std::filesystem::path(selectedPath));
-                    node->Process();
-                }
+                fileBrowserOpen = true;
+                fileBrowserTargetNode = node;
+                fileBrowserTargetBuffer = buffer;
             }
 
             ImVec2 loadButtonPos = ImVec2(buttonPos.x + buttonWidth + spacing, buttonPos.y);
@@ -633,6 +630,46 @@ namespace VisionCraft
         }
 
         return std::make_unique<DefaultNodeRenderingStrategy>();
+    }
+
+    void NodeRenderer::RenderFileBrowser()
+    {
+        // Open dialog only once when requested
+        if (fileBrowserOpen && !ImGuiFileDialog::Instance()->IsOpened("ChooseImageDlgKey"))
+        {
+            // Open file dialog with image filters and devices button for drive switching
+            IGFD::FileDialogConfig config;
+            config.path = ".";
+            config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ShowDevicesButton;
+
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "ChooseImageDlgKey", "Choose Image File", "Image Files{.png,.jpg,.jpeg,.bmp,.tiff,.tif,.webp}", config);
+            fileBrowserOpen = false;
+        }
+
+        // Display file dialog with a reasonable minimum size
+        ImVec2 minSize = ImVec2(800, 500);
+        ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseImageDlgKey", ImGuiWindowFlags_NoCollapse, minSize, maxSize))
+        {
+            if (ImGuiFileDialog::Instance()->IsOk())
+            {
+                std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
+                if (!selectedPath.empty() && fileBrowserTargetNode && fileBrowserTargetBuffer)
+                {
+                    strncpy_s(fileBrowserTargetBuffer, 512, selectedPath.c_str(), 511);
+                    fileBrowserTargetBuffer[511] = '\0';
+                    fileBrowserTargetNode->SetParam("filepath", std::filesystem::path(selectedPath));
+                    fileBrowserTargetNode->Process();
+                }
+
+                fileBrowserTargetNode = nullptr;
+                fileBrowserTargetBuffer = nullptr;
+            }
+
+            ImGuiFileDialog::Instance()->Close();
+        }
     }
 
 } // namespace VisionCraft

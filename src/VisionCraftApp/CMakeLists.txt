@@ -14,23 +14,25 @@ add_executable(VisionCraftApp
     Layers/NodeDimensionCalculator.cpp
     Layers/DefaultNodeRenderingStrategy.cpp
     Layers/ImageInputNodeRenderingStrategy.cpp
-    Layers/PreviewNodeRenderingStrategy.cpp)
+    Layers/PreviewNodeRenderingStrategy.cpp
+    ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog/ImGuiFileDialog.cpp)
 
 target_compile_features(VisionCraftApp PRIVATE cxx_std_20)
 
-target_compile_definitions(VisionCraftApp PUBLIC 
-    IMGUI_IMPL_OPENGL_LOADER_GLAD 
+target_compile_definitions(VisionCraftApp PUBLIC
+    IMGUI_IMPL_OPENGL_LOADER_GLAD
     IMGUI_ENABLE_DOCKING
+    USE_STD_FILESYSTEM
 )
 
 find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 
-target_link_libraries(VisionCraftApp 
-    PRIVATE 
-    glad::glad 
-    glfw 
+target_link_libraries(VisionCraftApp
+    PRIVATE
+    glad::glad
+    glfw
     imgui::imgui
     Core
     VisionCraftEngine
@@ -41,6 +43,7 @@ target_include_directories(VisionCraftApp PRIVATE
     ${imgui_SOURCE_DIR}
     ${glad_SOURCE_DIR}/include
     ${glfw_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog
 )
 
 if(MSVC)

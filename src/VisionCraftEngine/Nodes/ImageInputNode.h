@@ -59,12 +59,6 @@ namespace VisionCraft::Engine
 
 
         /**
-         * @brief Opens a file browser dialog for image selection.
-         * @return Selected file path, or empty string if cancelled
-         */
-        std::string OpenFileBrowser();
-
-        /**
          * @brief Calculates the actual preview dimensions that will be used for rendering.
          * @param nodeContentWidth Available width for the preview (node width minus padding)
          * @param maxHeight Maximum allowed height for the preview

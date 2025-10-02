@@ -273,6 +273,17 @@ namespace VisionCraft
         [[nodiscard]] static std::unique_ptr<NodeRenderingStrategy> CreateRenderingStrategy(const Engine::Node *node);
         CanvasController &canvas_;
         ConnectionManager &connectionManager_;
+
+        /**
+         * @brief Renders the file browser dialog for ImageInputNode.
+         *
+         * This method should be called every frame to handle the file browser dialog state.
+         */
+        void RenderFileBrowser();
+
+        bool fileBrowserOpen = false;
+        Engine::Node *fileBrowserTargetNode = nullptr;
+        char *fileBrowserTargetBuffer = nullptr;
     };
 
 } // namespace VisionCraft

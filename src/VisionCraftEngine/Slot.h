@@ -121,6 +121,12 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] bool IsConnected() const;
 
+        /**
+         * @brief Gets raw variant data for data passing.
+         * @return The NodeData variant
+         */
+        [[nodiscard]] const NodeData &GetVariantData() const;
+
     private:
         NodeData data;                        ///< Runtime data from connected node
         std::optional<NodeData> defaultValue; ///< UI-editable default value

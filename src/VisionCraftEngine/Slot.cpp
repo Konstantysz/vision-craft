@@ -42,4 +42,9 @@ namespace VisionCraft::Engine
         return HasData();
     }
 
+    const NodeData &Slot::GetVariantData() const
+    {
+        return data;
+    }
+
 } // namespace VisionCraft::Engine

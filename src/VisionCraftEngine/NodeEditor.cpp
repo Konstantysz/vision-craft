@@ -220,8 +220,6 @@ namespace VisionCraft::Engine
         if (!fromNode || !toNode)
             return;
 
-        // New Slot-based system: ZERO dynamic_cast, clean and extensible!
-        // Get output data from source node's "Output" slot
         if (!fromNode->HasOutputSlot("Output"))
         {
             LOG_WARN("Node {} has no output slot", fromNode->GetName());
@@ -235,22 +233,13 @@ namespace VisionCraft::Engine
             return;
         }
 
-        // Try to get cv::Mat from the output slot
-        auto imageData = outputSlot.GetData<cv::Mat>();
-        if (!imageData)
-        {
-            LOG_WARN("Node {} output is not cv::Mat type", fromNode->GetName());
-            return;
-        }
-
-        // Pass data to destination node's "Input" slot
         if (!toNode->HasInputSlot("Input"))
         {
             LOG_WARN("Node {} has no input slot", toNode->GetName());
             return;
         }
 
-        toNode->SetInputSlotData("Input", *imageData);
+        toNode->SetInputSlotData("Input", outputSlot.GetVariantData());
         LOG_INFO("Passed data from {} to {}", fromNode->GetName(), toNode->GetName());
     }
 

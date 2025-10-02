@@ -432,3 +432,60 @@ TEST_F(NodeEditorTest, NextIdTracking)
     // but we can infer it works correctly by the fact that nodes are added successfully
     EXPECT_EQ(editor.GetNodeIds().size(), 3);
 }
+
+// ============================================================================
+// Slot-Based Data Passing Tests
+// ============================================================================
+
+class SlotTestNode : public Node
+{
+public:
+    SlotTestNode(NodeId id, std::string name) : Node(id, std::move(name))
+    {
+        CreateInputSlot("Input");
+        CreateInputSlot("Multiplier", 2.0);
+        CreateOutputSlot("Output");
+    }
+
+    void Process() override
+    {
+        auto input = GetInputValue<double>("Input");
+        auto multiplier = GetInputValue<double>("Multiplier").value_or(2.0);
+
+        if (input.has_value())
+        {
+            SetOutputSlotData("Output", input.value() * multiplier);
+        }
+        else
+        {
+            ClearOutputSlot("Output");
+        }
+    }
+};
+
+TEST_F(NodeEditorTest, ExecuteGraphWithSlots)
+{
+    auto node1 = std::make_unique<SlotTestNode>(1, "Node1");
+    auto node2 = std::make_unique<SlotTestNode>(2, "Node2");
+
+    node1->SetInputSlotData("Input", 5.0);
+    node1->SetInputSlotData("Multiplier", 3.0);
+
+    auto *node1Ptr = node1.get();
+    auto *node2Ptr = node2.get();
+
+    editor.AddNode(std::move(node1));
+    editor.AddNode(std::move(node2));
+    editor.AddConnection(1, 2);
+
+    bool success = editor.Execute();
+    EXPECT_TRUE(success);
+
+    auto node1Output = node1Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(node1Output.has_value());
+    EXPECT_DOUBLE_EQ(node1Output.value(), 15.0);
+
+    auto node2Output = node2Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(node2Output.has_value());
+    EXPECT_DOUBLE_EQ(node2Output.value(), 30.0);
+}

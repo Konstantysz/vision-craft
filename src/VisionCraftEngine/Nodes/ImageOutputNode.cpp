@@ -6,6 +6,9 @@ namespace VisionCraft::Engine
 {
     ImageOutputNode::ImageOutputNode(NodeId id, const std::string &name) : Node(id, name)
     {
+        // Create input slot (output nodes don't produce data for other nodes)
+        CreateInputSlot("Input");
+
         SetParam("savePath", std::filesystem::path{});
         SetParam("autoSave", false);
         SetParam("format", std::string{ "png" });
@@ -13,12 +16,18 @@ namespace VisionCraft::Engine
 
     void ImageOutputNode::Process()
     {
-        if (inputImage.empty())
+        // Get input image from slot
+        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        if (!inputData || inputData->empty())
         {
             LOG_WARN("ImageOutputNode {}: No input image provided", GetName());
+            inputImage = cv::Mat();
             displayImage = cv::Mat();
             return;
         }
+
+        // Store input
+        inputImage = *inputData;
 
         try
         {

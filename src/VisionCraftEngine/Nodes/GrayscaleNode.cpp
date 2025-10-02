@@ -5,18 +5,27 @@ namespace VisionCraft::Engine
 {
     GrayscaleNode::GrayscaleNode(NodeId id, const std::string &name) : Node(id, name)
     {
+        // Create slots for data flow
+        CreateInputSlot("Input");
+        CreateOutputSlot("Output");
+
+        // Set default parameters
         SetParam("method", std::string{ "BGR2GRAY" });
         SetParam("preserveAlpha", false);
     }
 
     void GrayscaleNode::Process()
     {
-        if (inputImage.empty())
+        // Get input image from slot
+        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        if (!inputData || inputData->empty())
         {
             LOG_WARN("GrayscaleNode {}: No input image provided", GetName());
-            outputImage = cv::Mat();
+            ClearOutputSlot("Output");
             return;
         }
+
+        const cv::Mat &inputImage = *inputData;
 
         try
         {
@@ -25,50 +34,56 @@ namespace VisionCraft::Engine
             const auto methodStr = GetValidatedString("method", "BGR2GRAY", kMethodValidation);
             const auto preserveAlpha = GetBoolParam("preserveAlpha", false);
 
+            cv::Mat outputImage;
+
             if (inputImage.channels() == 1)
             {
                 outputImage = inputImage.clone();
                 LOG_INFO("GrayscaleNode {}: Input already grayscale, passing through", GetName());
-                return;
-            }
-
-            int conversionCode = GetConversionMethod(methodStr);
-
-            if (inputImage.channels() == 4 && preserveAlpha)
-            {
-                std::vector<cv::Mat> channels;
-                cv::split(inputImage, channels);
-
-                cv::Mat colorPart;
-                if (inputImage.channels() == 4)
-                {
-                    cv::Mat rgb;
-                    cv::merge(std::vector<cv::Mat>{ channels[0], channels[1], channels[2] }, rgb);
-                    cv::cvtColor(rgb,
-                        colorPart,
-                        conversionCode == cv::COLOR_BGRA2GRAY ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
-                }
-
-                std::vector<cv::Mat> grayAlpha = { colorPart, channels[3] };
-                cv::merge(grayAlpha, outputImage);
-
-                LOG_INFO("GrayscaleNode {}: Converted to grayscale with alpha preservation", GetName());
             }
             else
             {
-                cv::cvtColor(inputImage, outputImage, conversionCode);
-                LOG_INFO("GrayscaleNode {}: Converted to grayscale using method '{}'", GetName(), methodStr);
+                int conversionCode = GetConversionMethod(methodStr);
+
+                if (inputImage.channels() == 4 && preserveAlpha)
+                {
+                    std::vector<cv::Mat> channels;
+                    cv::split(inputImage, channels);
+
+                    cv::Mat colorPart;
+                    if (inputImage.channels() == 4)
+                    {
+                        cv::Mat rgb;
+                        cv::merge(std::vector<cv::Mat>{ channels[0], channels[1], channels[2] }, rgb);
+                        cv::cvtColor(rgb,
+                            colorPart,
+                            conversionCode == cv::COLOR_BGRA2GRAY ? cv::COLOR_BGR2GRAY : cv::COLOR_RGB2GRAY);
+                    }
+
+                    std::vector<cv::Mat> grayAlpha = { colorPart, channels[3] };
+                    cv::merge(grayAlpha, outputImage);
+
+                    LOG_INFO("GrayscaleNode {}: Converted to grayscale with alpha preservation", GetName());
+                }
+                else
+                {
+                    cv::cvtColor(inputImage, outputImage, conversionCode);
+                    LOG_INFO("GrayscaleNode {}: Converted to grayscale using method '{}'", GetName(), methodStr);
+                }
             }
+
+            // Write result to output slot
+            SetOutputSlotData("Output", outputImage);
         }
         catch (const cv::Exception &e)
         {
             LOG_ERROR("GrayscaleNode {}: OpenCV error: {}", GetName(), e.what());
-            outputImage = cv::Mat();
+            ClearOutputSlot("Output");
         }
         catch (const std::exception &e)
         {
             LOG_ERROR("GrayscaleNode {}: Error processing image: {}", GetName(), e.what());
-            outputImage = cv::Mat();
+            ClearOutputSlot("Output");
         }
     }
 

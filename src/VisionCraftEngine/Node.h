@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "NodeParameter.h"
+#include "Slot.h"
 
 
 namespace VisionCraft::Engine
@@ -163,10 +164,96 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] virtual float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const;
 
+        /**
+         * @brief Creates an input slot with the given name.
+         * @param slotName Name of the input slot (e.g., "Input", "Image")
+         * @return Reference to the created slot
+         *
+         * Use this in derived class constructors to declare input slots.
+         * If slot already exists, returns existing slot.
+         */
+        Slot &CreateInputSlot(const std::string &slotName);
+
+        /**
+         * @brief Creates an output slot with the given name.
+         * @param slotName Name of the output slot (e.g., "Output", "Result")
+         * @return Reference to the created slot
+         *
+         * Use this in derived class constructors to declare output slots.
+         * If slot already exists, returns existing slot.
+         */
+        Slot &CreateOutputSlot(const std::string &slotName);
+
+        /**
+         * @brief Gets an input slot by name (const).
+         * @param slotName Name of the input slot
+         * @return Const reference to the input slot
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        [[nodiscard]] const Slot &GetInputSlot(const std::string &slotName) const;
+
+        /**
+         * @brief Gets an output slot by name (const).
+         * @param slotName Name of the output slot
+         * @return Const reference to the output slot
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        [[nodiscard]] const Slot &GetOutputSlot(const std::string &slotName) const;
+
+        /**
+         * @brief Sets data in an input slot.
+         * @param slotName Name of the input slot
+         * @param data Data to set in the slot
+         * @throws std::out_of_range if slot doesn't exist
+         *
+         * Use this to write data to input slots. Clear, explicit mutation.
+         */
+        void SetInputSlotData(const std::string &slotName, NodeData data);
+
+        /**
+         * @brief Sets data in an output slot.
+         * @param slotName Name of the output slot
+         * @param data Data to set in the slot
+         * @throws std::out_of_range if slot doesn't exist
+         *
+         * Use this to write data to output slots. Clear, explicit mutation.
+         */
+        void SetOutputSlotData(const std::string &slotName, NodeData data);
+
+        /**
+         * @brief Clears data in an input slot.
+         * @param slotName Name of the input slot
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        void ClearInputSlot(const std::string &slotName);
+
+        /**
+         * @brief Clears data in an output slot.
+         * @param slotName Name of the output slot
+         * @throws std::out_of_range if slot doesn't exist
+         */
+        void ClearOutputSlot(const std::string &slotName);
+
+        /**
+         * @brief Checks if an input slot exists.
+         * @param slotName Name of the slot to check
+         * @return True if the input slot exists
+         */
+        [[nodiscard]] bool HasInputSlot(const std::string &slotName) const;
+
+        /**
+         * @brief Checks if an output slot exists.
+         * @param slotName Name of the slot to check
+         * @return True if the output slot exists
+         */
+        [[nodiscard]] bool HasOutputSlot(const std::string &slotName) const;
+
     protected:
-        ParameterStorage parameters; ///< Modern type-safe parameter storage
-        std::string name;            ///< Name of the node
-        NodeId id;                   ///< Unique identifier of the node
+        ParameterStorage parameters;                       ///< Modern type-safe parameter storage
+        std::string name;                                  ///< Name of the node
+        NodeId id;                                         ///< Unique identifier of the node
+        std::unordered_map<std::string, Slot> inputSlots;  ///< Input data slots
+        std::unordered_map<std::string, Slot> outputSlots; ///< Output data slots
     };
 
     // Node template method instantiation declarations

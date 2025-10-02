@@ -117,4 +117,54 @@ namespace VisionCraft::Engine
         return 0.0f;
     }
 
+    Slot &Node::CreateInputSlot(const std::string &slotName)
+    {
+        return inputSlots[slotName]; // Creates if doesn't exist
+    }
+
+    Slot &Node::CreateOutputSlot(const std::string &slotName)
+    {
+        return outputSlots[slotName]; // Creates if doesn't exist
+    }
+
+    const Slot &Node::GetInputSlot(const std::string &slotName) const
+    {
+        return inputSlots.at(slotName); // Throws if doesn't exist
+    }
+
+    const Slot &Node::GetOutputSlot(const std::string &slotName) const
+    {
+        return outputSlots.at(slotName); // Throws if doesn't exist
+    }
+
+    void Node::SetInputSlotData(const std::string &slotName, NodeData data)
+    {
+        inputSlots.at(slotName).SetData(std::move(data)); // Throws if slot doesn't exist
+    }
+
+    void Node::SetOutputSlotData(const std::string &slotName, NodeData data)
+    {
+        outputSlots.at(slotName).SetData(std::move(data)); // Throws if slot doesn't exist
+    }
+
+    void Node::ClearInputSlot(const std::string &slotName)
+    {
+        inputSlots.at(slotName).Clear(); // Throws if slot doesn't exist
+    }
+
+    void Node::ClearOutputSlot(const std::string &slotName)
+    {
+        outputSlots.at(slotName).Clear(); // Throws if slot doesn't exist
+    }
+
+    bool Node::HasInputSlot(const std::string &slotName) const
+    {
+        return inputSlots.find(slotName) != inputSlots.end();
+    }
+
+    bool Node::HasOutputSlot(const std::string &slotName) const
+    {
+        return outputSlots.find(slotName) != outputSlots.end();
+    }
+
 } // namespace VisionCraft::Engine

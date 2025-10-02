@@ -6,6 +6,10 @@ namespace VisionCraft::Engine
 {
     ThresholdNode::ThresholdNode(NodeId id, const std::string &name) : Node(id, name)
     {
+        // Create input and output slots
+        CreateInputSlot("Input");
+        CreateOutputSlot("Output");
+
         SetParam("threshold", 127.0);
         SetParam("maxValue", 255.0);
         SetParam("type", std::string{ "THRESH_BINARY" });
@@ -13,12 +17,19 @@ namespace VisionCraft::Engine
 
     void ThresholdNode::Process()
     {
-        if (inputImage.empty())
+        // Get input image from slot
+        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        if (!inputData || inputData->empty())
         {
             LOG_WARN("ThresholdNode {}: No input image provided", GetName());
+            inputImage = cv::Mat();
             outputImage = cv::Mat();
+            ClearOutputSlot("Output");
             return;
         }
+
+        // Store input
+        inputImage = *inputData;
 
         try
         {
@@ -50,6 +61,9 @@ namespace VisionCraft::Engine
 
             double actualThreshold = cv::threshold(grayImage, outputImage, threshold, maxValue, thresholdType);
 
+            // Write to output slot
+            SetOutputSlotData("Output", outputImage);
+
             LOG_INFO("ThresholdNode {}: Applied thresholding (threshold: {}, actual: {}, max: {}, type: {})",
                 GetName(),
                 threshold,
@@ -61,11 +75,13 @@ namespace VisionCraft::Engine
         {
             LOG_ERROR("ThresholdNode {}: OpenCV error: {}", GetName(), e.what());
             outputImage = cv::Mat();
+            ClearOutputSlot("Output");
         }
         catch (const std::exception &e)
         {
             LOG_ERROR("ThresholdNode {}: Error processing image: {}", GetName(), e.what());
             outputImage = cv::Mat();
+            ClearOutputSlot("Output");
         }
     }
 

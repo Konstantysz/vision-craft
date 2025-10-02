@@ -1,13 +1,6 @@
 #include "NodeEditor.h"
 #include "Logger.h"
 
-#include "Nodes/CannyEdgeNode.h"
-#include "Nodes/GrayscaleNode.h"
-#include "Nodes/ImageInputNode.h"
-#include "Nodes/ImageOutputNode.h"
-#include "Nodes/PreviewNode.h"
-#include "Nodes/ThresholdNode.h"
-
 #include <algorithm>
 #include <queue>
 #include <unordered_map>
@@ -227,71 +220,38 @@ namespace VisionCraft::Engine
         if (!fromNode || !toNode)
             return;
 
-        cv::Mat outputImage;
-        bool hasOutput = false;
-
-        // Extract output image from source node (using dynamic_cast for type checking)
-        // TODO: Replace this with a proper polymorphic interface or data port system
-        if (auto *inputNode = dynamic_cast<ImageInputNode *>(fromNode))
+        // New Slot-based system: ZERO dynamic_cast, clean and extensible!
+        // Get output data from source node's "Output" slot
+        if (!fromNode->HasOutputSlot("Output"))
         {
-            outputImage = inputNode->GetOutputImage();
-            hasOutput = !outputImage.empty();
-        }
-        else if (auto *grayscaleNode = dynamic_cast<GrayscaleNode *>(fromNode))
-        {
-            outputImage = grayscaleNode->GetOutputImage();
-            hasOutput = grayscaleNode->HasValidOutput();
-        }
-        else if (auto *cannyNode = dynamic_cast<CannyEdgeNode *>(fromNode))
-        {
-            outputImage = cannyNode->GetOutputImage();
-            hasOutput = !outputImage.empty();
-        }
-        else if (auto *thresholdNode = dynamic_cast<ThresholdNode *>(fromNode))
-        {
-            outputImage = thresholdNode->GetOutputImage();
-            hasOutput = !outputImage.empty();
-        }
-
-        if (!hasOutput)
-        {
-            LOG_WARN("Node {} has no output image", fromNode->GetName());
+            LOG_WARN("Node {} has no output slot", fromNode->GetName());
             return;
         }
 
-        // Pass data to destination node (using dynamic_cast for type checking)
-        bool dataPassed = false;
-
-        if (auto *previewNode = dynamic_cast<PreviewNode *>(toNode))
+        const auto &outputSlot = fromNode->GetOutputSlot("Output");
+        if (!outputSlot.HasData())
         {
-            previewNode->SetInputImage(outputImage);
-            dataPassed = true;
-        }
-        else if (auto *grayscaleNode = dynamic_cast<GrayscaleNode *>(toNode))
-        {
-            grayscaleNode->SetInputImage(outputImage);
-            dataPassed = true;
-        }
-        else if (auto *cannyNode = dynamic_cast<CannyEdgeNode *>(toNode))
-        {
-            cannyNode->SetInputImage(outputImage);
-            dataPassed = true;
-        }
-        else if (auto *thresholdNode = dynamic_cast<ThresholdNode *>(toNode))
-        {
-            thresholdNode->SetInputImage(outputImage);
-            dataPassed = true;
-        }
-        else if (auto *outputNode = dynamic_cast<ImageOutputNode *>(toNode))
-        {
-            outputNode->SetInputImage(outputImage);
-            dataPassed = true;
+            LOG_WARN("Node {} output slot has no data", fromNode->GetName());
+            return;
         }
 
-        if (dataPassed)
+        // Try to get cv::Mat from the output slot
+        auto imageData = outputSlot.GetData<cv::Mat>();
+        if (!imageData)
         {
-            LOG_INFO("Passing image from {} to {}", fromNode->GetName(), toNode->GetName());
+            LOG_WARN("Node {} output is not cv::Mat type", fromNode->GetName());
+            return;
         }
+
+        // Pass data to destination node's "Input" slot
+        if (!toNode->HasInputSlot("Input"))
+        {
+            LOG_WARN("Node {} has no input slot", toNode->GetName());
+            return;
+        }
+
+        toNode->SetInputSlotData("Input", *imageData);
+        LOG_INFO("Passed data from {} to {}", fromNode->GetName(), toNode->GetName());
     }
 
 } // namespace VisionCraft::Engine

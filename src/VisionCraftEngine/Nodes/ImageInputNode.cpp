@@ -31,6 +31,9 @@ namespace VisionCraft::Engine
 {
     ImageInputNode::ImageInputNode(NodeId id, const std::string &name) : Node(id, name)
     {
+        // Create output slot for image data
+        CreateOutputSlot("Output");
+
         // Set default parameters using modern type-safe API
         SetParam("filepath", std::filesystem::path{});
 
@@ -49,6 +52,7 @@ namespace VisionCraft::Engine
         if (!ValidateFilePath("filepath", kImageFileValidation))
         {
             outputImage = cv::Mat{};
+            ClearOutputSlot("Output");
             return;
         }
 
@@ -59,10 +63,21 @@ namespace VisionCraft::Engine
         {
             LOG_ERROR("ImageInputNode {}: Filepath parameter is empty", GetName());
             outputImage = cv::Mat{};
+            ClearOutputSlot("Output");
             return;
         }
 
         LoadImageFromPath(filepath.string());
+
+        // Write loaded image to output slot
+        if (!outputImage.empty())
+        {
+            SetOutputSlotData("Output", outputImage);
+        }
+        else
+        {
+            ClearOutputSlot("Output");
+        }
     }
 
     bool ImageInputNode::HasValidImage() const

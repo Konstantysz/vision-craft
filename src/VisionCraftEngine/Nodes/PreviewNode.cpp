@@ -6,22 +6,35 @@ namespace VisionCraft::Engine
 {
     PreviewNode::PreviewNode(NodeId id, const std::string &name) : Node(id, name)
     {
+        // Create input and output slots
+        CreateInputSlot("Input");
+        CreateOutputSlot("Output");
     }
 
     void PreviewNode::Process()
     {
-        if (inputImage.empty())
+        // Get input image from slot
+        auto inputData = GetInputSlot("Input").GetData<cv::Mat>();
+        if (!inputData || inputData->empty())
         {
             LOG_WARN("PreviewNode {}: No input image to preview", GetName());
+            inputImage = cv::Mat{};
             outputImage = cv::Mat{};
+            ClearOutputSlot("Output");
             return;
         }
+
+        // Store input for texture/preview access
+        inputImage = *inputData;
 
         // Simply pass through the input to output
         outputImage = inputImage.clone();
 
         // Update texture for GUI display
         UpdateTexture();
+
+        // Write to output slot
+        SetOutputSlotData("Output", outputImage);
 
         LOG_INFO("PreviewNode {}: Processing image ({}x{}, {} channels)",
             GetName(),

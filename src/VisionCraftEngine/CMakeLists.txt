@@ -8,6 +8,7 @@ add_library(VisionCraftEngine STATIC
     Node.cpp
     NodeEditor.cpp
     NodeParameter.cpp
+    Slot.cpp
     Nodes/GrayscaleNode.cpp
     Nodes/ImageInputNode.cpp
     Nodes/CannyEdgeNode.cpp

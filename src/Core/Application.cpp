@@ -99,4 +99,9 @@ namespace Core
     {
         return static_cast<float>(glfwGetTime());
     }
+
+    EventBus &Application::GetEventBus()
+    {
+        return eventBus;
+    }
 } // namespace Core

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Application.h"
+#include "NodeEditor.h"
 
 namespace VisionCraft
 {
@@ -31,6 +32,18 @@ namespace VisionCraft
          * @brief Virtual destructor that ensures proper ImGui cleanup.
          */
         virtual ~VisionCraftApplication();
+
+        /**
+         * @brief Gets the shared node editor instance.
+         * @return Reference to the node editor
+         */
+        [[nodiscard]] Engine::NodeEditor &GetNodeEditor();
+
+        /**
+         * @brief Gets the shared node editor instance (const version).
+         * @return Const reference to the node editor
+         */
+        [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
 
     protected:
         /**
@@ -67,5 +80,6 @@ namespace VisionCraft
         void ShutdownImGui();
 
         bool imguiInitialized = false; ///< Flag indicating if ImGui has been initialized
+        Engine::NodeEditor nodeEditor; ///< Shared node editor instance accessed by all layers
     };
 } // namespace VisionCraft

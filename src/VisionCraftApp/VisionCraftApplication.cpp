@@ -32,6 +32,16 @@ namespace VisionCraft
         }
     }
 
+    Engine::NodeEditor &VisionCraftApplication::GetNodeEditor()
+    {
+        return nodeEditor;
+    }
+
+    const Engine::NodeEditor &VisionCraftApplication::GetNodeEditor() const
+    {
+        return nodeEditor;
+    }
+
     void VisionCraftApplication::BeginFrame()
     {
         if (!imguiInitialized)

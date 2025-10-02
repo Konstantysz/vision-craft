@@ -5,29 +5,22 @@
 #include "Application.h"
 #include "Events/GraphExecuteEvent.h"
 #include "Logger.h"
+#include "VisionCraftApplication.h"
 
 namespace VisionCraft
 {
     GraphExecutionLayer::GraphExecutionLayer()
     {
         Core::Application::Get().GetEventBus().Subscribe<GraphExecuteEvent>(
-            [this](const GraphExecuteEvent &event) { ExecuteGraph(); });
+            [this]([[maybe_unused]] const GraphExecuteEvent &event) { ExecuteGraph(); });
     }
 
-    void GraphExecutionLayer::OnEvent(Core::Event &event)
+    void GraphExecutionLayer::OnEvent([[maybe_unused]] Core::Event &event)
     {
     }
 
-    void GraphExecutionLayer::OnUpdate(float deltaTime)
+    void GraphExecutionLayer::OnUpdate([[maybe_unused]] float deltaTime)
     {
-    }
-
-    void GraphExecutionLayer::ExecuteGraph()
-    {
-        LOG_INFO("Graph execution triggered via EventBus!");
-        isExecuting = true;
-        showResultsWindow = true;
-        // TODO: Implement actual graph execution logic
     }
 
     void GraphExecutionLayer::OnRender()
@@ -65,6 +58,26 @@ namespace VisionCraft
             ImGui::Text("No results to display");
 
             ImGui::End();
+        }
+    }
+
+    void GraphExecutionLayer::ExecuteGraph()
+    {
+        LOG_INFO("Graph execution triggered via EventBus!");
+        isExecuting = true;
+        showResultsWindow = true;
+
+        auto &app = static_cast<VisionCraftApplication &>(Core::Application::Get());
+        auto &nodeEditor = app.GetNodeEditor();
+
+        // Execute the graph (backend handles all the complexity)
+        const bool success = nodeEditor.Execute();
+
+        isExecuting = false;
+
+        if (!success)
+        {
+            LOG_ERROR("Graph execution failed");
         }
     }
 } // namespace VisionCraft

@@ -1,6 +1,10 @@
 #pragma once
 
 #include "Layer.h"
+#include "Node.h"
+#include "NodeEditor.h"
+
+#include <vector>
 
 namespace VisionCraft
 {
@@ -54,7 +58,7 @@ namespace VisionCraft
          * @brief Executes the node graph.
          *
          * This method is called when a GraphExecuteEvent is published.
-         * It triggers the actual graph execution and updates the execution state.
+         * It delegates to NodeEditor::Execute() which handles the execution logic.
          */
         void ExecuteGraph();
 

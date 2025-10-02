@@ -52,7 +52,7 @@ namespace VisionCraft
          * @param nodePositions Map of node positions
          * @param canvas Reference to canvas controller
          */
-        void HandleConnectionInteractions(const Engine::NodeEditor &nodeEditor,
+        void HandleConnectionInteractions(Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
             const CanvasController &canvas);
 
@@ -70,10 +70,10 @@ namespace VisionCraft
          * @brief Creates a connection between two pins.
          * @param outputPin Source pin (must be output)
          * @param inputPin Target pin (must be input)
-         * @param nodeEditor Reference to node editor for validation
+         * @param nodeEditor Reference to node editor for validation and syncing
          * @return True if connection was created successfully
          */
-        bool CreateConnection(const PinId &outputPin, const PinId &inputPin, const Engine::NodeEditor &nodeEditor);
+        bool CreateConnection(const PinId &outputPin, const PinId &inputPin, Engine::NodeEditor &nodeEditor);
 
         /**
          * @brief Validates if a connection between two pins is allowed.

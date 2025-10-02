@@ -8,6 +8,9 @@
 
 #include <imgui.h>
 
+#include "Application.h"
+#include "VisionCraftApplication.h"
+
 #include "Nodes/CannyEdgeNode.h"
 #include "Nodes/GrayscaleNode.h"
 #include "Nodes/ImageInputNode.h"
@@ -21,6 +24,7 @@ namespace VisionCraft
     NodeEditorLayer::NodeEditorLayer() : nodeRenderer(canvas, connectionManager)
     {
     }
+
     void NodeEditorLayer::OnEvent(Core::Event &event)
     {
     }
@@ -41,6 +45,8 @@ namespace VisionCraft
 
         const auto &io = ImGui::GetIO();
         canvas.HandleImGuiInput(io, ImGui::IsWindowHovered());
+
+        auto &nodeEditor = GetNodeEditor();
 
         if (nodeEditor.GetNodeIds().empty())
         {
@@ -70,6 +76,8 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderNodes()
     {
+        auto &nodeEditor = GetNodeEditor();
+
         for (const auto nodeId : nodeEditor.GetNodeIds())
         {
             auto *node = nodeEditor.GetNode(nodeId);
@@ -174,6 +182,8 @@ namespace VisionCraft
             return;
         }
 
+        auto &nodeEditor = GetNodeEditor();
+
         hoveredPin =
             connectionManager.FindPinAtPositionInNode(mousePos, hoveredNodeId, nodeEditor, nodePositions, canvas);
     }
@@ -275,6 +285,8 @@ namespace VisionCraft
 
         if (newNode)
         {
+            auto &nodeEditor = GetNodeEditor();
+
             const auto actualNodeId = newNode->GetId();
             nodeEditor.AddNode(std::move(newNode));
             nodePositions[actualNodeId] = { worldX, worldY };
@@ -310,6 +322,7 @@ namespace VisionCraft
 
     Engine::NodeId NodeEditorLayer::FindNodeAtPosition(const ImVec2 &mousePos) const
     {
+        const auto &nodeEditor = GetNodeEditor();
         const auto nodeIds = nodeEditor.GetNodeIds();
 
         for (auto it = nodeIds.rbegin(); it != nodeIds.rend(); ++it)
@@ -332,4 +345,13 @@ namespace VisionCraft
         return Constants::Special::kInvalidNodeId;
     }
 
+    Engine::NodeEditor &NodeEditorLayer::GetNodeEditor()
+    {
+        return static_cast<VisionCraftApplication &>(Core::Application::Get()).GetNodeEditor();
+    }
+
+    const Engine::NodeEditor &NodeEditorLayer::GetNodeEditor() const
+    {
+        return static_cast<const VisionCraftApplication &>(Core::Application::Get()).GetNodeEditor();
+    }
 } // namespace VisionCraft

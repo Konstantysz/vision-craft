@@ -28,6 +28,17 @@ namespace Core
      * It manages the main application loop, window lifecycle, and layer stack. Derived classes should
      * override the virtual BeginFrame() and EndFrame() methods to implement custom frame processing
      * (e.g., ImGui initialization and rendering).
+     *
+     * @note Architecture Pattern: Service Locator (Pseudo-Singleton)
+     * This class uses a Service Locator pattern rather than a true Singleton:
+     * - Constructor is public to allow derived classes (e.g., VisionCraftApplication)
+     * - Get() returns a global instance pointer set during construction
+     * - Only ONE instance should be created (enforced by convention, not compiler)
+     *
+     * TODO: Consider refactoring to one of these patterns:
+     * 1. True Singleton - Make constructor private, use static instance
+     * 2. Dependency Injection - Remove Get(), pass Application& to components that need it
+     * 3. Add runtime check in constructor to prevent multiple instances
      */
     class Application
     {
@@ -35,6 +46,9 @@ namespace Core
         /**
          * @brief Constructs an application with the given specification.
          * @param specification Configuration options for the application
+         *
+         * @warning Only ONE Application instance should exist at a time.
+         * Creating multiple instances leads to undefined behavior with Get().
          */
         explicit Application(const ApplicationSpecification &specification = ApplicationSpecification());
 
@@ -117,10 +131,7 @@ namespace Core
          * @brief Gets the application's event bus.
          * @return Reference to the event bus for publishing and subscribing to events
          */
-        [[nodiscard]] EventBus &GetEventBus()
-        {
-            return eventBus;
-        }
+        [[nodiscard]] EventBus &GetEventBus();
 
     private:
         ApplicationSpecification specification;         ///< Application configuration

@@ -143,11 +143,24 @@ namespace VisionCraft
          */
         [[nodiscard]] Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
 
+        /**
+         * @brief Gets the shared NodeEditor instance from VisionCraftApplication.
+         * @return Reference to the shared NodeEditor
+         *
+         * @note This helper encapsulates the Service Locator pattern access.
+         * See Application.h for architectural notes about this pattern.
+         */
+        [[nodiscard]] Engine::NodeEditor &GetNodeEditor();
+
+        /**
+         * @brief Gets the shared NodeEditor instance from VisionCraftApplication (const version).
+         * @return Const reference to the shared NodeEditor
+         */
+        [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
 
         // Core components
         CanvasController canvas;                                        ///< Canvas management component
         ConnectionManager connectionManager;                            ///< Connection management component
-        Engine::NodeEditor nodeEditor;                                  ///< Backend node editor
         NodeRenderer nodeRenderer;                                      ///< Node rendering component
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID

@@ -93,7 +93,33 @@ namespace VisionCraft::Engine
          */
         void Clear();
 
+        /**
+         * @brief Executes the node graph in dependency order.
+         * @return True if execution succeeded, false if cycle detected
+         *
+         * This method:
+         * 1. Performs topological sort to determine execution order
+         * 2. Passes data between connected nodes
+         * 3. Calls Process() on each node in correct order
+         */
+        bool Execute();
+
     private:
+        /**
+         * @brief Performs topological sort on the node graph.
+         * @return Vector of node IDs in execution order, or empty if cycle detected
+         */
+        [[nodiscard]] std::vector<NodeId> TopologicalSort() const;
+
+        /**
+         * @brief Passes data from one node to another based on their types.
+         * @param fromNode Source node
+         * @param toNode Destination node
+         *
+         * TODO: Replace dynamic_cast approach with proper polymorphic interface
+         * or data port system for cleaner, extensible design
+         */
+        static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
         std::unordered_map<NodeId, NodePtr> nodes; ///< Map of node IDs to node pointers
         std::vector<Connection> connections;       ///< List of connections
         NodeId nextId;                             ///< Next available node ID

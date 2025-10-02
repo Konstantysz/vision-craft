@@ -152,6 +152,12 @@ namespace VisionCraft::Engine
 
     std::string ImageInputNode::OpenFileBrowser()
     {
+        // TODO: File dialog is VERY SLOW (PowerShell startup overhead)
+        // Consider alternatives:
+        // 1. Native Win32 API (but requires careful header management to avoid conflicts)
+        // 2. Portable library like NFD (Native File Dialog)
+        // 3. ImGui file browser (no native dialog, but fast)
+
         // Simple approach: use system command for file dialog
         // This avoids Windows header conflicts while still providing a file dialog
 #ifdef _WIN32

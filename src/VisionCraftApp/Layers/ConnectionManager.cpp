@@ -17,7 +17,7 @@ namespace VisionCraft
     {
     }
 
-    void ConnectionManager::HandleConnectionInteractions(const Engine::NodeEditor &nodeEditor,
+    void ConnectionManager::HandleConnectionInteractions(Engine::NodeEditor &nodeEditor,
         const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
         const CanvasController &canvas)
     {
@@ -129,7 +129,7 @@ namespace VisionCraft
 
     bool ConnectionManager::CreateConnection(const PinId &outputPin,
         const PinId &inputPin,
-        const Engine::NodeEditor &nodeEditor)
+        Engine::NodeEditor &nodeEditor)
     {
         if (!IsConnectionValid(outputPin, inputPin, nodeEditor))
         {
@@ -139,6 +139,9 @@ namespace VisionCraft
         RemoveConnectionToInput(inputPin);
 
         connections.push_back({ outputPin, inputPin });
+
+        // Sync with backend NodeEditor
+        nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
 
         return true;
     }
@@ -392,44 +395,6 @@ namespace VisionCraft
         return connectionState;
     }
 
-    void ConnectionManager::RemoveConnectionToInput(const PinId &inputPin)
-    {
-        connections.erase(std::remove_if(connections.begin(),
-                              connections.end(),
-                              [&inputPin](const NodeConnection &conn) { return conn.inputPin == inputPin; }),
-            connections.end());
-    }
-
-    void ConnectionManager::RenderConnection(const NodeConnection &connection,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const CanvasController &canvas)
-    {
-        auto *drawList = ImGui::GetWindowDrawList();
-        const auto startPos = GetPinWorldPosition(connection.outputPin, nodeEditor, nodePositions, canvas);
-        const auto endPos = GetPinWorldPosition(connection.inputPin, nodeEditor, nodePositions, canvas);
-
-        if (startPos.x == 0 && startPos.y == 0)
-        {
-            return;
-        }
-
-        if (endPos.x == 0 && endPos.y == 0)
-        {
-            return;
-        }
-
-        const auto connectionColor = Constants::Colors::Connection::kActive;
-        const auto connectionThickness = Constants::Connection::kThickness;
-        const auto bezierTension = Constants::Connection::kBezierTension;
-        const auto distance = std::abs(endPos.x - startPos.x);
-        const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
-        const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
-        const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
-
-        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
-    }
-
     std::vector<NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
     {
         static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
@@ -485,7 +450,6 @@ namespace VisionCraft
         return {};
     }
 
-
     bool ConnectionManager::IsCreatingConnection() const
     {
         return connectionState.isCreating;
@@ -494,5 +458,43 @@ namespace VisionCraft
     const PinId &ConnectionManager::GetStartPin() const
     {
         return connectionState.startPin;
+    }
+
+    void ConnectionManager::RemoveConnectionToInput(const PinId &inputPin)
+    {
+        connections.erase(std::remove_if(connections.begin(),
+                              connections.end(),
+                              [&inputPin](const NodeConnection &conn) { return conn.inputPin == inputPin; }),
+            connections.end());
+    }
+
+    void ConnectionManager::RenderConnection(const NodeConnection &connection,
+        const Engine::NodeEditor &nodeEditor,
+        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+        const CanvasController &canvas)
+    {
+        auto *drawList = ImGui::GetWindowDrawList();
+        const auto startPos = GetPinWorldPosition(connection.outputPin, nodeEditor, nodePositions, canvas);
+        const auto endPos = GetPinWorldPosition(connection.inputPin, nodeEditor, nodePositions, canvas);
+
+        if (startPos.x == 0 && startPos.y == 0)
+        {
+            return;
+        }
+
+        if (endPos.x == 0 && endPos.y == 0)
+        {
+            return;
+        }
+
+        const auto connectionColor = Constants::Colors::Connection::kActive;
+        const auto connectionThickness = Constants::Connection::kThickness;
+        const auto bezierTension = Constants::Connection::kBezierTension;
+        const auto distance = std::abs(endPos.x - startPos.x);
+        const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
+        const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
+        const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
+
+        drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
     }
 } // namespace VisionCraft

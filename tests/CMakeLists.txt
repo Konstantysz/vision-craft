@@ -4,6 +4,7 @@ add_executable(TestVisionCraftNodes
     TestNodes.cpp
     TestNodeEditor.cpp
     TestSlot.cpp
+    TestNodeImplementations.cpp
 )
 
 target_compile_features(TestVisionCraftNodes PRIVATE cxx_std_20)

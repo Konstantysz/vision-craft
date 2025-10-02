@@ -489,3 +489,196 @@ TEST_F(NodeEditorTest, ExecuteGraphWithSlots)
     ASSERT_TRUE(node2Output.has_value());
     EXPECT_DOUBLE_EQ(node2Output.value(), 30.0);
 }
+
+TEST_F(NodeEditorTest, ExecuteGraphCycleDetection)
+{
+    auto node1 = std::make_unique<SlotTestNode>(1, "Node1");
+    auto node2 = std::make_unique<SlotTestNode>(2, "Node2");
+    auto node3 = std::make_unique<SlotTestNode>(3, "Node3");
+
+    editor.AddNode(std::move(node1));
+    editor.AddNode(std::move(node2));
+    editor.AddNode(std::move(node3));
+
+    // Create a cycle: 1 -> 2 -> 3 -> 1
+    editor.AddConnection(1, 2);
+    editor.AddConnection(2, 3);
+    editor.AddConnection(3, 1);
+
+    bool success = editor.Execute();
+    EXPECT_FALSE(success); // Should fail due to cycle
+}
+
+TEST_F(NodeEditorTest, ExecuteGraphSelfCycle)
+{
+    auto node = std::make_unique<SlotTestNode>(1, "Node");
+
+    editor.AddNode(std::move(node));
+    editor.AddConnection(1, 1); // Self-connection
+
+    bool success = editor.Execute();
+    EXPECT_FALSE(success); // Should fail due to cycle
+}
+
+TEST_F(NodeEditorTest, ExecuteGraphMultipleBranches)
+{
+    auto source = std::make_unique<SlotTestNode>(1, "Source");
+    auto branch1 = std::make_unique<SlotTestNode>(2, "Branch1");
+    auto branch2 = std::make_unique<SlotTestNode>(3, "Branch2");
+    auto merge = std::make_unique<SlotTestNode>(4, "Merge");
+
+    source->SetInputSlotData("Input", 10.0);
+
+    auto *sourcePtr = source.get();
+    auto *branch1Ptr = branch1.get();
+    auto *branch2Ptr = branch2.get();
+    auto *mergePtr = merge.get();
+
+    editor.AddNode(std::move(source));
+    editor.AddNode(std::move(branch1));
+    editor.AddNode(std::move(branch2));
+    editor.AddNode(std::move(merge));
+
+    // Create diamond pattern: source -> branch1 -> merge
+    //                          source -> branch2 -> merge
+    editor.AddConnection(1, 2);
+    editor.AddConnection(1, 3);
+    editor.AddConnection(2, 4);
+    editor.AddConnection(3, 4);
+
+    bool success = editor.Execute();
+    EXPECT_TRUE(success);
+
+    // Source should output 20 (10 * 2)
+    auto sourceOutput = sourcePtr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(sourceOutput.has_value());
+    EXPECT_DOUBLE_EQ(sourceOutput.value(), 20.0);
+
+    // Both branches should process
+    auto branch1Output = branch1Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(branch1Output.has_value());
+    EXPECT_DOUBLE_EQ(branch1Output.value(), 40.0); // 20 * 2
+
+    auto branch2Output = branch2Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(branch2Output.has_value());
+    EXPECT_DOUBLE_EQ(branch2Output.value(), 40.0); // 20 * 2
+
+    // Merge will receive data from branch2 (last connection processed)
+    auto mergeOutput = mergePtr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(mergeOutput.has_value());
+    EXPECT_DOUBLE_EQ(mergeOutput.value(), 80.0); // 40 * 2
+}
+
+TEST_F(NodeEditorTest, ExecuteEmptyGraph)
+{
+    bool success = editor.Execute();
+    EXPECT_TRUE(success); // Empty graph should succeed trivially
+}
+
+TEST_F(NodeEditorTest, ExecuteSingleNode)
+{
+    auto node = std::make_unique<SlotTestNode>(1, "Single");
+    node->SetInputSlotData("Input", 7.0);
+
+    auto *nodePtr = node.get();
+    editor.AddNode(std::move(node));
+
+    bool success = editor.Execute();
+    EXPECT_TRUE(success);
+
+    auto output = nodePtr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(output.has_value());
+    EXPECT_DOUBLE_EQ(output.value(), 14.0); // 7 * 2
+}
+
+TEST_F(NodeEditorTest, ExecuteDisconnectedNodes)
+{
+    auto node1 = std::make_unique<SlotTestNode>(1, "Node1");
+    auto node2 = std::make_unique<SlotTestNode>(2, "Node2");
+
+    node1->SetInputSlotData("Input", 5.0);
+    node2->SetInputSlotData("Input", 10.0);
+
+    auto *node1Ptr = node1.get();
+    auto *node2Ptr = node2.get();
+
+    editor.AddNode(std::move(node1));
+    editor.AddNode(std::move(node2));
+    // No connections - both nodes independent
+
+    bool success = editor.Execute();
+    EXPECT_TRUE(success);
+
+    // Both should execute independently
+    auto output1 = node1Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(output1.has_value());
+    EXPECT_DOUBLE_EQ(output1.value(), 10.0);
+
+    auto output2 = node2Ptr->GetOutputSlot("Output").GetData<double>();
+    ASSERT_TRUE(output2.has_value());
+    EXPECT_DOUBLE_EQ(output2.value(), 20.0);
+}
+
+TEST_F(NodeEditorTest, ExecuteLongChain)
+{
+    const int chainLength = 10;
+    std::vector<SlotTestNode *> nodePtrs;
+
+    for (int i = 1; i <= chainLength; ++i)
+    {
+        auto node = std::make_unique<SlotTestNode>(i, "Node" + std::to_string(i));
+        nodePtrs.push_back(node.get());
+        editor.AddNode(std::move(node));
+    }
+
+    // Set input on first node
+    nodePtrs[0]->SetInputSlotData("Input", 1.0);
+    nodePtrs[0]->SetInputSlotData("Multiplier", 2.0);
+
+    // Connect nodes in a chain
+    for (int i = 0; i < chainLength - 1; ++i)
+    {
+        editor.AddConnection(i + 1, i + 2);
+    }
+
+    bool success = editor.Execute();
+    EXPECT_TRUE(success);
+
+    // Verify each node in the chain
+    double expectedValue = 2.0; // 1.0 * 2.0
+    for (int i = 0; i < chainLength; ++i)
+    {
+        auto output = nodePtrs[i]->GetOutputSlot("Output").GetData<double>();
+        ASSERT_TRUE(output.has_value()) << "Node " << i << " failed";
+        EXPECT_DOUBLE_EQ(output.value(), expectedValue) << "Node " << i << " value mismatch";
+        expectedValue *= 2.0; // Each subsequent node doubles the value
+    }
+}
+
+class ErrorThrowingNode : public Node
+{
+public:
+    ErrorThrowingNode(NodeId id, std::string name) : Node(id, std::move(name))
+    {
+        CreateInputSlot("Input");
+        CreateOutputSlot("Output");
+    }
+
+    void Process() override
+    {
+        throw std::runtime_error("Intentional error for testing");
+    }
+};
+
+TEST_F(NodeEditorTest, ExecuteGraphWithNodeError)
+{
+    auto node1 = std::make_unique<SlotTestNode>(1, "GoodNode");
+    auto node2 = std::make_unique<ErrorThrowingNode>(2, "BadNode");
+
+    editor.AddNode(std::move(node1));
+    editor.AddNode(std::move(node2));
+    editor.AddConnection(1, 2);
+
+    bool success = editor.Execute();
+    EXPECT_FALSE(success); // Should fail when node throws
+}

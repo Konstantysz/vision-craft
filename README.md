@@ -14,7 +14,7 @@ A modern C++20 computer vision node editor with an intuitive visual programming 
 
 VisionCraft is built using a layered architecture:
 
-- **Core**: Foundation framework providing Application, Window, and Layer abstractions
+- **kappa-core**: Foundation framework (as git submodule) providing Application, Window, and Layer abstractions
 - **VisionCraftEngine**: Node system and computer vision processing logic
 - **VisionCraftApp**: GUI application with ImGui-based interface
 
@@ -38,9 +38,9 @@ VisionCraft is built using a layered architecture:
 
 ### 🪟 Windows
 
-1. **Clone the repository**
+1. **Clone the repository with submodules**
    ```cmd
-   git clone https://github.com/yourusername/vision-craft.git
+   git clone --recursive https://github.com/Konstantysz/vision-craft.git
    cd vision-craft
    ```
 
@@ -69,7 +69,7 @@ VisionCraft is built using a layered architecture:
 
 2. **Clone and build**
    ```bash
-   git clone https://github.com/yourusername/vision-craft.git
+   git clone --recursive https://github.com/Konstantysz/vision-craft.git
    cd vision-craft
    cmake -B build
    cmake --build build --config Release -j$(nproc)
@@ -109,12 +109,10 @@ VisionCraft automatically manages its dependencies through vcpkg:
 
 ```
 vision-craft/
+├── external/
+│   ├── kappa-core/           # Core GUI application framework (git submodule)
+│   └── ImGuiFileDialog/      # File dialog library (git submodule)
 ├── src/
-│   ├── Core/                 # Core framework
-│   │   ├── Application.h     # Abstract application base
-│   │   ├── Window.h          # Window management
-│   │   ├── Layer.h           # Layer system
-│   │   └── Logger.h          # Logging utilities
 │   ├── VisionCraftEngine/    # Node system and CV logic
 │   │   ├── Node.h            # Abstract node base
 │   │   ├── NodeEditor.h      # Node graph management

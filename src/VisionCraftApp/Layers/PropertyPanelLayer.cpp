@@ -4,7 +4,7 @@
 
 namespace VisionCraft
 {
-    void PropertyPanelLayer::OnEvent(Core::Event &event)
+    void PropertyPanelLayer::OnEvent(Kappa::Event &event)
     {
     }
 

@@ -7,7 +7,7 @@ namespace VisionCraft
     /**
      * @brief Event for triggering graph execution.
      */
-    class GraphExecuteEvent : public Core::Event
+    class GraphExecuteEvent : public Kappa::Event
     {
     public:
         /**

@@ -17,7 +17,7 @@ namespace VisionCraft
     /**
      * @brief Node editor layer with canvas, rendering, and interactions.
      */
-    class NodeEditorLayer : public Core::Layer
+    class NodeEditorLayer : public Kappa::Layer
     {
     public:
         /**
@@ -34,7 +34,7 @@ namespace VisionCraft
          * @brief Handles input events.
          * @param event Event to handle
          */
-        void OnEvent(Core::Event &event) override;
+        void OnEvent(Kappa::Event &event) override;
 
         /**
          * @brief Updates editor state.

@@ -24,7 +24,7 @@ namespace VisionCraft
          * @param mousePos Mouse position in screen coordinates
          * @param isWindowHovered Whether window is hovered
          */
-        void HandleInput(Core::Event &event, const ImVec2 &mousePos, bool isWindowHovered);
+        void HandleInput(Kappa::Event &event, const ImVec2 &mousePos, bool isWindowHovered);
 
         /**
          * @brief Handles ImGui-specific canvas input.

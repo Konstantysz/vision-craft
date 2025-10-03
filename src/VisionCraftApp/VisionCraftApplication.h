@@ -13,14 +13,15 @@ namespace VisionCraft
      * @brief Application with node editor and ImGui integration.
      * @note Sets up all required layers automatically.
      */
-    class VisionCraftApplication : public Core::Application
+    class VisionCraftApplication : public Kappa::Application
     {
     public:
         /**
          * @brief Constructs the application.
          * @param specification Application configuration
          */
-        VisionCraftApplication(const Core::ApplicationSpecification &specification = Core::ApplicationSpecification());
+        VisionCraftApplication(
+            const Kappa::ApplicationSpecification &specification = Kappa::ApplicationSpecification());
 
         /**
          * @brief Virtual destructor that ensures proper ImGui cleanup.

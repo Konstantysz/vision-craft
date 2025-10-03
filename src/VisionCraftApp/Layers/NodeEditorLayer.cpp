@@ -25,7 +25,7 @@ namespace VisionCraft
     {
     }
 
-    void NodeEditorLayer::OnEvent(Core::Event &event)
+    void NodeEditorLayer::OnEvent(Kappa::Event &event)
     {
     }
 
@@ -347,11 +347,11 @@ namespace VisionCraft
 
     Engine::NodeEditor &NodeEditorLayer::GetNodeEditor()
     {
-        return static_cast<VisionCraftApplication &>(Core::Application::Get()).GetNodeEditor();
+        return static_cast<VisionCraftApplication &>(Kappa::Application::Get()).GetNodeEditor();
     }
 
     const Engine::NodeEditor &NodeEditorLayer::GetNodeEditor() const
     {
-        return static_cast<const VisionCraftApplication &>(Core::Application::Get()).GetNodeEditor();
+        return static_cast<const VisionCraftApplication &>(Kappa::Application::Get()).GetNodeEditor();
     }
 } // namespace VisionCraft

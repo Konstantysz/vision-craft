@@ -7,7 +7,7 @@ namespace VisionCraft
     /**
      * @brief Layer for editing node properties.
      */
-    class PropertyPanelLayer : public Core::Layer
+    class PropertyPanelLayer : public Kappa::Layer
     {
     public:
         /**
@@ -24,7 +24,7 @@ namespace VisionCraft
          * @brief Handles property panel events.
          * @param event Event to handle
          */
-        void OnEvent(Core::Event &event) override;
+        void OnEvent(Kappa::Event &event) override;
 
         /**
          * @brief Updates property panel state.

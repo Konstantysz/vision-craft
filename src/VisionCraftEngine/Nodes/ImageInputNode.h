@@ -79,7 +79,7 @@ namespace VisionCraft::Engine
 
 
         cv::Mat outputImage;        ///< Loaded image data
-        Core::Texture texture;      ///< RAII-managed OpenGL texture for display
+        Kappa::Texture texture;     ///< RAII-managed OpenGL texture for display
         std::string lastLoadedPath; ///< Last successfully loaded file path
         char filePathBuffer[Constants::Buffers::kFilePathBufferSize] =
             ""; ///< Buffer for file path input (ImGui requirement)

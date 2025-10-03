@@ -34,7 +34,7 @@ target_link_libraries(VisionCraftApp
     glad::glad
     glfw
     imgui::imgui
-    Core
+    Kappa
     VisionCraftEngine
 )
 

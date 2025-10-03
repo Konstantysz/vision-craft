@@ -4,7 +4,7 @@
 
 namespace VisionCraft
 {
-    void DockSpaceLayer::OnEvent(Core::Event &event)
+    void DockSpaceLayer::OnEvent(Kappa::Event &event)
     {
     }
 

@@ -11,7 +11,7 @@ namespace VisionCraft
     /**
      * @brief Layer for graph execution and results display.
      */
-    class GraphExecutionLayer : public Core::Layer
+    class GraphExecutionLayer : public Kappa::Layer
     {
     public:
         /**
@@ -28,7 +28,7 @@ namespace VisionCraft
          * @brief Handles execution events.
          * @param event Event to handle
          */
-        void OnEvent(Core::Event &event) override;
+        void OnEvent(Kappa::Event &event) override;
 
         /**
          * @brief Updates execution state.

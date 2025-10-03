@@ -15,8 +15,8 @@
 
 namespace VisionCraft
 {
-    VisionCraftApplication::VisionCraftApplication(const Core::ApplicationSpecification &specification)
-        : Core::Application(specification)
+    VisionCraftApplication::VisionCraftApplication(const Kappa::ApplicationSpecification &specification)
+        : Kappa::Application(specification)
     {
         PushLayer<DockSpaceLayer>();
         PushLayer<NodeEditorLayer>();

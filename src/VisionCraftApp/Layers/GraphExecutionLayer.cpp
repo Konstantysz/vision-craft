@@ -11,11 +11,11 @@ namespace VisionCraft
 {
     GraphExecutionLayer::GraphExecutionLayer()
     {
-        Core::Application::Get().GetEventBus().Subscribe<GraphExecuteEvent>(
+        Kappa::Application::Get().GetEventBus().Subscribe<GraphExecuteEvent>(
             [this]([[maybe_unused]] const GraphExecuteEvent &event) { ExecuteGraph(); });
     }
 
-    void GraphExecutionLayer::OnEvent([[maybe_unused]] Core::Event &event)
+    void GraphExecutionLayer::OnEvent([[maybe_unused]] Kappa::Event &event)
     {
     }
 
@@ -29,7 +29,7 @@ namespace VisionCraft
 
         if (ImGui::Button("Execute Graph"))
         {
-            Core::Application::Get().GetEventBus().Publish(GraphExecuteEvent{});
+            Kappa::Application::Get().GetEventBus().Publish(GraphExecuteEvent{});
         }
 
         ImGui::SameLine();
@@ -67,7 +67,7 @@ namespace VisionCraft
         isExecuting = true;
         showResultsWindow = true;
 
-        auto &app = static_cast<VisionCraftApplication &>(Core::Application::Get());
+        auto &app = static_cast<VisionCraftApplication &>(Kappa::Application::Get());
         auto &nodeEditor = app.GetNodeEditor();
 
         const bool success = nodeEditor.Execute();

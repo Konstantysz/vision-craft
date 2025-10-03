@@ -76,8 +76,8 @@ namespace VisionCraft::Engine
          */
         void UpdateTexture();
 
-        cv::Mat inputImage;    ///< Input image from connected node
-        cv::Mat outputImage;   ///< Output image (same as input)
-        Core::Texture texture; ///< RAII-managed OpenGL texture for display
+        cv::Mat inputImage;     ///< Input image from connected node
+        cv::Mat outputImage;    ///< Output image (same as input)
+        Kappa::Texture texture; ///< RAII-managed OpenGL texture for display
     };
 } // namespace VisionCraft::Engine

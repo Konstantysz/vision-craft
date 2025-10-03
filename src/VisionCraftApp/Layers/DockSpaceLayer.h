@@ -7,7 +7,7 @@ namespace VisionCraft
     /**
      * @brief Layer providing fullscreen dockspace and menu bar.
      */
-    class DockSpaceLayer : public Core::Layer
+    class DockSpaceLayer : public Kappa::Layer
     {
     public:
         /**
@@ -24,7 +24,7 @@ namespace VisionCraft
          * @brief Handles dockspace events.
          * @param event Event to handle
          */
-        void OnEvent(Core::Event &event) override;
+        void OnEvent(Kappa::Event &event) override;
 
         /**
          * @brief Updates dockspace state.

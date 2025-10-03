@@ -2,7 +2,7 @@
 
 int main()
 {
-    Core::ApplicationSpecification appSpec;
+    Kappa::ApplicationSpecification appSpec;
     appSpec.name = "VisionCraft";
     appSpec.windowSpecification.title = "VisionCraft - Computer Vision Node Editor";
     appSpec.windowSpecification.width = 1920;

@@ -26,6 +26,6 @@ target_link_libraries(VisionCraftEngine PUBLIC
     opencv_imgproc)
 
 target_link_libraries(VisionCraftEngine PUBLIC
-    Core)
+    Kappa)
 
 target_compile_features(VisionCraftEngine PUBLIC cxx_std_20)

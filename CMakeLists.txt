@@ -77,5 +77,8 @@ add_code_quality_targets()
 # Setup IDE integration
 setup_ide_integration()
 
+# Add kappa-core submodule
+add_subdirectory(external/kappa-core)
+
 add_subdirectory(src)
 add_subdirectory(tests)

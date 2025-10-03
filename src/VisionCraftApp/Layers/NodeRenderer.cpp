@@ -482,7 +482,7 @@ namespace VisionCraft
     {
         std::string paramValue = node->GetInputValue<std::string>(pin.name).value_or("");
         char buffer[256];
-        strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
+        std::strncpy(buffer, paramValue.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
 
         ImGui::PushItemWidth(inputWidth);
@@ -546,7 +546,7 @@ namespace VisionCraft
         auto pathValue = node->GetInputValue<std::filesystem::path>(pin.name).value_or(std::filesystem::path{});
         std::string pathStr = pathValue.string();
         char buffer[256];
-        strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
+        std::strncpy(buffer, pathStr.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
 
         bool isImageInputFilepath = (pin.name == "FilePath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
@@ -655,7 +655,7 @@ namespace VisionCraft
                 std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
                 if (!selectedPath.empty() && fileBrowserTargetNode && fileBrowserTargetBuffer)
                 {
-                    strncpy_s(fileBrowserTargetBuffer, 512, selectedPath.c_str(), 511);
+                    std::strncpy(fileBrowserTargetBuffer, selectedPath.c_str(), 511);
                     fileBrowserTargetBuffer[511] = '\0';
                     fileBrowserTargetNode->SetInputSlotDefault("FilePath", std::filesystem::path(selectedPath));
                     fileBrowserTargetNode->Process();

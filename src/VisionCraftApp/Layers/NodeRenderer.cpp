@@ -480,7 +480,7 @@ namespace VisionCraft
         const std::string &widgetId,
         float inputWidth)
     {
-        std::string paramValue = node->GetParamOr<std::string>(pin.name, "");
+        std::string paramValue = node->GetInputValue<std::string>(pin.name).value_or("");
         char buffer[256];
         strncpy_s(buffer, paramValue.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
@@ -488,7 +488,7 @@ namespace VisionCraft
         ImGui::PushItemWidth(inputWidth);
         if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
         {
-            node->SetParam(pin.name, std::string(buffer));
+            node->SetInputSlotDefault(pin.name, std::string(buffer));
         }
         ImGui::PopItemWidth();
     }
@@ -498,8 +498,8 @@ namespace VisionCraft
         const std::string &widgetId,
         float inputWidth)
     {
-        float value = static_cast<float>(
-            node->GetParamOr<double>(pin.name, Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
+        float value = static_cast<float>(node->GetInputValue<double>(pin.name).value_or(
+            Constants::NodeRenderer::ParameterInput::kDefaultFloatValue));
 
         ImGui::PushItemWidth(inputWidth);
         if (ImGui::InputFloat(widgetId.c_str(),
@@ -508,7 +508,7 @@ namespace VisionCraft
                 Constants::NodeRenderer::ParameterInput::kFloatFastStep,
                 Constants::NodeRenderer::ParameterInput::kFloatFormat))
         {
-            node->SetParam(pin.name, static_cast<double>(value));
+            node->SetInputSlotDefault(pin.name, static_cast<double>(value));
         }
         ImGui::PopItemWidth();
     }
@@ -518,23 +518,23 @@ namespace VisionCraft
         const std::string &widgetId,
         float inputWidth)
     {
-        int value = node->GetParamOr<int>(pin.name, 0);
+        int value = node->GetInputValue<int>(pin.name).value_or(0);
 
         ImGui::PushItemWidth(inputWidth);
         if (ImGui::InputInt(widgetId.c_str(), &value))
         {
-            node->SetParam(pin.name, value);
+            node->SetInputSlotDefault(pin.name, value);
         }
         ImGui::PopItemWidth();
     }
 
     void NodeRenderer::RenderBoolInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId)
     {
-        bool value = node->GetParamOr<bool>(pin.name, false);
+        bool value = node->GetInputValue<bool>(pin.name).value_or(false);
 
         if (ImGui::Checkbox(widgetId.c_str(), &value))
         {
-            node->SetParam(pin.name, value);
+            node->SetInputSlotDefault(pin.name, value);
         }
     }
 
@@ -543,13 +543,13 @@ namespace VisionCraft
         const std::string &widgetId,
         float inputWidth)
     {
-        auto pathValue = node->GetParamOr<std::filesystem::path>(pin.name, std::filesystem::path{});
+        auto pathValue = node->GetInputValue<std::filesystem::path>(pin.name).value_or(std::filesystem::path{});
         std::string pathStr = pathValue.string();
         char buffer[256];
         strncpy_s(buffer, pathStr.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
 
-        bool isImageInputFilepath = (pin.name == "filepath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
+        bool isImageInputFilepath = (pin.name == "FilePath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
 
         if (isImageInputFilepath)
         {
@@ -558,7 +558,7 @@ namespace VisionCraft
             ImGui::PushItemWidth(inputWidth);
             if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
             {
-                node->SetParam(pin.name, std::filesystem::path(buffer));
+                node->SetInputSlotDefault(pin.name, std::filesystem::path(buffer));
             }
             ImGui::PopItemWidth();
 
@@ -590,7 +590,7 @@ namespace VisionCraft
             ImGui::PushItemWidth(inputWidth);
             if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
             {
-                node->SetParam(pin.name, std::filesystem::path(buffer));
+                node->SetInputSlotDefault(pin.name, std::filesystem::path(buffer));
             }
             ImGui::PopItemWidth();
         }
@@ -657,7 +657,7 @@ namespace VisionCraft
                 {
                     strncpy_s(fileBrowserTargetBuffer, 512, selectedPath.c_str(), 511);
                     fileBrowserTargetBuffer[511] = '\0';
-                    fileBrowserTargetNode->SetParam("filepath", std::filesystem::path(selectedPath));
+                    fileBrowserTargetNode->SetInputSlotDefault("FilePath", std::filesystem::path(selectedPath));
                     fileBrowserTargetNode->Process();
                 }
 

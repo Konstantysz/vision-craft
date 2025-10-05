@@ -1,7 +1,9 @@
 #include "NodeEditor.h"
 #include "Logger.h"
+#include "NodeFactory.h"
 
 #include <algorithm>
+#include <fstream>
 #include <queue>
 #include <unordered_map>
 
@@ -230,6 +232,150 @@ namespace VisionCraft::Engine
 
         toNode->SetInputSlotData("Input", outputSlot.GetVariantData());
         LOG_INFO("Passed data from {} to {}", fromNode->GetName(), toNode->GetName());
+    }
+
+    bool NodeEditor::SaveToFile(const std::filesystem::path &filepath,
+        const std::unordered_map<NodeId, std::pair<float, float>> &nodePositions) const
+    {
+        try
+        {
+            nlohmann::json j;
+            j["version"] = "1.0";
+
+            // Serialize nodes
+            nlohmann::json nodesArray = nlohmann::json::array();
+            for (const auto &[id, nodePtr] : nodes)
+            {
+                if (!nodePtr)
+                {
+                    LOG_WARN("Skipping null node with ID: {}", id);
+                    continue;
+                }
+
+                nlohmann::json nodeJson;
+                nodeJson["id"] = id;
+                nodeJson["type"] = nodePtr->GetType();
+                nodeJson["name"] = nodePtr->GetName();
+                nodesArray.push_back(nodeJson);
+            }
+            j["nodes"] = nodesArray;
+
+            // Serialize connections
+            nlohmann::json connectionsArray = nlohmann::json::array();
+            for (const auto &conn : connections)
+            {
+                nlohmann::json connJson;
+                connJson["from"] = conn.from;
+                connJson["to"] = conn.to;
+                connectionsArray.push_back(connJson);
+            }
+            j["connections"] = connectionsArray;
+
+            // Serialize node positions
+            nlohmann::json positionsArray = nlohmann::json::array();
+            for (const auto &[id, pos] : nodePositions)
+            {
+                nlohmann::json posJson;
+                posJson["id"] = id;
+                posJson["x"] = pos.first;
+                posJson["y"] = pos.second;
+                positionsArray.push_back(posJson);
+            }
+            j["nodePositions"] = positionsArray;
+
+            // Write to file
+            std::ofstream file(filepath);
+            if (!file.is_open())
+            {
+                LOG_ERROR("Failed to open file for writing: {}", filepath.string());
+                return false;
+            }
+
+            file << j.dump(2);
+            file.close();
+
+            LOG_INFO("Saved graph to: {}", filepath.string());
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            LOG_ERROR("Failed to save graph: {}", e.what());
+            return false;
+        }
+    }
+
+    bool NodeEditor::LoadFromFile(const std::filesystem::path &filepath,
+        std::unordered_map<NodeId, std::pair<float, float>> &nodePositions)
+    {
+        try
+        {
+            std::ifstream file(filepath);
+            if (!file.is_open())
+            {
+                LOG_ERROR("Failed to open file for reading: {}", filepath.string());
+                return false;
+            }
+
+            nlohmann::json j;
+            file >> j;
+            file.close();
+
+            // Clear existing graph
+            Clear();
+            nodePositions.clear();
+
+            // Deserialize nodes
+            if (j.contains("nodes"))
+            {
+                for (const auto &nodeJson : j["nodes"])
+                {
+                    NodeId id = nodeJson["id"];
+                    std::string type = nodeJson["type"];
+                    std::string name = nodeJson["name"];
+
+                    auto node = NodeFactory::CreateNode(type, id, name);
+                    if (node)
+                    {
+                        AddNode(std::move(node));
+                    }
+                    else
+                    {
+                        LOG_ERROR("Failed to create node of type: {}", type);
+                    }
+                }
+            }
+
+            // Deserialize connections
+            if (j.contains("connections"))
+            {
+                for (const auto &connJson : j["connections"])
+                {
+                    NodeId from = connJson["from"];
+                    NodeId to = connJson["to"];
+                    AddConnection(from, to);
+                }
+            }
+
+            // Deserialize node positions
+            if (j.contains("nodePositions"))
+            {
+                for (const auto &posJson : j["nodePositions"])
+                {
+                    NodeId id = posJson["id"];
+                    float x = posJson["x"];
+                    float y = posJson["y"];
+                    nodePositions[id] = { x, y };
+                }
+            }
+
+            LOG_INFO("Loaded graph from: {}", filepath.string());
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            LOG_ERROR("Failed to load graph: {}", e.what());
+            return false;
+        }
     }
 
 } // namespace VisionCraft::Engine

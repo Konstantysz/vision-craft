@@ -1,6 +1,8 @@
 #pragma once
 #include "Node.h"
 
+#include <filesystem>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <unordered_map>
 #include <vector>
@@ -94,6 +96,24 @@ namespace VisionCraft::Engine
          * @note Performs topological sort, passes data between nodes, and calls Process() in order.
          */
         bool Execute();
+
+        /**
+         * @brief Serializes graph to JSON file.
+         * @param filepath Path to save file
+         * @param nodePositions Map of node IDs to positions (x,y coordinates)
+         * @return True if succeeded
+         */
+        bool SaveToFile(const std::filesystem::path &filepath,
+            const std::unordered_map<NodeId, std::pair<float, float>> &nodePositions) const;
+
+        /**
+         * @brief Deserializes graph from JSON file.
+         * @param filepath Path to load file
+         * @param nodePositions Output map for node positions
+         * @return True if succeeded
+         */
+        bool LoadFromFile(const std::filesystem::path &filepath,
+            std::unordered_map<NodeId, std::pair<float, float>> &nodePositions);
 
     private:
         /**

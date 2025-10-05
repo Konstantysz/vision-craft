@@ -12,16 +12,23 @@
 #include "Layers/GraphExecutionLayer.h"
 #include "Layers/NodeEditorLayer.h"
 #include "Layers/PropertyPanelLayer.h"
+#include "Logger.h"
 
 namespace VisionCraft
 {
     VisionCraftApplication::VisionCraftApplication(const Kappa::ApplicationSpecification &specification)
         : Kappa::Application(specification)
     {
+        LOG_INFO("VisionCraftApplication: Starting initialization");
+        LOG_INFO("VisionCraftApplication: Pushing DockSpaceLayer");
         PushLayer<DockSpaceLayer>();
+        LOG_INFO("VisionCraftApplication: Pushing NodeEditorLayer");
         PushLayer<NodeEditorLayer>();
+        LOG_INFO("VisionCraftApplication: Pushing PropertyPanelLayer");
         PushLayer<PropertyPanelLayer>();
+        LOG_INFO("VisionCraftApplication: Pushing GraphExecutionLayer");
         PushLayer<GraphExecutionLayer>();
+        LOG_INFO("VisionCraftApplication: Initialization complete");
     }
 
     VisionCraftApplication::~VisionCraftApplication()
@@ -46,8 +53,10 @@ namespace VisionCraft
     {
         if (!imguiInitialized)
         {
+            LOG_INFO("VisionCraftApplication: Initializing ImGui");
             InitializeImGui();
             imguiInitialized = true;
+            LOG_INFO("VisionCraftApplication: ImGui initialized successfully");
         }
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -78,13 +87,17 @@ namespace VisionCraft
 
     void VisionCraftApplication::InitializeImGui()
     {
+        LOG_INFO("InitializeImGui: Checking ImGui version");
         IMGUI_CHECKVERSION();
+        LOG_INFO("InitializeImGui: Creating ImGui context");
         ImGui::CreateContext();
+        LOG_INFO("InitializeImGui: Configuring ImGui IO");
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
+        LOG_INFO("InitializeImGui: Setting style");
         ImGui::StyleColorsDark();
 
         ImGuiStyle &style = ImGui::GetStyle();
@@ -94,9 +107,18 @@ namespace VisionCraft
             style.Colors[ImGuiCol_WindowBg].w = 1.0f;
         }
 
+        LOG_INFO("InitializeImGui: Getting GLFW window context");
         GLFWwindow *glfwWindow = glfwGetCurrentContext();
+        if (!glfwWindow)
+        {
+            LOG_ERROR("InitializeImGui: GLFW window context is NULL!");
+            return;
+        }
+        LOG_INFO("InitializeImGui: Initializing ImGui GLFW backend");
         ImGui_ImplGlfw_InitForOpenGL(glfwWindow, true);
+        LOG_INFO("InitializeImGui: Initializing ImGui OpenGL3 backend");
         ImGui_ImplOpenGL3_Init("#version 410");
+        LOG_INFO("InitializeImGui: Complete");
     }
 
     void VisionCraftApplication::ShutdownImGui()

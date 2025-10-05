@@ -1,4 +1,7 @@
 #include "DockSpaceLayer.h"
+#include "Events/LoadGraphEvent.h"
+#include "Events/NewGraphEvent.h"
+#include "Events/SaveGraphEvent.h"
 
 #include <imgui.h>
 
@@ -61,9 +64,29 @@ namespace VisionCraft
         {
             if (ImGui::BeginMenu("File"))
             {
-                // TODO: Signal application to close
+                if (ImGui::MenuItem("New", "Ctrl+N"))
+                {
+                    NewGraphEvent event;
+                    OnEvent(event);
+                }
+
+                if (ImGui::MenuItem("Open...", "Ctrl+O"))
+                {
+                    LoadGraphEvent event;
+                    OnEvent(event);
+                }
+
+                if (ImGui::MenuItem("Save", "Ctrl+S"))
+                {
+                    SaveGraphEvent event;
+                    OnEvent(event);
+                }
+
+                ImGui::Separator();
+
                 if (ImGui::MenuItem("Exit"))
                 {
+                    // TODO: Signal application to close
                 }
                 ImGui::EndMenu();
             }

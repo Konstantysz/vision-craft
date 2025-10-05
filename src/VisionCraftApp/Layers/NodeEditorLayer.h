@@ -143,6 +143,31 @@ namespace VisionCraft
          */
         [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
 
+        /**
+         * @brief Handles save graph event.
+         */
+        void HandleSaveGraph();
+
+        /**
+         * @brief Handles load graph event.
+         */
+        void HandleLoadGraph();
+
+        /**
+         * @brief Handles new graph event.
+         */
+        void HandleNewGraph();
+
+        /**
+         * @brief Renders save file dialog.
+         */
+        void RenderSaveDialog();
+
+        /**
+         * @brief Renders load file dialog.
+         */
+        void RenderLoadDialog();
+
         // Core components
         CanvasController canvas;                                        ///< Canvas management component
         ConnectionManager connectionManager;                            ///< Connection management component
@@ -161,5 +186,11 @@ namespace VisionCraft
 
         // Pin interaction state
         PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin
+
+        // File management state
+        std::string currentFilePath;   ///< Current file path
+        bool showSaveDialog = false;   ///< Whether to show save dialog
+        bool showLoadDialog = false;   ///< Whether to show load dialog
+        char filePathBuffer[512] = ""; ///< Buffer for file path input
     };
 } // namespace VisionCraft

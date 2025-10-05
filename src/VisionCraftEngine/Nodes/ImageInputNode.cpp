@@ -85,13 +85,12 @@ namespace VisionCraft::Engine
             UpdateTexture();
             lastLoadedPath = filepath;
 
-            LOG_INFO("ImageInputNode {}: Successfully loaded image from '{}' ({}x{}, {} channels, {} bytes)",
+            LOG_INFO("ImageInputNode {}: Successfully loaded image from '{}' ({}x{}, {} channels)",
                 GetName(),
                 filepath,
                 outputImage.cols,
                 outputImage.rows,
-                outputImage.channels(),
-                outputImage.total() * outputImage.elemSize());
+                outputImage.channels());
         }
         catch (const cv::Exception &e)
         {
@@ -113,28 +112,82 @@ namespace VisionCraft::Engine
             return;
         }
 
-        cv::Mat rgbImage;
-        cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
-
-        if (!texture.Create())
+        // Safety check: ensure we have valid image data
+        if (outputImage.data == nullptr || outputImage.cols <= 0 || outputImage.rows <= 0)
         {
+            LOG_ERROR("ImageInputNode {}: Invalid image data, cannot create texture", GetName());
+            texture.Reset();
             return;
         }
 
-        glBindTexture(GL_TEXTURE_2D, texture.Get());
+        cv::Mat rgbImage;
+        try
+        {
+            // Verify outputImage is valid before conversion
+            if (!outputImage.data)
+            {
+                LOG_ERROR("ImageInputNode {}: outputImage.data is null before cvtColor", GetName());
+                texture.Reset();
+                return;
+            }
+
+            cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
+
+            // Verify conversion succeeded
+            if (rgbImage.empty() || !rgbImage.data)
+            {
+                LOG_ERROR("ImageInputNode {}: RGB conversion produced invalid image", GetName());
+                texture.Reset();
+                return;
+            }
+        }
+        catch (const cv::Exception &e)
+        {
+            LOG_ERROR("ImageInputNode {}: Failed to convert image to RGB: {}", GetName(), e.what());
+            texture.Reset();
+            return;
+        }
+        catch (const std::exception &e)
+        {
+            LOG_ERROR("ImageInputNode {}: Standard exception during RGB conversion: {}", GetName(), e.what());
+            texture.Reset();
+            return;
+        }
+
+        if (!texture.Create())
+        {
+            LOG_ERROR("ImageInputNode {}: Failed to create OpenGL texture", GetName());
+            return;
+        }
+
+        GLuint textureId = texture.Get();
+        if (textureId == 0)
+        {
+            LOG_ERROR("ImageInputNode {}: Invalid texture ID", GetName());
+            return;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RGB, rgbImage.cols, rgbImage.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, rgbImage.data);
+
+        GLenum error = glGetError();
+        if (error != GL_NO_ERROR)
+        {
+            LOG_ERROR("ImageInputNode {}: OpenGL error after texture upload: 0x{:x}", GetName(), error);
+        }
+
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     std::pair<float, float> ImageInputNode::CalculatePreviewDimensions(float nodeContentWidth,
         [[maybe_unused]] float maxHeight) const
     {
-        if (!HasValidImage())
+        if (!HasValidImage() || outputImage.rows <= 0 || outputImage.cols <= 0)
         {
             return { 0.0f, 0.0f };
         }

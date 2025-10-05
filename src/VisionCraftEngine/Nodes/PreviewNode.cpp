@@ -83,7 +83,7 @@ namespace VisionCraft::Engine
     std::pair<float, float> PreviewNode::CalculatePreviewDimensions(float nodeContentWidth,
         [[maybe_unused]] float maxHeight) const
     {
-        if (!HasValidImage())
+        if (!HasValidImage() || outputImage.rows <= 0 || outputImage.cols <= 0)
         {
             return { 0.0f, 0.0f };
         }

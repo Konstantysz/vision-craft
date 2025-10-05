@@ -48,8 +48,12 @@ namespace VisionCraft
             if (ImGui::IsItemHovered())
             {
                 auto outputImage = previewNode.GetOutputImage();
-                float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
-                ImGui::SetTooltip("%dx%d pixels\nAspect ratio: %.2f", outputImage.cols, outputImage.rows, imageAspect);
+                if (outputImage.rows > 0 && outputImage.cols > 0)
+                {
+                    float imageAspect = static_cast<float>(outputImage.cols) / static_cast<float>(outputImage.rows);
+                    ImGui::SetTooltip(
+                        "%dx%d pixels\nAspect ratio: %.2f", outputImage.cols, outputImage.rows, imageAspect);
+                }
             }
         }
     }

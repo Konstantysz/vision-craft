@@ -1,6 +1,7 @@
 #include "NodeRenderer.h"
 #include "DefaultNodeRenderingStrategy.h"
 #include "ImageInputNodeRenderingStrategy.h"
+#include "Logger.h"
 #include "NodeDimensionCalculator.h"
 #include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
@@ -574,7 +575,9 @@ namespace VisionCraft
             {
                 fileBrowserOpen = true;
                 fileBrowserTargetNode = node;
-                fileBrowserTargetBuffer = buffer;
+                // Don't store buffer pointer - it's a local variable that will be invalid later!
+                // We'll set the path directly via SetInputSlotDefault in the callback
+                fileBrowserTargetBuffer = nullptr;
             }
 
             ImVec2 loadButtonPos = ImVec2(buttonPos.x + buttonWidth + spacing, buttonPos.y);
@@ -653,10 +656,9 @@ namespace VisionCraft
             if (ImGuiFileDialog::Instance()->IsOk())
             {
                 std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
-                if (!selectedPath.empty() && fileBrowserTargetNode && fileBrowserTargetBuffer)
+
+                if (!selectedPath.empty() && fileBrowserTargetNode)
                 {
-                    std::strncpy(fileBrowserTargetBuffer, selectedPath.c_str(), 511);
-                    fileBrowserTargetBuffer[511] = '\0';
                     fileBrowserTargetNode->SetInputSlotDefault("FilePath", std::filesystem::path(selectedPath));
                     fileBrowserTargetNode->Process();
                 }

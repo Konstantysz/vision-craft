@@ -24,6 +24,15 @@ namespace VisionCraft::Engine
         ImageInputNode(NodeId id, const std::string &name = "Image Input");
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "ImageInputNode";
+        }
+
+        /**
          * @brief Processes node by loading specified image.
          */
         void Process() override;

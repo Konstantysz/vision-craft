@@ -24,6 +24,15 @@ namespace VisionCraft::Engine
         virtual ~ImageOutputNode() = default;
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "ImageOutputNode";
+        }
+
+        /**
          * @brief Processes input image for display/saving.
          */
         void Process() override;

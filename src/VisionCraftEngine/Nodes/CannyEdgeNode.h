@@ -24,6 +24,15 @@ namespace VisionCraft::Engine
         virtual ~CannyEdgeNode() = default;
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "CannyEdgeNode";
+        }
+
+        /**
          * @brief Processes input image using Canny edge detection.
          */
         void Process() override;

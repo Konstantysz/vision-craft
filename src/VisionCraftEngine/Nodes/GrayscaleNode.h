@@ -24,6 +24,15 @@ namespace VisionCraft::Engine
         virtual ~GrayscaleNode() = default;
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "GrayscaleNode";
+        }
+
+        /**
          * @brief Processes input image by converting to grayscale.
          */
         void Process() override;

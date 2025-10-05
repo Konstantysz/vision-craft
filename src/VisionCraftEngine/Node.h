@@ -47,6 +47,12 @@ namespace VisionCraft::Engine
         [[nodiscard]] const std::string &GetName() const;
 
         /**
+         * @brief Returns the node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] virtual std::string GetType() const = 0;
+
+        /**
          * @brief Processes node data. Must be implemented by derived classes.
          */
         virtual void Process() = 0;

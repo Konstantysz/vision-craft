@@ -26,6 +26,15 @@ namespace VisionCraft::Engine
         virtual ~PreviewNode() = default;
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "PreviewNode";
+        }
+
+        /**
          * @brief Processes node by passing input to output.
          */
         void Process() override;

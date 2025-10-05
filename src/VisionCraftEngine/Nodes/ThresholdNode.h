@@ -24,6 +24,15 @@ namespace VisionCraft::Engine
         virtual ~ThresholdNode() = default;
 
         /**
+         * @brief Returns node type identifier.
+         * @return Type string
+         */
+        [[nodiscard]] std::string GetType() const override
+        {
+            return "ThresholdNode";
+        }
+
+        /**
          * @brief Processes input image using thresholding.
          */
         void Process() override;

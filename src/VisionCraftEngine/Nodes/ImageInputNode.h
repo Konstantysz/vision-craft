@@ -74,6 +74,18 @@ namespace VisionCraft::Engine
          */
         [[nodiscard]] float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const override;
 
+        /**
+         * @brief Returns error message if loading failed.
+         * @return Error message or empty string
+         */
+        [[nodiscard]] std::string GetErrorMessage() const;
+
+        /**
+         * @brief Checks if node has an error.
+         * @return True if error exists
+         */
+        [[nodiscard]] bool HasError() const;
+
     private:
         /**
          * @brief Loads image from file path.

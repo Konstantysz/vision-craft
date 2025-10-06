@@ -27,11 +27,31 @@
 
 namespace VisionCraft::Engine
 {
+    namespace
+    {
+        // Use special prefix in lastLoadedPath to store error messages
+        inline constexpr std::string_view kErrorPrefix = "ERROR:";
+    } // namespace
+
     ImageInputNode::ImageInputNode(NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("FilePath", std::filesystem::path{});
         CreateOutputSlot("Output");
         filePathBuffer[0] = '\0';
+    }
+
+    std::string ImageInputNode::GetErrorMessage() const
+    {
+        if (lastLoadedPath.starts_with(kErrorPrefix))
+        {
+            return lastLoadedPath.substr(kErrorPrefix.length());
+        }
+        return "";
+    }
+
+    bool ImageInputNode::HasError() const
+    {
+        return lastLoadedPath.starts_with(kErrorPrefix);
     }
 
     void ImageInputNode::Process()
@@ -41,6 +61,7 @@ namespace VisionCraft::Engine
         if (filepath.empty())
         {
             outputImage = cv::Mat{};
+            lastLoadedPath.clear();
             ClearOutputSlot("Output");
             return;
         }
@@ -69,12 +90,18 @@ namespace VisionCraft::Engine
 
     void ImageInputNode::LoadImageFromPath(const std::string &filepath)
     {
+        auto setError = [this](std::string_view errorMsg) {
+            lastLoadedPath = std::string(kErrorPrefix) + std::string(errorMsg);
+            outputImage = cv::Mat{};
+        };
+
         try
         {
             outputImage = cv::imread(filepath, cv::IMREAD_COLOR);
 
             if (outputImage.empty()) [[unlikely]]
             {
+                setError("Failed to load image");
                 LOG_ERROR(
                     "ImageInputNode {}: Failed to load image from '{}' - file may be corrupted or unsupported format",
                     GetName(),
@@ -94,13 +121,13 @@ namespace VisionCraft::Engine
         }
         catch (const cv::Exception &e)
         {
+            setError("OpenCV error");
             LOG_ERROR("ImageInputNode {}: OpenCV error loading image '{}': {}", GetName(), filepath, e.what());
-            outputImage = cv::Mat{};
         }
         catch (const std::exception &e)
         {
+            setError("Error loading image");
             LOG_ERROR("ImageInputNode {}: Unexpected error loading image '{}': {}", GetName(), filepath, e.what());
-            outputImage = cv::Mat{};
         }
     }
 

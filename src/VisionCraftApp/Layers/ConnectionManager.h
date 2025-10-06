@@ -42,10 +42,12 @@ namespace VisionCraft
          * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
          * @param canvas Canvas controller
+         * @param hoveredConnection Optional hovered connection for highlighting
          */
         void RenderConnections(const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const CanvasController &canvas);
+            const CanvasController &canvas,
+            const std::optional<NodeConnection> &hoveredConnection = std::nullopt);
 
         /**
          * @brief Creates connection between pins.
@@ -186,11 +188,13 @@ namespace VisionCraft
          * @param nodeEditor Node editor backend
          * @param nodePositions Map of node positions
          * @param canvas Canvas controller
+         * @param isHovered Whether connection is hovered
          */
         void RenderConnection(const NodeConnection &connection,
             const Engine::NodeEditor &nodeEditor,
             const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const CanvasController &canvas);
+            const CanvasController &canvas,
+            bool isHovered = false);
 
         // Connection data
         std::vector<NodeConnection> connections; ///< All active connections

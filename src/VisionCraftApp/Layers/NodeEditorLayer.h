@@ -193,6 +193,9 @@ namespace VisionCraft
         // Pin interaction state
         PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin
 
+        // Connection interaction state
+        std::optional<NodeConnection> hoveredConnection = std::nullopt; ///< Currently hovered connection
+
         // File management state
         std::string currentFilePath;   ///< Current file path
         bool showSaveDialog = false;   ///< Whether to show save dialog

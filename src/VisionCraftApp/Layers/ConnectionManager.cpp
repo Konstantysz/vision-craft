@@ -1,4 +1,5 @@
 #include "ConnectionManager.h"
+#include "Logger.h"
 #include "NodeEditorLayer.h"
 #include "NodeRenderer.h"
 
@@ -109,12 +110,14 @@ namespace VisionCraft
 
     void ConnectionManager::RenderConnections(const Engine::NodeEditor &nodeEditor,
         const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const CanvasController &canvas)
+        const CanvasController &canvas,
+        const std::optional<NodeConnection> &hoveredConnection)
     {
         auto *drawList = ImGui::GetWindowDrawList();
         for (const auto &connection : connections)
         {
-            RenderConnection(connection, nodeEditor, nodePositions, canvas);
+            const bool isHovered = hoveredConnection.has_value() && hoveredConnection.value() == connection;
+            RenderConnection(connection, nodeEditor, nodePositions, canvas, isHovered);
         }
 
         if (connectionState.isCreating)
@@ -452,7 +455,8 @@ namespace VisionCraft
     void ConnectionManager::RenderConnection(const NodeConnection &connection,
         const Engine::NodeEditor &nodeEditor,
         const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const CanvasController &canvas)
+        const CanvasController &canvas,
+        bool isHovered)
     {
         auto *drawList = ImGui::GetWindowDrawList();
         const auto startPos = GetPinWorldPosition(connection.outputPin, nodeEditor, nodePositions, canvas);
@@ -468,8 +472,11 @@ namespace VisionCraft
             return;
         }
 
-        const auto connectionColor = Constants::Colors::Connection::kActive;
-        const auto connectionThickness = Constants::Connection::kThickness;
+        // Highlight hovered connections with brighter color and thicker line
+        const auto connectionColor = isHovered ? IM_COL32(255, 255, 100, 255) : Constants::Colors::Connection::kActive;
+        const auto connectionThickness =
+            isHovered ? Constants::Connection::kThickness * 2.0f : Constants::Connection::kThickness;
+
         const auto bezierTension = Constants::Connection::kBezierTension;
         const auto distance = std::abs(endPos.x - startPos.x);
         const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());

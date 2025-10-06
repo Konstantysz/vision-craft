@@ -81,7 +81,7 @@ namespace VisionCraft
         DetectHoveredPin();
         connectionManager.HandleConnectionInteractions(nodeEditor, nodePositions, canvas);
 
-        connectionManager.RenderConnections(nodeEditor, nodePositions, canvas);
+        connectionManager.RenderConnections(nodeEditor, nodePositions, canvas, hoveredConnection);
         RenderNodes();
 
         RenderContextMenu();
@@ -151,18 +151,29 @@ namespace VisionCraft
 
         if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {
+            hoveredConnection = std::nullopt;
             return;
+        }
+
+        // Update hovered connection for visual feedback (only if not dragging or interacting with pins)
+        if (!isDragging && hoveredPin.nodeId == Constants::Special::kInvalidNodeId)
+        {
+            auto &nodeEditor = GetNodeEditor();
+            hoveredConnection = connectionManager.FindConnectionAtPosition(mousePos, nodeEditor, nodePositions, canvas);
+        }
+        else
+        {
+            hoveredConnection = std::nullopt;
         }
 
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
-            // First check if clicking on a connection
-            auto &nodeEditor = GetNodeEditor();
-            auto connection = connectionManager.FindConnectionAtPosition(mousePos, nodeEditor, nodePositions, canvas);
-            if (connection.has_value())
+            // First check if clicking on a connection (reuse hoveredConnection)
+            if (hoveredConnection.has_value())
             {
                 // Right-click on connection - delete it
-                connectionManager.RemoveConnection(connection.value());
+                connectionManager.RemoveConnection(hoveredConnection.value());
+                hoveredConnection = std::nullopt;
                 return;
             }
 

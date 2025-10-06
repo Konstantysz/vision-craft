@@ -118,6 +118,12 @@ namespace VisionCraft
         void CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position);
 
         /**
+         * @brief Deletes a node.
+         * @param nodeId Node ID to delete
+         */
+        void DeleteNode(Engine::NodeId nodeId);
+
+        /**
          * @brief Returns data type color.
          * @param dataType Data type
          * @return Color

@@ -141,6 +141,14 @@ namespace VisionCraft
     {
         auto &io = ImGui::GetIO();
         const auto mousePos = io.MousePos;
+
+        // Handle Delete key for selected node
+        if (selectedNodeId != Constants::Special::kInvalidNodeId && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        {
+            DeleteNode(selectedNodeId);
+            return;
+        }
+
         if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {
             return;
@@ -153,6 +161,12 @@ namespace VisionCraft
             {
                 showContextMenu = true;
                 contextMenuPos = mousePos;
+                ImGui::OpenPopup("NodeContextMenu");
+            }
+            else
+            {
+                // Right-click on node - select it and show context menu
+                selectedNodeId = clickedNodeId;
                 ImGui::OpenPopup("NodeContextMenu");
             }
         }
@@ -232,45 +246,58 @@ namespace VisionCraft
     {
         if (ImGui::BeginPopup("NodeContextMenu"))
         {
-            ImGui::Text("Add Node");
-            ImGui::Separator();
-
-            if (ImGui::MenuItem("Image Input"))
+            // If a node is selected, show node operations
+            if (selectedNodeId != Constants::Special::kInvalidNodeId)
             {
-                CreateNodeAtPosition("ImageInput", contextMenuPos);
-                ImGui::CloseCurrentPopup();
+                if (ImGui::MenuItem("Delete"))
+                {
+                    DeleteNode(selectedNodeId);
+                    ImGui::CloseCurrentPopup();
+                }
             }
-
-            if (ImGui::MenuItem("Image Output"))
+            else
             {
-                CreateNodeAtPosition("ImageOutput", contextMenuPos);
-                ImGui::CloseCurrentPopup();
-            }
+                // Otherwise show node creation menu
+                ImGui::Text("Add Node");
+                ImGui::Separator();
 
-            if (ImGui::MenuItem("Preview"))
-            {
-                CreateNodeAtPosition("Preview", contextMenuPos);
-                ImGui::CloseCurrentPopup();
-            }
+                if (ImGui::MenuItem("Image Input"))
+                {
+                    CreateNodeAtPosition("ImageInput", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
 
-            ImGui::Separator();
+                if (ImGui::MenuItem("Image Output"))
+                {
+                    CreateNodeAtPosition("ImageOutput", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
 
-            if (ImGui::MenuItem("Grayscale"))
-            {
-                CreateNodeAtPosition("Grayscale", contextMenuPos);
-                ImGui::CloseCurrentPopup();
-            }
+                if (ImGui::MenuItem("Preview"))
+                {
+                    CreateNodeAtPosition("Preview", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
 
-            if (ImGui::MenuItem("Canny Edge Detection"))
-            {
-                CreateNodeAtPosition("CannyEdge", contextMenuPos);
-                ImGui::CloseCurrentPopup();
-            }
+                ImGui::Separator();
 
-            if (ImGui::MenuItem("Threshold"))
-            {
-                CreateNodeAtPosition("Threshold", contextMenuPos);
-                ImGui::CloseCurrentPopup();
+                if (ImGui::MenuItem("Grayscale"))
+                {
+                    CreateNodeAtPosition("Grayscale", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
+
+                if (ImGui::MenuItem("Canny Edge Detection"))
+                {
+                    CreateNodeAtPosition("CannyEdge", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
+
+                if (ImGui::MenuItem("Threshold"))
+                {
+                    CreateNodeAtPosition("Threshold", contextMenuPos);
+                    ImGui::CloseCurrentPopup();
+                }
             }
 
             ImGui::EndPopup();
@@ -543,5 +570,28 @@ namespace VisionCraft
 
             ImGui::EndPopup();
         }
+    }
+
+    void NodeEditorLayer::DeleteNode(Engine::NodeId nodeId)
+    {
+        if (nodeId == Constants::Special::kInvalidNodeId)
+        {
+            return;
+        }
+
+        auto &nodeEditor = GetNodeEditor();
+
+        // Clear selection if deleting selected node
+        if (selectedNodeId == nodeId)
+        {
+            selectedNodeId = Constants::Special::kInvalidNodeId;
+            isDragging = false;
+        }
+
+        // Remove node (also removes connections)
+        nodeEditor.RemoveNode(nodeId);
+
+        // Remove node position
+        nodePositions.erase(nodeId);
     }
 } // namespace VisionCraft

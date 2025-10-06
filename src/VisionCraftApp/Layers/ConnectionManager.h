@@ -154,6 +154,25 @@ namespace VisionCraft
          */
         [[nodiscard]] const PinId &GetStartPin() const;
 
+        /**
+         * @brief Finds connection at mouse position.
+         * @param mousePos Mouse position
+         * @param nodeEditor Node editor backend
+         * @param nodePositions Map of node positions
+         * @param canvas Canvas controller
+         * @return Connection if found, otherwise invalid connection
+         */
+        [[nodiscard]] std::optional<NodeConnection> FindConnectionAtPosition(const ImVec2 &mousePos,
+            const Engine::NodeEditor &nodeEditor,
+            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+            const CanvasController &canvas) const;
+
+        /**
+         * @brief Removes a connection.
+         * @param connection Connection to remove
+         */
+        void RemoveConnection(const NodeConnection &connection);
+
     private:
         /**
          * @brief Removes connection to input pin.

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iterator>
 #include <limits>
+#include <optional>
 
 namespace VisionCraft
 {
@@ -475,5 +476,59 @@ namespace VisionCraft
         const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
         const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
         drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
+    }
+
+    std::optional<NodeConnection> ConnectionManager::FindConnectionAtPosition(const ImVec2 &mousePos,
+        const Engine::NodeEditor &nodeEditor,
+        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+        const CanvasController &canvas) const
+    {
+        const float clickThreshold = 10.0f; // Distance threshold for clicking on a connection
+
+        for (const auto &connection : connections)
+        {
+            // Get start and end positions
+            const auto startPos = GetPinWorldPosition(connection.outputPin, nodeEditor, nodePositions, canvas);
+            const auto endPos = GetPinWorldPosition(connection.inputPin, nodeEditor, nodePositions, canvas);
+
+            // Calculate bezier curve parameters (same as in RenderConnection)
+            const auto distance = std::abs(endPos.x - startPos.x);
+            const auto bezierTension = Constants::Connection::kBezierTension;
+            const auto tension = std::min(distance * 0.5f, bezierTension * canvas.GetZoomLevel());
+            const auto cp1 = ImVec2(startPos.x + tension, startPos.y);
+            const auto cp2 = ImVec2(endPos.x - tension, endPos.y);
+
+            // Check distance to bezier curve by sampling points
+            const int samples = 20;
+            for (int i = 0; i <= samples; ++i)
+            {
+                const float t = static_cast<float>(i) / samples;
+                const float u = 1.0f - t;
+                const float t2 = t * t;
+                const float u2 = u * u;
+                const float t3 = t2 * t;
+                const float u3 = u2 * u;
+
+                // Cubic bezier formula
+                const ImVec2 point = ImVec2(u3 * startPos.x + 3 * u2 * t * cp1.x + 3 * u * t2 * cp2.x + t3 * endPos.x,
+                    u3 * startPos.y + 3 * u2 * t * cp1.y + 3 * u * t2 * cp2.y + t3 * endPos.y);
+
+                const float dx = mousePos.x - point.x;
+                const float dy = mousePos.y - point.y;
+                const float distSq = dx * dx + dy * dy;
+
+                if (distSq < clickThreshold * clickThreshold)
+                {
+                    return connection;
+                }
+            }
+        }
+
+        return std::nullopt;
+    }
+
+    void ConnectionManager::RemoveConnection(const NodeConnection &connection)
+    {
+        connections.erase(std::remove(connections.begin(), connections.end(), connection), connections.end());
     }
 } // namespace VisionCraft

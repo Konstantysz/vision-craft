@@ -156,6 +156,17 @@ namespace VisionCraft
 
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
         {
+            // First check if clicking on a connection
+            auto &nodeEditor = GetNodeEditor();
+            auto connection = connectionManager.FindConnectionAtPosition(mousePos, nodeEditor, nodePositions, canvas);
+            if (connection.has_value())
+            {
+                // Right-click on connection - delete it
+                connectionManager.RemoveConnection(connection.value());
+                return;
+            }
+
+            // Then check if clicking on a node
             const auto clickedNodeId = FindNodeAtPosition(mousePos);
             if (clickedNodeId == Constants::Special::kInvalidNodeId)
             {

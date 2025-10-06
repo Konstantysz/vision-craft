@@ -8,6 +8,9 @@ CMakeUserPresets.json
 build/
 vcpkg_installed/
 
+# Private test data (not tracked by git)
+test_data/
+
 # User-specific files
 *.rsuser
 *.suo

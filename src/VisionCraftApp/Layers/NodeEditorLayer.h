@@ -5,6 +5,7 @@
 #include "Layer.h"
 #include "NodeEditor.h"
 #include "NodeEditorTypes.h"
+#include "NodeFactory.h"
 #include "NodeRenderer.h"
 
 #include <memory>
@@ -196,6 +197,7 @@ namespace VisionCraft
         CanvasController canvas;                                        ///< Canvas management component
         ConnectionManager connectionManager;                            ///< Connection management component
         NodeRenderer nodeRenderer;                                      ///< Node rendering component
+        NodeFactory nodeFactory;                                        ///< Factory for creating nodes
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 

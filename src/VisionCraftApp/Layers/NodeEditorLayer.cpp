@@ -28,6 +28,30 @@ namespace VisionCraft
 {
     NodeEditorLayer::NodeEditorLayer() : nodeRenderer(canvas, connectionManager)
     {
+        // Register all available node types with the factory
+        nodeFactory.Register("ImageInput", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::ImageInputNode>(id, std::string(name));
+        });
+
+        nodeFactory.Register("ImageOutput", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::ImageOutputNode>(id, std::string(name));
+        });
+
+        nodeFactory.Register("Preview", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::PreviewNode>(id, std::string(name));
+        });
+
+        nodeFactory.Register("Grayscale", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::GrayscaleNode>(id, std::string(name));
+        });
+
+        nodeFactory.Register("CannyEdge", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::CannyEdgeNode>(id, std::string(name));
+        });
+
+        nodeFactory.Register("Threshold", [](Engine::NodeId id, std::string_view name) {
+            return std::make_unique<Engine::ThresholdNode>(id, std::string(name));
+        });
     }
 
     void NodeEditorLayer::OnEvent(Kappa::Event &event)
@@ -434,38 +458,24 @@ namespace VisionCraft
     void NodeEditorLayer::CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position)
     {
         const auto worldPos = canvas.ScreenToWorld(position);
-        auto worldX = worldPos.x;
-        auto worldY = worldPos.y;
-
-        worldX -= Constants::Node::Creation::kOffsetX;
-        worldY -= Constants::Node::Creation::kOffsetY;
+        const auto worldX = worldPos.x - Constants::Node::Creation::kOffsetX;
+        const auto worldY = worldPos.y - Constants::Node::Creation::kOffsetY;
 
         const auto nodeId = nextNodeId++;
-        std::unique_ptr<Engine::Node> newNode;
-        if (nodeType == "ImageInput")
-        {
-            newNode = std::make_unique<Engine::ImageInputNode>(nodeId, "Image Input");
-        }
-        else if (nodeType == "ImageOutput")
-        {
-            newNode = std::make_unique<Engine::ImageOutputNode>(nodeId, "Image Output");
-        }
-        else if (nodeType == "Grayscale")
-        {
-            newNode = std::make_unique<Engine::GrayscaleNode>(nodeId, "Grayscale");
-        }
-        else if (nodeType == "CannyEdge")
-        {
-            newNode = std::make_unique<Engine::CannyEdgeNode>(nodeId, "Canny Edge");
-        }
-        else if (nodeType == "Threshold")
-        {
-            newNode = std::make_unique<Engine::ThresholdNode>(nodeId, "Threshold");
-        }
-        else if (nodeType == "Preview")
-        {
-            newNode = std::make_unique<Engine::PreviewNode>(nodeId, "Preview");
-        }
+
+        // Map node types to display names
+        static const std::unordered_map<std::string, std::string> displayNames = { { "ImageInput", "Image Input" },
+            { "ImageOutput", "Image Output" },
+            { "Grayscale", "Grayscale" },
+            { "CannyEdge", "Canny Edge" },
+            { "Threshold", "Threshold" },
+            { "Preview", "Preview" } };
+
+        // Get display name or use type as fallback
+        const auto displayName = displayNames.contains(nodeType) ? displayNames.at(nodeType) : nodeType;
+
+        // Use factory to create node
+        auto newNode = nodeFactory.Create(nodeType, nodeId, displayName);
 
         if (newNode)
         {

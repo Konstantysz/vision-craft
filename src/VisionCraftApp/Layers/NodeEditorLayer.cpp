@@ -73,8 +73,8 @@ namespace VisionCraft
             nodePositions[nodeId] = { 100.0f, 100.0f };
 
             selectedNodeId = Constants::Special::kInvalidNodeId;
+            selectedNodeIds.clear();
             isDragging = false;
-            dragOffset = {};
         }
 
         HandleMouseInteractions();
@@ -83,6 +83,7 @@ namespace VisionCraft
 
         connectionManager.RenderConnections(nodeEditor, nodePositions, canvas, hoveredConnection);
         RenderNodes();
+        RenderBoxSelection();
 
         RenderContextMenu();
 
@@ -124,7 +125,11 @@ namespace VisionCraft
             return this->GetPinInteractionState(nodeId, pinName);
         };
 
-        nodeRenderer.RenderNode(node, nodePos, selectedNodeId, getPinInteractionState);
+        // Determine if this node is selected (check both for backward compatibility)
+        const bool isSelected = IsNodeSelected(node->GetId()) || (selectedNodeId == node->GetId());
+        const Engine::NodeId displaySelectedId = isSelected ? node->GetId() : Constants::Special::kInvalidNodeId;
+
+        nodeRenderer.RenderNode(node, nodePos, displaySelectedId, getPinInteractionState);
     }
 
     bool NodeEditorLayer::IsMouseOverNode(const ImVec2 &mousePos,
@@ -142,9 +147,21 @@ namespace VisionCraft
         auto &io = ImGui::GetIO();
         const auto mousePos = io.MousePos;
 
-        // Handle Delete key for selected node
-        if (selectedNodeId != Constants::Special::kInvalidNodeId && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        // Handle Delete key for selected nodes
+        if (!selectedNodeIds.empty() && ImGui::IsKeyPressed(ImGuiKey_Delete))
         {
+            std::vector<Engine::NodeId> nodesToDelete(selectedNodeIds.begin(), selectedNodeIds.end());
+            for (const auto nodeId : nodesToDelete)
+            {
+                DeleteNode(nodeId);
+            }
+            selectedNodeIds.clear();
+            selectedNodeId = Constants::Special::kInvalidNodeId;
+            return;
+        }
+        else if (selectedNodeId != Constants::Special::kInvalidNodeId && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        {
+            // Backward compatibility
             DeleteNode(selectedNodeId);
             return;
         }
@@ -201,32 +218,96 @@ namespace VisionCraft
             }
 
             const auto clickedNodeId = FindNodeAtPosition(mousePos);
+            const bool shiftPressed = io.KeyShift;
+
             if (clickedNodeId != Constants::Special::kInvalidNodeId)
             {
-                selectedNodeId = clickedNodeId;
-                isDragging = true;
+                // Clicked on a node
+                if (shiftPressed)
+                {
+                    // Shift+click: toggle selection
+                    if (selectedNodeIds.count(clickedNodeId))
+                    {
+                        selectedNodeIds.erase(clickedNodeId);
+                        if (selectedNodeId == clickedNodeId)
+                        {
+                            selectedNodeId =
+                                selectedNodeIds.empty() ? Constants::Special::kInvalidNodeId : *selectedNodeIds.begin();
+                        }
+                    }
+                    else
+                    {
+                        selectedNodeIds.insert(clickedNodeId);
+                        selectedNodeId = clickedNodeId;
+                    }
+                }
+                else
+                {
+                    // Normal click: select only this node (unless already in multi-selection)
+                    if (!selectedNodeIds.count(clickedNodeId))
+                    {
+                        selectedNodeIds.clear();
+                        selectedNodeIds.insert(clickedNodeId);
+                    }
+                    selectedNodeId = clickedNodeId;
+                }
 
-                const auto &nodePos = nodePositions[clickedNodeId];
-                const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-                dragOffset = ImVec2(mousePos.x - worldPos.x, mousePos.y - worldPos.y);
+                // Start dragging all selected nodes
+                isDragging = true;
+                dragOffsets.clear();
+                for (const auto nodeId : selectedNodeIds)
+                {
+                    const auto &nodePos = nodePositions[nodeId];
+                    const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+                    dragOffsets[nodeId] = ImVec2(mousePos.x - worldPos.x, mousePos.y - worldPos.y);
+                }
             }
             else
             {
-                selectedNodeId = Constants::Special::kInvalidNodeId;
+                // Clicked on empty space
+                if (!shiftPressed)
+                {
+                    // Start box selection
+                    isBoxSelecting = true;
+                    boxSelectStart = mousePos;
+                    boxSelectEnd = mousePos;
+                    selectedNodeIds.clear();
+                    selectedNodeId = Constants::Special::kInvalidNodeId;
+                }
                 isDragging = false;
             }
         }
 
-        if (isDragging && selectedNodeId != -1 && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        // Handle box selection
+        if (isBoxSelecting && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
         {
-            const auto newWorldPos = ImVec2(mousePos.x - dragOffset.x, mousePos.y - dragOffset.y);
-            const auto newNodePos = canvas.ScreenToWorld(newWorldPos);
-            nodePositions[selectedNodeId] = NodePosition{ newNodePos.x, newNodePos.y };
+            boxSelectEnd = mousePos;
+            UpdateBoxSelection();
+        }
+
+        if (isBoxSelecting && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        {
+            isBoxSelecting = false;
+            // Set selectedNodeId to first selected node for backward compatibility
+            selectedNodeId = selectedNodeIds.empty() ? Constants::Special::kInvalidNodeId : *selectedNodeIds.begin();
+        }
+
+        // Handle node dragging
+        if (isDragging && !selectedNodeIds.empty() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+        {
+            for (const auto nodeId : selectedNodeIds)
+            {
+                const auto &offset = dragOffsets[nodeId];
+                const auto newWorldPos = ImVec2(mousePos.x - offset.x, mousePos.y - offset.y);
+                const auto newNodePos = canvas.ScreenToWorld(newWorldPos);
+                nodePositions[nodeId] = NodePosition{ newNodePos.x, newNodePos.y };
+            }
         }
 
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {
             isDragging = false;
+            dragOffsets.clear();
         }
     }
 
@@ -268,9 +349,26 @@ namespace VisionCraft
     {
         if (ImGui::BeginPopup("NodeContextMenu"))
         {
-            // If a node is selected, show node operations
-            if (selectedNodeId != Constants::Special::kInvalidNodeId)
+            // If nodes are selected, show node operations
+            if (!selectedNodeIds.empty())
             {
+                const char *deleteLabel = selectedNodeIds.size() > 1 ? "Delete Selected Nodes" : "Delete";
+                if (ImGui::MenuItem(deleteLabel))
+                {
+                    // Delete all selected nodes
+                    std::vector<Engine::NodeId> nodesToDelete(selectedNodeIds.begin(), selectedNodeIds.end());
+                    for (const auto nodeId : nodesToDelete)
+                    {
+                        DeleteNode(nodeId);
+                    }
+                    selectedNodeIds.clear();
+                    selectedNodeId = Constants::Special::kInvalidNodeId;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+            else if (selectedNodeId != Constants::Special::kInvalidNodeId)
+            {
+                // Backward compatibility: handle single selection
                 if (ImGui::MenuItem("Delete"))
                 {
                     DeleteNode(selectedNodeId);
@@ -371,8 +469,8 @@ namespace VisionCraft
             nodePositions[actualNodeId] = { worldX, worldY };
 
             selectedNodeId = Constants::Special::kInvalidNodeId;
+            selectedNodeIds.clear();
             isDragging = false;
-            dragOffset = {};
         }
     }
 
@@ -470,6 +568,7 @@ namespace VisionCraft
         nodePositions.clear();
         currentFilePath.clear();
         selectedNodeId = Constants::Special::kInvalidNodeId;
+        selectedNodeIds.clear();
         isDragging = false;
         nextNodeId = 1;
         LOG_INFO("Created new graph");
@@ -610,10 +709,66 @@ namespace VisionCraft
             isDragging = false;
         }
 
+        // Remove from multi-selection
+        selectedNodeIds.erase(nodeId);
+
         // Remove node (also removes connections)
         nodeEditor.RemoveNode(nodeId);
 
         // Remove node position
         nodePositions.erase(nodeId);
+    }
+
+    void NodeEditorLayer::RenderBoxSelection()
+    {
+        if (!isBoxSelecting)
+        {
+            return;
+        }
+
+        auto *drawList = ImGui::GetWindowDrawList();
+
+        // Calculate box rectangle
+        const ImVec2 minPos(std::min(boxSelectStart.x, boxSelectEnd.x), std::min(boxSelectStart.y, boxSelectEnd.y));
+        const ImVec2 maxPos(std::max(boxSelectStart.x, boxSelectEnd.x), std::max(boxSelectStart.y, boxSelectEnd.y));
+
+        // Draw selection box
+        const ImU32 boxColor = IM_COL32(100, 150, 255, 100);
+        const ImU32 borderColor = IM_COL32(100, 150, 255, 200);
+
+        drawList->AddRectFilled(minPos, maxPos, boxColor);
+        drawList->AddRect(minPos, maxPos, borderColor, 0.0f, 0, 2.0f);
+    }
+
+    void NodeEditorLayer::UpdateBoxSelection()
+    {
+        // Clear previous selection
+        selectedNodeIds.clear();
+
+        // Calculate box bounds in screen space
+        const ImVec2 minPos(std::min(boxSelectStart.x, boxSelectEnd.x), std::min(boxSelectStart.y, boxSelectEnd.y));
+        const ImVec2 maxPos(std::max(boxSelectStart.x, boxSelectEnd.x), std::max(boxSelectStart.y, boxSelectEnd.y));
+
+        // Check each node
+        for (const auto &[nodeId, nodePos] : nodePositions)
+        {
+            const auto screenPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+            const auto nodeSize = ImVec2(
+                Constants::Node::kWidth * canvas.GetZoomLevel(), Constants::Node::kMinHeight * canvas.GetZoomLevel());
+
+            // Check if node overlaps with selection box
+            const bool overlapsX = screenPos.x < maxPos.x && (screenPos.x + nodeSize.x) > minPos.x;
+            const bool overlapsY = screenPos.y < maxPos.y && (screenPos.y + nodeSize.y) > minPos.y;
+
+            if (overlapsX && overlapsY)
+            {
+                selectedNodeIds.insert(nodeId);
+            }
+        }
+    }
+
+    bool NodeEditorLayer::IsNodeSelected(Engine::NodeId nodeId) const
+    {
+        return selectedNodeIds.count(nodeId) > 0;
     }
 } // namespace VisionCraft

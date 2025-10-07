@@ -198,6 +198,9 @@ namespace VisionCraft
             const auto clickedNodeId = FindNodeAtPosition(mousePos);
             if (clickedNodeId == Constants::Special::kInvalidNodeId)
             {
+                // Right-click on empty space - clear selection and show creation menu
+                selectedNodeIds.clear();
+                selectedNodeId = Constants::Special::kInvalidNodeId;
                 showContextMenu = true;
                 contextMenuPos = mousePos;
                 ImGui::OpenPopup("NodeContextMenu");
@@ -205,6 +208,11 @@ namespace VisionCraft
             else
             {
                 // Right-click on node - select it and show context menu
+                if (!selectedNodeIds.count(clickedNodeId))
+                {
+                    selectedNodeIds.clear();
+                    selectedNodeIds.insert(clickedNodeId);
+                }
                 selectedNodeId = clickedNodeId;
                 ImGui::OpenPopup("NodeContextMenu");
             }
@@ -349,38 +357,34 @@ namespace VisionCraft
     {
         if (ImGui::BeginPopup("NodeContextMenu"))
         {
-            // If nodes are selected, show node operations
-            if (!selectedNodeIds.empty())
+            const bool hasSelection = !selectedNodeIds.empty() || selectedNodeId != Constants::Special::kInvalidNodeId;
+
+            // Delete operation (disabled when no selection)
+            if (ImGui::MenuItem("Delete", nullptr, false, hasSelection))
             {
-                const char *deleteLabel = selectedNodeIds.size() > 1 ? "Delete Selected Nodes" : "Delete";
-                if (ImGui::MenuItem(deleteLabel))
+                if (!selectedNodeIds.empty())
                 {
-                    // Delete all selected nodes
                     std::vector<Engine::NodeId> nodesToDelete(selectedNodeIds.begin(), selectedNodeIds.end());
                     for (const auto nodeId : nodesToDelete)
                     {
                         DeleteNode(nodeId);
                     }
                     selectedNodeIds.clear();
-                    selectedNodeId = Constants::Special::kInvalidNodeId;
-                    ImGui::CloseCurrentPopup();
                 }
-            }
-            else if (selectedNodeId != Constants::Special::kInvalidNodeId)
-            {
-                // Backward compatibility: handle single selection
-                if (ImGui::MenuItem("Delete"))
+                else if (selectedNodeId != Constants::Special::kInvalidNodeId)
                 {
                     DeleteNode(selectedNodeId);
-                    ImGui::CloseCurrentPopup();
                 }
+                selectedNodeId = Constants::Special::kInvalidNodeId;
+                ImGui::CloseCurrentPopup();
             }
-            else
-            {
-                // Otherwise show node creation menu
-                ImGui::Text("Add Node");
-                ImGui::Separator();
 
+            ImGui::Separator();
+
+            // Nested "Add Node" submenu
+            if (ImGui::BeginMenu("Add Node"))
+            {
+                // Input/Output category
                 if (ImGui::MenuItem("Image Input"))
                 {
                     CreateNodeAtPosition("ImageInput", contextMenuPos);
@@ -401,6 +405,7 @@ namespace VisionCraft
 
                 ImGui::Separator();
 
+                // Processing category
                 if (ImGui::MenuItem("Grayscale"))
                 {
                     CreateNodeAtPosition("Grayscale", contextMenuPos);
@@ -418,6 +423,8 @@ namespace VisionCraft
                     CreateNodeAtPosition("Threshold", contextMenuPos);
                     ImGui::CloseCurrentPopup();
                 }
+
+                ImGui::EndMenu();
             }
 
             ImGui::EndPopup();

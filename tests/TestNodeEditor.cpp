@@ -15,6 +15,12 @@ public:
     TestNode(NodeId id, std::string name) : Node(id, std::move(name))
     {
     }
+
+    std::string GetType() const
+    {
+        return "TestNode";
+    }
+
     void Process() override
     {
     } // No-op for testing
@@ -447,6 +453,11 @@ public:
         CreateOutputSlot("Output");
     }
 
+    std::string GetType() const
+    {
+        return "SlotTestNode";
+    }
+
     void Process() override
     {
         auto input = GetInputValue<double>("Input");
@@ -662,6 +673,11 @@ public:
     {
         CreateInputSlot("Input");
         CreateOutputSlot("Output");
+    }
+
+    std::string GetType() const
+    {
+        return "ErrorThrowingNode";
     }
 
     void Process() override

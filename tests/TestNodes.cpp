@@ -15,6 +15,11 @@ public:
     {
     }
 
+    std::string GetType() const
+    {
+        return "DummyNode";
+    }
+
     void Process() override
     {
         // no-op for testing

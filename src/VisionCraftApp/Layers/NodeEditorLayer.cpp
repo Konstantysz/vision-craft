@@ -96,8 +96,7 @@ namespace VisionCraft
             nodeEditor.AddNode(std::move(starterNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };
 
-            selectedNodeId = Constants::Special::kInvalidNodeId;
-            selectedNodeIds.clear();
+            selectionManager.ClearSelection();
             isDragging = false;
         }
 
@@ -179,8 +178,7 @@ namespace VisionCraft
             {
                 DeleteNode(nodeId);
             }
-            selectedNodeIds.clear();
-            selectedNodeId = Constants::Special::kInvalidNodeId;
+            selectionManager.ClearSelection();
             return;
         }
         else if (selectedNodeId != Constants::Special::kInvalidNodeId && ImGui::IsKeyPressed(ImGuiKey_Delete))
@@ -485,8 +483,7 @@ namespace VisionCraft
             nodeEditor.AddNode(std::move(newNode));
             nodePositions[actualNodeId] = { worldX, worldY };
 
-            selectedNodeId = Constants::Special::kInvalidNodeId;
-            selectedNodeIds.clear();
+            selectionManager.ClearSelection();
             isDragging = false;
         }
     }
@@ -786,6 +783,6 @@ namespace VisionCraft
 
     bool NodeEditorLayer::IsNodeSelected(Engine::NodeId nodeId) const
     {
-        return selectedNodeIds.count(nodeId) > 0;
+        return selectionManager.IsNodeSelected(nodeId);
     }
 } // namespace VisionCraft

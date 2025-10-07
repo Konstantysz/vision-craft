@@ -7,6 +7,7 @@
 #include "NodeEditorTypes.h"
 #include "NodeFactory.h"
 #include "NodeRenderer.h"
+#include "SelectionManager.h"
 
 #include <memory>
 #include <unordered_map>
@@ -198,20 +199,9 @@ namespace VisionCraft
         ConnectionManager connectionManager;                            ///< Connection management component
         NodeRenderer nodeRenderer;                                      ///< Node rendering component
         NodeFactory nodeFactory;                                        ///< Factory for creating nodes
+        SelectionManager selectionManager;                              ///< Manages node selection and dragging
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
-
-        // Selection and dragging state
-        Engine::NodeId selectedNodeId =
-            Constants::Special::kInvalidNodeId;             ///< Currently selected node ID (for backward compatibility)
-        std::unordered_set<Engine::NodeId> selectedNodeIds; ///< All currently selected node IDs
-        bool isDragging = false;                            ///< Whether a node is being dragged
-        std::unordered_map<Engine::NodeId, ImVec2> dragOffsets; ///< Mouse offset from each node position during drag
-
-        // Box selection state
-        bool isBoxSelecting = false;                ///< Whether box selection is active
-        ImVec2 boxSelectStart = ImVec2(0.0f, 0.0f); ///< Box selection start position (screen space)
-        ImVec2 boxSelectEnd = ImVec2(0.0f, 0.0f);   ///< Box selection end position (screen space)
 
         // Context menu state
         bool showContextMenu = false;               ///< Whether to show the context menu

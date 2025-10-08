@@ -124,17 +124,8 @@ namespace VisionCraft
         ImGui::End();
 
         // Render file dialogs
-        if (showSaveDialog)
-        {
-            ImGui::OpenPopup("Save Graph");
-            RenderSaveDialog();
-        }
-
-        if (showLoadDialog)
-        {
-            ImGui::OpenPopup("Load Graph");
-            RenderLoadDialog();
-        }
+        RenderSaveDialog();
+        RenderLoadDialog();
     }
 
     void NodeEditorLayer::RenderNodes()
@@ -473,7 +464,7 @@ namespace VisionCraft
     {
         if (currentFilePath.empty())
         {
-            showSaveDialog = true;
+            fileDialogManager.OpenSaveDialog();
         }
         else
         {
@@ -496,7 +487,7 @@ namespace VisionCraft
 
     void NodeEditorLayer::HandleLoadGraph()
     {
-        showLoadDialog = true;
+        fileDialogManager.OpenLoadDialog();
     }
 
     void NodeEditorLayer::HandleNewGraph()
@@ -511,119 +502,63 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderSaveDialog()
     {
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        const auto result = fileDialogManager.RenderSaveDialog();
 
-        if (ImGui::BeginPopupModal("Save Graph", &showSaveDialog, ImGuiWindowFlags_AlwaysAutoResize))
+        if (result.action == FileDialogResult::Action::Save)
         {
-            ImGui::Text("Enter filename:");
-            ImGui::InputText("##filepath", filePathBuffer, sizeof(filePathBuffer));
+            currentFilePath = result.filepath;
 
-            if (ImGui::Button("Save", ImVec2(120, 0)))
+            std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+            for (const auto &[id, pos] : nodePositions)
             {
-                std::string filepath = filePathBuffer;
-                if (!filepath.empty())
-                {
-                    if (!filepath.ends_with(".json"))
-                    {
-                        filepath += ".json";
-                    }
-
-                    currentFilePath = filepath;
-
-                    std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
-                    for (const auto &[id, pos] : nodePositions)
-                    {
-                        positions[id] = { pos.x, pos.y };
-                    }
-
-                    if (GetNodeEditor().SaveToFile(currentFilePath, positions))
-                    {
-                        LOG_INFO("Graph saved successfully to: {}", currentFilePath);
-                        showSaveDialog = false;
-                        std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
-                    }
-                    else
-                    {
-                        LOG_ERROR("Failed to save graph");
-                    }
-                }
+                positions[id] = { pos.x, pos.y };
             }
 
-            ImGui::SameLine();
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            if (GetNodeEditor().SaveToFile(currentFilePath, positions))
             {
-                showSaveDialog = false;
-                std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
+                LOG_INFO("Graph saved successfully to: {}", currentFilePath);
             }
-
-            ImGui::EndPopup();
+            else
+            {
+                LOG_ERROR("Failed to save graph");
+            }
         }
     }
 
     void NodeEditorLayer::RenderLoadDialog()
     {
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        const auto result = fileDialogManager.RenderLoadDialog();
 
-        if (ImGui::BeginPopupModal("Load Graph", &showLoadDialog, ImGuiWindowFlags_AlwaysAutoResize))
+        if (result.action == FileDialogResult::Action::Load)
         {
-            ImGui::Text("Enter filename:");
-            ImGui::InputText("##filepath", filePathBuffer, sizeof(filePathBuffer));
+            std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
 
-            if (ImGui::Button("Load", ImVec2(120, 0)))
+            if (GetNodeEditor().LoadFromFile(result.filepath, positions))
             {
-                std::string filepath = filePathBuffer;
-                if (!filepath.empty())
+                nodePositions.clear();
+                for (const auto &[id, pos] : positions)
                 {
-                    if (!filepath.ends_with(".json"))
-                    {
-                        filepath += ".json";
-                    }
-
-                    std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
-
-                    if (GetNodeEditor().LoadFromFile(filepath, positions))
-                    {
-                        nodePositions.clear();
-                        for (const auto &[id, pos] : positions)
-                        {
-                            nodePositions[id] = NodePosition{ pos.first, pos.second };
-                        }
-
-                        currentFilePath = filepath;
-                        selectionManager.ClearSelection();
-
-                        // Update nextNodeId to be higher than any loaded ID
-                        Engine::NodeId maxId = 0;
-                        for (const auto &id : GetNodeEditor().GetNodeIds())
-                        {
-                            if (id > maxId)
-                                maxId = id;
-                        }
-                        nextNodeId = maxId + 1;
-
-                        LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
-                        showLoadDialog = false;
-                        std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
-                    }
-                    else
-                    {
-                        LOG_ERROR("Failed to load graph from: {}", filepath);
-                    }
+                    nodePositions[id] = NodePosition{ pos.first, pos.second };
                 }
+
+                currentFilePath = result.filepath;
+                selectionManager.ClearSelection();
+
+                // Update nextNodeId to be higher than any loaded ID
+                Engine::NodeId maxId = 0;
+                for (const auto &id : GetNodeEditor().GetNodeIds())
+                {
+                    if (id > maxId)
+                        maxId = id;
+                }
+                nextNodeId = maxId + 1;
+
+                LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
             }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            else
             {
-                showLoadDialog = false;
-                std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
+                LOG_ERROR("Failed to load graph from: {}", result.filepath);
             }
-
-            ImGui::EndPopup();
         }
     }
 

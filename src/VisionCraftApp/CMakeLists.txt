@@ -9,6 +9,7 @@ add_executable(VisionCraftApp
     Layers/NodeFactory.cpp
     Layers/SelectionManager.cpp
     Layers/ContextMenuRenderer.cpp
+    Layers/FileDialogManager.cpp
     Layers/NodeRenderer.cpp
     Layers/CanvasController.cpp
     Layers/ConnectionManager.cpp

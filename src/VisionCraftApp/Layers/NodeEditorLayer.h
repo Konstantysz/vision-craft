@@ -3,6 +3,7 @@
 #include "CanvasController.h"
 #include "ConnectionManager.h"
 #include "ContextMenuRenderer.h"
+#include "FileDialogManager.h"
 #include "Layer.h"
 #include "NodeEditor.h"
 #include "NodeEditorTypes.h"
@@ -202,6 +203,7 @@ namespace VisionCraft
         NodeFactory nodeFactory;                                        ///< Factory for creating nodes
         SelectionManager selectionManager;                              ///< Manages node selection and dragging
         ContextMenuRenderer contextMenuRenderer;                        ///< Renders context menu
+        FileDialogManager fileDialogManager;                            ///< Manages file dialogs
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 
@@ -216,9 +218,6 @@ namespace VisionCraft
         std::optional<NodeConnection> hoveredConnection = std::nullopt; ///< Currently hovered connection
 
         // File management state
-        std::string currentFilePath;   ///< Current file path
-        bool showSaveDialog = false;   ///< Whether to show save dialog
-        bool showLoadDialog = false;   ///< Whether to show load dialog
-        char filePathBuffer[512] = ""; ///< Buffer for file path input
+        std::string currentFilePath; ///< Current file path
     };
 } // namespace VisionCraft

@@ -52,6 +52,16 @@ namespace VisionCraft
         nodeFactory.Register("Threshold", [](Engine::NodeId id, std::string_view name) {
             return std::make_unique<Engine::ThresholdNode>(id, std::string(name));
         });
+
+        // Register node types for context menu
+        contextMenuRenderer.SetAvailableNodeTypes({
+            { "ImageInput", "Image Input", "Input/Output" },
+            { "ImageOutput", "Image Output", "Input/Output" },
+            { "Preview", "Preview", "Input/Output" },
+            { "Grayscale", "Grayscale", "Processing" },
+            { "CannyEdge", "Canny Edge Detection", "Processing" },
+            { "Threshold", "Threshold", "Processing" },
+        });
     }
 
     void NodeEditorLayer::OnEvent(Kappa::Event &event)
@@ -218,7 +228,7 @@ namespace VisionCraft
                 selectionManager.ClearSelection();
                 showContextMenu = true;
                 contextMenuPos = mousePos;
-                ImGui::OpenPopup("NodeContextMenu");
+                contextMenuRenderer.Open();
             }
             else
             {
@@ -227,7 +237,7 @@ namespace VisionCraft
                 {
                     selectionManager.SelectNode(clickedNodeId);
                 }
-                ImGui::OpenPopup("NodeContextMenu");
+                contextMenuRenderer.Open();
             }
         }
 
@@ -345,72 +355,25 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderContextMenu()
     {
-        if (ImGui::BeginPopup("NodeContextMenu"))
+        const auto result = contextMenuRenderer.Render(selectionManager.HasSelection());
+
+        switch (result.action)
         {
-            const bool hasSelection = selectionManager.HasSelection();
-
-            // Delete operation (disabled when no selection)
-            if (ImGui::MenuItem("Delete", nullptr, false, hasSelection))
+        case ContextMenuResult::Action::DeleteNodes: {
+            std::vector<Engine::NodeId> nodesToDelete(
+                selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
+            for (const auto nodeId : nodesToDelete)
             {
-                std::vector<Engine::NodeId> nodesToDelete(
-                    selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
-                for (const auto nodeId : nodesToDelete)
-                {
-                    DeleteNode(nodeId);
-                }
-                selectionManager.ClearSelection();
-                ImGui::CloseCurrentPopup();
+                DeleteNode(nodeId);
             }
-
-            ImGui::Separator();
-
-            // Nested "Add Node" submenu
-            if (ImGui::BeginMenu("Add Node"))
-            {
-                // Input/Output category
-                if (ImGui::MenuItem("Image Input"))
-                {
-                    CreateNodeAtPosition("ImageInput", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                if (ImGui::MenuItem("Image Output"))
-                {
-                    CreateNodeAtPosition("ImageOutput", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                if (ImGui::MenuItem("Preview"))
-                {
-                    CreateNodeAtPosition("Preview", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::Separator();
-
-                // Processing category
-                if (ImGui::MenuItem("Grayscale"))
-                {
-                    CreateNodeAtPosition("Grayscale", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                if (ImGui::MenuItem("Canny Edge Detection"))
-                {
-                    CreateNodeAtPosition("CannyEdge", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                if (ImGui::MenuItem("Threshold"))
-                {
-                    CreateNodeAtPosition("Threshold", contextMenuPos);
-                    ImGui::CloseCurrentPopup();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndPopup();
+            selectionManager.ClearSelection();
+            break;
+        }
+        case ContextMenuResult::Action::CreateNode:
+            CreateNodeAtPosition(result.nodeType, contextMenuPos);
+            break;
+        case ContextMenuResult::Action::None:
+            break;
         }
     }
 

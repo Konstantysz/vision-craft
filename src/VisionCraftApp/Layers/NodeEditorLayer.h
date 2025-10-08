@@ -2,6 +2,7 @@
 
 #include "CanvasController.h"
 #include "ConnectionManager.h"
+#include "ContextMenuRenderer.h"
 #include "Layer.h"
 #include "NodeEditor.h"
 #include "NodeEditorTypes.h"
@@ -200,6 +201,7 @@ namespace VisionCraft
         NodeRenderer nodeRenderer;                                      ///< Node rendering component
         NodeFactory nodeFactory;                                        ///< Factory for creating nodes
         SelectionManager selectionManager;                              ///< Manages node selection and dragging
+        ContextMenuRenderer contextMenuRenderer;                        ///< Renders context menu
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 

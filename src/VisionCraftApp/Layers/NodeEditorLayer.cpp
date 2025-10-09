@@ -193,7 +193,29 @@ namespace VisionCraft
             case InputActionType::DeleteNodes:
                 for (const auto nodeId : action.nodeIds)
                 {
-                    DeleteNode(nodeId);
+                    auto *node = nodeEditor.GetNode(nodeId);
+                    if (!node)
+                        continue;
+
+                    auto command = std::make_unique<DeleteNodeCommand>(
+                        nodeId,
+                        [this](Engine::NodeId id) -> Engine::Node * { return GetNodeEditor().GetNode(id); },
+                        [this](Engine::NodeId id) {
+                            GetNodeEditor().RemoveNode(id);
+                            nodePositions.erase(id);
+                            if (selectionManager.IsNodeSelected(id))
+                            {
+                                selectionManager.RemoveFromSelection(id);
+                            }
+                        },
+                        [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
+                        [this](Engine::NodeId id) -> NodePosition { return nodePositions[id]; },
+                        [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
+                        [this](const std::string &type, Engine::NodeId id, const std::string &name) {
+                            return nodeFactory.Create(NodeTypeToFactoryKey(type), id, name);
+                        });
+
+                    commandHistory.ExecuteCommand(std::move(command));
                 }
                 selectionManager.ClearSelection();
                 break;
@@ -410,7 +432,29 @@ namespace VisionCraft
                 selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
             for (const auto nodeId : nodesToDelete)
             {
-                DeleteNode(nodeId);
+                auto *node = nodeEditor.GetNode(nodeId);
+                if (!node)
+                    continue;
+
+                auto command = std::make_unique<DeleteNodeCommand>(
+                    nodeId,
+                    [this](Engine::NodeId id) -> Engine::Node * { return GetNodeEditor().GetNode(id); },
+                    [this](Engine::NodeId id) {
+                        GetNodeEditor().RemoveNode(id);
+                        nodePositions.erase(id);
+                        if (selectionManager.IsNodeSelected(id))
+                        {
+                            selectionManager.RemoveFromSelection(id);
+                        }
+                    },
+                    [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
+                    [this](Engine::NodeId id) -> NodePosition { return nodePositions[id]; },
+                    [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
+                    [this](const std::string &type, Engine::NodeId id, const std::string &name) {
+                        return nodeFactory.Create(NodeTypeToFactoryKey(type), id, name);
+                    });
+
+                commandHistory.ExecuteCommand(std::move(command));
             }
             selectionManager.ClearSelection();
             break;

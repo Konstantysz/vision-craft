@@ -5,12 +5,18 @@
 #include "Editor/NodeEditorTypes.h"
 #include "NodeEditor.h"
 
+#include <functional>
 #include <imgui.h>
 #include <unordered_map>
 #include <vector>
 
 namespace VisionCraft
 {
+    /**
+     * @brief Callback for connection creation.
+     */
+    using ConnectionCreatedCallback = std::function<void(const NodeConnection &)>;
+
     /**
      * @brief Connection management for creation, validation, and rendering.
      */
@@ -54,9 +60,13 @@ namespace VisionCraft
          * @param outputPin Source pin
          * @param inputPin Target pin
          * @param nodeEditor Node editor for validation
+         * @param notifyCallback Whether to invoke the callback (default true)
          * @return True if created
          */
-        bool CreateConnection(const PinId &outputPin, const PinId &inputPin, Engine::NodeEditor &nodeEditor);
+        bool CreateConnection(const PinId &outputPin,
+            const PinId &inputPin,
+            Engine::NodeEditor &nodeEditor,
+            bool notifyCallback = true);
 
         /**
          * @brief Validates connection between pins.
@@ -175,6 +185,12 @@ namespace VisionCraft
          */
         void RemoveConnection(const NodeConnection &connection);
 
+        /**
+         * @brief Sets callback for connection creation.
+         * @param callback Callback to invoke when connection is created
+         */
+        void SetConnectionCreatedCallback(ConnectionCreatedCallback callback);
+
     private:
         /**
          * @brief Removes connection to input pin.
@@ -197,8 +213,9 @@ namespace VisionCraft
             bool isHovered = false);
 
         // Connection data
-        std::vector<NodeConnection> connections; ///< All active connections
-        ConnectionState connectionState;         ///< Current connection creation state
+        std::vector<NodeConnection> connections;       ///< All active connections
+        ConnectionState connectionState;               ///< Current connection creation state
+        ConnectionCreatedCallback onConnectionCreated; ///< Callback for connection creation
     };
 
 } // namespace VisionCraft

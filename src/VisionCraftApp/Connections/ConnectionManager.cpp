@@ -133,7 +133,8 @@ namespace VisionCraft
 
     bool ConnectionManager::CreateConnection(const PinId &outputPin,
         const PinId &inputPin,
-        Engine::NodeEditor &nodeEditor)
+        Engine::NodeEditor &nodeEditor,
+        bool notifyCallback)
     {
         if (!IsConnectionValid(outputPin, inputPin, nodeEditor))
         {
@@ -141,8 +142,15 @@ namespace VisionCraft
         }
 
         RemoveConnectionToInput(inputPin);
-        connections.push_back({ outputPin, inputPin });
+        const NodeConnection newConnection{ outputPin, inputPin };
+        connections.push_back(newConnection);
         nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
+
+        // Notify callback if set and enabled
+        if (notifyCallback && onConnectionCreated)
+        {
+            onConnectionCreated(newConnection);
+        }
 
         return true;
     }
@@ -537,5 +545,10 @@ namespace VisionCraft
     void ConnectionManager::RemoveConnection(const NodeConnection &connection)
     {
         connections.erase(std::remove(connections.begin(), connections.end(), connection), connections.end());
+    }
+
+    void ConnectionManager::SetConnectionCreatedCallback(ConnectionCreatedCallback callback)
+    {
+        onConnectionCreated = std::move(callback);
     }
 } // namespace VisionCraft

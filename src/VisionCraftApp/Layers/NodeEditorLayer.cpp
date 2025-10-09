@@ -65,6 +65,20 @@ namespace VisionCraft
             { "CannyEdge", "Canny Edge Detection", "Processing" },
             { "Threshold", "Threshold", "Processing" },
         });
+
+        // Set connection creation callback for undo/redo
+        connectionManager.SetConnectionCreatedCallback([this](const NodeConnection &connection) {
+            auto command = std::make_unique<CreateConnectionCommand>(
+                connection.outputPin,
+                connection.inputPin,
+                [this](const PinId &outputPin, const PinId &inputPin) {
+                    // Pass false to avoid triggering callback again
+                    connectionManager.CreateConnection(outputPin, inputPin, GetNodeEditor(), false);
+                },
+                [this](const NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
+
+            commandHistory.ExecuteCommand(std::move(command));
+        });
     }
 
     void NodeEditorLayer::OnEvent(Kappa::Event &event)
@@ -223,7 +237,14 @@ namespace VisionCraft
             case InputActionType::DeleteConnection:
                 if (action.connection.has_value())
                 {
-                    connectionManager.RemoveConnection(action.connection.value());
+                    auto command = std::make_unique<DeleteConnectionCommand>(
+                        action.connection.value(),
+                        [this](const PinId &outputPin, const PinId &inputPin) {
+                            connectionManager.CreateConnection(outputPin, inputPin, GetNodeEditor(), false);
+                        },
+                        [this](const NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
+
+                    commandHistory.ExecuteCommand(std::move(command));
                 }
                 break;
 

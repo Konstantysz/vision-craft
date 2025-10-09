@@ -40,7 +40,8 @@ namespace VisionCraft
         CutNodes,
         PasteNodes,
         Undo,
-        Redo
+        Redo,
+        FinishNodeMove
     };
 
     /**
@@ -48,13 +49,14 @@ namespace VisionCraft
      */
     struct InputAction
     {
-        InputActionType type = InputActionType::None;                   ///< Type of the input action
-        std::vector<Engine::NodeId> nodeIds;                            ///< For DeleteNodes
-        std::optional<NodeConnection> connection;                       ///< For DeleteConnection
-        ImVec2 contextMenuPos{ 0.0f, 0.0f };                            ///< For OpenContextMenu
-        std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< For UpdateNodePositions
-        std::optional<NodeConnection> hoveredConnection;                ///< For UpdateHoveredConnection
-        ImVec2 pastePosition{ 0.0f, 0.0f };                             ///< For PasteNodes
+        InputActionType type = InputActionType::None;                      ///< Type of the input action
+        std::vector<Engine::NodeId> nodeIds;                               ///< For DeleteNodes
+        std::optional<NodeConnection> connection;                          ///< For DeleteConnection
+        ImVec2 contextMenuPos{ 0.0f, 0.0f };                               ///< For OpenContextMenu
+        std::unordered_map<Engine::NodeId, NodePosition> nodePositions;    ///< For UpdateNodePositions
+        std::optional<NodeConnection> hoveredConnection;                   ///< For UpdateHoveredConnection
+        ImVec2 pastePosition{ 0.0f, 0.0f };                                ///< For PasteNodes
+        std::unordered_map<Engine::NodeId, NodePosition> oldNodePositions; ///< For FinishNodeMove (old positions)
     };
 
     /**
@@ -140,8 +142,11 @@ namespace VisionCraft
 
         /**
          * @brief Handles mouse button release.
+         * @param nodePositions Current node positions
+         * @return Vector of actions (finish node move)
          */
-        void HandleMouseRelease();
+        [[nodiscard]] std::vector<InputAction> HandleMouseRelease(
+            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions);
 
         /**
          * @brief Updates hovered connection.
@@ -160,5 +165,6 @@ namespace VisionCraft
 
         ImVec2 contextMenuPos{ 0.0f, 0.0f };
         std::optional<NodeConnection> hoveredConnection;
+        std::unordered_map<Engine::NodeId, NodePosition> dragStartPositions; ///< Node positions when drag started
     };
 } // namespace VisionCraft

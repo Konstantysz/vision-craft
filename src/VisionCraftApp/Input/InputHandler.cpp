@@ -114,7 +114,8 @@ namespace VisionCraft
         // Handle mouse release
         if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
         {
-            HandleMouseRelease();
+            auto releaseActions = HandleMouseRelease(nodePositions);
+            actions.insert(actions.end(), releaseActions.begin(), releaseActions.end());
         }
 
         return actions;
@@ -207,6 +208,8 @@ namespace VisionCraft
             {
                 const auto &nodePos = nodePositions.at(nodeId);
                 screenPositions[nodeId] = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+                // Capture starting positions for undo/redo
+                dragStartPositions[nodeId] = nodePos;
             }
             selectionManager.StartDrag(mousePos, screenPositions);
         }
@@ -254,8 +257,11 @@ namespace VisionCraft
         return actions;
     }
 
-    void InputHandler::HandleMouseRelease()
+    std::vector<InputAction> InputHandler::HandleMouseRelease(
+        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions)
     {
+        std::vector<InputAction> actions;
+
         if (selectionManager.IsBoxSelecting())
         {
             selectionManager.EndBoxSelection();
@@ -263,8 +269,28 @@ namespace VisionCraft
 
         if (selectionManager.IsDragging())
         {
+            // Check if nodes actually moved
+            if (!dragStartPositions.empty())
+            {
+                InputAction action;
+                action.type = InputActionType::FinishNodeMove;
+                action.oldNodePositions = dragStartPositions;
+                action.nodePositions = {};
+
+                // Get current positions for all nodes that were dragged
+                for (const auto &[nodeId, oldPos] : dragStartPositions)
+                {
+                    action.nodePositions[nodeId] = nodePositions.at(nodeId);
+                }
+
+                actions.push_back(action);
+                dragStartPositions.clear();
+            }
+
             selectionManager.StopDrag();
         }
+
+        return actions;
     }
 
     InputAction InputHandler::UpdateHoveredConnection(const ImVec2 &mousePos,

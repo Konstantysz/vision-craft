@@ -379,6 +379,17 @@ namespace VisionCraft
                 commandHistory.Redo();
                 break;
 
+            case InputActionType::FinishNodeMove:
+                if (!action.oldNodePositions.empty() && !action.nodePositions.empty())
+                {
+                    auto command = std::make_unique<MoveNodesCommand>(action.oldNodePositions,
+                        action.nodePositions,
+                        [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; });
+
+                    commandHistory.ExecuteCommand(std::move(command));
+                }
+                break;
+
             case InputActionType::None:
                 break;
             }

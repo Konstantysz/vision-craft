@@ -26,7 +26,8 @@
 
 namespace VisionCraft
 {
-    NodeEditorLayer::NodeEditorLayer() : nodeRenderer(canvas, connectionManager)
+    NodeEditorLayer::NodeEditorLayer()
+        : nodeRenderer(canvas, connectionManager), inputHandler(selectionManager, contextMenuRenderer, canvas)
     {
         // Register all available node types with the factory
         nodeFactory.Register("ImageInput", [](Engine::NodeId id, std::string_view name) {
@@ -167,146 +168,59 @@ namespace VisionCraft
 
     void NodeEditorLayer::HandleMouseInteractions()
     {
-        auto &io = ImGui::GetIO();
-        const auto mousePos = io.MousePos;
+        auto &nodeEditor = GetNodeEditor();
 
-        // Handle Delete key for selected nodes
-        if (selectionManager.HasSelection() && ImGui::IsKeyPressed(ImGuiKey_Delete))
+        // Create callbacks for InputHandler
+        auto findNode = [this](const ImVec2 &pos) { return FindNodeAtPosition(pos); };
+
+        auto findConnection = [this, &nodeEditor](const ImVec2 &pos) {
+            return connectionManager.FindConnectionAtPosition(pos, nodeEditor, nodePositions, canvas);
+        };
+
+        auto updateBoxSelection = [this]() { UpdateBoxSelection(); };
+
+        // Process input and get actions
+        const auto actions =
+            inputHandler.ProcessInput(nodePositions, hoveredPin, findNode, findConnection, updateBoxSelection);
+
+        // Handle actions
+        for (const auto &action : actions)
         {
-            std::vector<Engine::NodeId> nodesToDelete(
-                selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
-            for (const auto nodeId : nodesToDelete)
+            switch (action.type)
             {
-                DeleteNode(nodeId);
-            }
-            selectionManager.ClearSelection();
-            return;
-        }
-
-        if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
-        {
-            hoveredConnection = std::nullopt;
-            return;
-        }
-
-        // Update hovered connection for visual feedback (only if not dragging or interacting with pins)
-        if (!selectionManager.IsDragging() && hoveredPin.nodeId == Constants::Special::kInvalidNodeId)
-        {
-            auto &nodeEditor = GetNodeEditor();
-            hoveredConnection = connectionManager.FindConnectionAtPosition(mousePos, nodeEditor, nodePositions, canvas);
-        }
-        else
-        {
-            hoveredConnection = std::nullopt;
-        }
-
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        {
-            // First check if clicking on a connection (reuse hoveredConnection)
-            if (hoveredConnection.has_value())
-            {
-                // Right-click on connection - delete it
-                connectionManager.RemoveConnection(hoveredConnection.value());
-                hoveredConnection = std::nullopt;
-                return;
-            }
-
-            // Then check if clicking on a node
-            const auto clickedNodeId = FindNodeAtPosition(mousePos);
-            if (clickedNodeId == Constants::Special::kInvalidNodeId)
-            {
-                // Right-click on empty space - clear selection and show creation menu
+            case InputActionType::DeleteNodes:
+                for (const auto nodeId : action.nodeIds)
+                {
+                    DeleteNode(nodeId);
+                }
                 selectionManager.ClearSelection();
-                showContextMenu = true;
-                contextMenuPos = mousePos;
-                contextMenuRenderer.Open();
-            }
-            else
-            {
-                // Right-click on node - select it and show context menu
-                if (!selectionManager.IsNodeSelected(clickedNodeId))
+                break;
+
+            case InputActionType::DeleteConnection:
+                if (action.connection.has_value())
                 {
-                    selectionManager.SelectNode(clickedNodeId);
+                    connectionManager.RemoveConnection(action.connection.value());
                 }
-                contextMenuRenderer.Open();
-            }
-        }
+                break;
 
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            if (io.WantCaptureMouse && ImGui::IsAnyItemActive())
-            {
-                return;
-            }
-
-            const auto clickedNodeId = FindNodeAtPosition(mousePos);
-            const bool shiftPressed = io.KeyShift;
-
-            if (clickedNodeId != Constants::Special::kInvalidNodeId)
-            {
-                // Clicked on a node
-                if (shiftPressed)
+            case InputActionType::UpdateNodePositions:
+                for (const auto &[nodeId, pos] : action.nodePositions)
                 {
-                    // Shift+click: toggle selection
-                    selectionManager.ToggleNodeSelection(clickedNodeId);
+                    nodePositions[nodeId] = pos;
                 }
-                else
-                {
-                    // Normal click: select only this node (unless already in multi-selection)
-                    if (!selectionManager.IsNodeSelected(clickedNodeId))
-                    {
-                        selectionManager.SelectNode(clickedNodeId);
-                    }
-                }
+                break;
 
-                // Start dragging all selected nodes
-                // Convert nodePositions to screen positions for drag calculation
-                std::unordered_map<Engine::NodeId, ImVec2> screenPositions;
-                for (const auto nodeId : selectionManager.GetSelectedNodes())
-                {
-                    const auto &nodePos = nodePositions[nodeId];
-                    screenPositions[nodeId] = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-                }
-                selectionManager.StartDrag(mousePos, screenPositions);
+            case InputActionType::UpdateHoveredConnection:
+                hoveredConnection = action.hoveredConnection;
+                break;
+
+            case InputActionType::OpenContextMenu:
+                // Context menu is already opened by InputHandler
+                break;
+
+            case InputActionType::None:
+                break;
             }
-            else
-            {
-                // Clicked on empty space
-                if (!shiftPressed)
-                {
-                    // Start box selection
-                    selectionManager.StartBoxSelection(mousePos);
-                }
-            }
-        }
-
-        // Handle box selection
-        if (selectionManager.IsBoxSelecting() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        {
-            selectionManager.UpdateBoxSelection(mousePos);
-            UpdateBoxSelection();
-        }
-
-        if (selectionManager.IsBoxSelecting() && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-        {
-            selectionManager.EndBoxSelection();
-        }
-
-        // Handle node dragging
-        if (selectionManager.IsDragging() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-        {
-            const auto &dragOffsets = selectionManager.GetDragOffsets();
-            for (const auto &[nodeId, offset] : dragOffsets)
-            {
-                const auto newWorldPos = ImVec2(mousePos.x - offset.x, mousePos.y - offset.y);
-                const auto newNodePos = canvas.ScreenToWorld(newWorldPos);
-                nodePositions[nodeId] = NodePosition{ newNodePos.x, newNodePos.y };
-            }
-        }
-
-        if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
-        {
-            selectionManager.StopDrag();
         }
     }
 
@@ -361,7 +275,7 @@ namespace VisionCraft
             break;
         }
         case ContextMenuResult::Action::CreateNode:
-            CreateNodeAtPosition(result.nodeType, contextMenuPos);
+            CreateNodeAtPosition(result.nodeType, inputHandler.GetContextMenuPos());
             break;
         case ContextMenuResult::Action::None:
             break;

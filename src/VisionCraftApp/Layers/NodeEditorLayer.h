@@ -4,6 +4,7 @@
 #include "ConnectionManager.h"
 #include "ContextMenuRenderer.h"
 #include "FileDialogManager.h"
+#include "InputHandler.h"
 #include "Layer.h"
 #include "NodeEditor.h"
 #include "NodeEditorTypes.h"
@@ -204,12 +205,9 @@ namespace VisionCraft
         SelectionManager selectionManager;                              ///< Manages node selection and dragging
         ContextMenuRenderer contextMenuRenderer;                        ///< Renders context menu
         FileDialogManager fileDialogManager;                            ///< Manages file dialogs
+        InputHandler inputHandler;                                      ///< Handles input processing
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
-
-        // Context menu state
-        bool showContextMenu = false;               ///< Whether to show the context menu
-        ImVec2 contextMenuPos = ImVec2(0.0f, 0.0f); ///< Position where context menu was opened
 
         // Pin interaction state
         PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin

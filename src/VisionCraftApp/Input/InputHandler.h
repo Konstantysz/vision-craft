@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CanvasController.h"
-#include "ContextMenuRenderer.h"
-#include "NodeEditorTypes.h"
-#include "SelectionManager.h"
+#include "Canvas/CanvasController.h"
+#include "Editor/NodeEditorTypes.h"
+#include "Input/SelectionManager.h"
+#include "UI/ContextMenuRenderer.h"
 
 #include <functional>
 #include <optional>

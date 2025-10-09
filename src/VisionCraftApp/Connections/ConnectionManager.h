@@ -1,9 +1,9 @@
 #pragma once
 
-#include "CanvasController.h"
+#include "Canvas/CanvasController.h"
+#include "Editor/NodeEditorConstants.h"
+#include "Editor/NodeEditorTypes.h"
 #include "NodeEditor.h"
-#include "NodeEditorConstants.h"
-#include "NodeEditorTypes.h"
 
 #include <imgui.h>
 #include <unordered_map>

@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Editor/NodeEditorTypes.h"
 #include "Node.h"
-#include "NodeEditorTypes.h"
 #include <vector>
 
 namespace VisionCraft

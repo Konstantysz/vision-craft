@@ -1,7 +1,7 @@
-#include "ConnectionManager.h"
+#include "Connections/ConnectionManager.h"
+#include "Layers/NodeEditorLayer.h"
 #include "Logger.h"
-#include "NodeEditorLayer.h"
-#include "NodeRenderer.h"
+#include "Rendering/NodeRenderer.h"
 
 #include <algorithm>
 #include <cmath>

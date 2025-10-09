@@ -1,10 +1,10 @@
 #include "NodeEditorLayer.h"
+#include "Editor/NodeEditorConstants.h"
 #include "Events/LoadGraphEvent.h"
 #include "Events/NewGraphEvent.h"
 #include "Events/SaveGraphEvent.h"
 #include "Logger.h"
-#include "NodeEditorConstants.h"
-#include "NodeRenderer.h"
+#include "Rendering/NodeRenderer.h"
 
 #include <algorithm>
 #include <cmath>
@@ -14,7 +14,7 @@
 #include <imgui.h>
 
 #include "Application.h"
-#include "VisionCraftApplication.h"
+#include "Main/VisionCraftApplication.h"
 
 #include "Nodes/CannyEdgeNode.h"
 #include "Nodes/GrayscaleNode.h"

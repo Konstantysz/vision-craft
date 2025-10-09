@@ -1,13 +1,13 @@
 #pragma once
 
-#include "NodeRenderingStrategy.h"
+#include "Rendering/Strategies/NodeRenderingStrategy.h"
 
 namespace VisionCraft
 {
     /**
-     * @brief Rendering strategy for ImageInputNode with image preview.
+     * @brief Default strategy - no custom content.
      */
-    class ImageInputNodeRenderingStrategy : public NodeRenderingStrategy
+    class DefaultNodeRenderingStrategy : public NodeRenderingStrategy
     {
     public:
         void RenderCustomContent(Engine::Node &node,

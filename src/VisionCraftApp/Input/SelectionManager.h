@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NodeEditorTypes.h"
+#include "Editor/NodeEditorTypes.h"
 
 #include <unordered_set>
 

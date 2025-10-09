@@ -1,7 +1,7 @@
 #pragma once
 
+#include "Editor/NodeEditorConstants.h"
 #include "Event.h"
-#include "NodeEditorConstants.h"
 
 #include <imgui.h>
 

@@ -1,4 +1,4 @@
-#include "NodeFactory.h"
+#include "Editor/NodeFactory.h"
 
 #include <algorithm>
 #include <ranges>

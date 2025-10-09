@@ -1,11 +1,11 @@
-#include "GraphExecutionLayer.h"
+#include "Layers/GraphExecutionLayer.h"
 
 #include <imgui.h>
 
 #include "Application.h"
 #include "Events/GraphExecuteEvent.h"
 #include "Logger.h"
-#include "VisionCraftApplication.h"
+#include "Main/VisionCraftApplication.h"
 
 namespace VisionCraft
 {

@@ -1,4 +1,4 @@
-#include "DefaultNodeRenderingStrategy.h"
+#include "Rendering/Strategies/DefaultNodeRenderingStrategy.h"
 
 namespace VisionCraft
 {

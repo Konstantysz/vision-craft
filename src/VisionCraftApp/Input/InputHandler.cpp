@@ -1,6 +1,6 @@
-#include "InputHandler.h"
+#include "Input/InputHandler.h"
 
-#include "NodeEditorConstants.h"
+#include "Editor/NodeEditorConstants.h"
 
 namespace VisionCraft
 {

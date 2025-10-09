@@ -1,12 +1,12 @@
-#include "NodeRenderer.h"
-#include "DefaultNodeRenderingStrategy.h"
-#include "ImageInputNodeRenderingStrategy.h"
+#include "Rendering/NodeRenderer.h"
+#include "Editor/NodeEditorConstants.h"
 #include "Logger.h"
-#include "NodeDimensionCalculator.h"
-#include "NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
 #include "Nodes/PreviewNode.h"
-#include "PreviewNodeRenderingStrategy.h"
+#include "Rendering/NodeDimensionCalculator.h"
+#include "Rendering/Strategies/DefaultNodeRenderingStrategy.h"
+#include "Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
+#include "Rendering/Strategies/PreviewNodeRenderingStrategy.h"
 
 #include <ImGuiFileDialog.h>
 

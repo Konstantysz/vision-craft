@@ -1,10 +1,10 @@
 #pragma once
 
-#include "CanvasController.h"
-#include "ConnectionManager.h"
+#include "Canvas/CanvasController.h"
+#include "Connections/ConnectionManager.h"
+#include "Editor/NodeEditorTypes.h"
 #include "Node.h"
-#include "NodeEditorTypes.h"
-#include "NodeRenderingStrategy.h"
+#include "Rendering/Strategies/NodeRenderingStrategy.h"
 
 #include <functional>
 #include <string>

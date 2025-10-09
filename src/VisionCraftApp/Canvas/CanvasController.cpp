@@ -1,4 +1,4 @@
-#include "CanvasController.h"
+#include "Canvas/CanvasController.h"
 
 #include <algorithm>
 #include <cmath>

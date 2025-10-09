@@ -1,16 +1,16 @@
 #pragma once
 
-#include "CanvasController.h"
-#include "ConnectionManager.h"
-#include "ContextMenuRenderer.h"
-#include "FileDialogManager.h"
-#include "InputHandler.h"
+#include "Canvas/CanvasController.h"
+#include "Connections/ConnectionManager.h"
+#include "Editor/NodeEditorTypes.h"
+#include "Editor/NodeFactory.h"
+#include "Input/InputHandler.h"
+#include "Input/SelectionManager.h"
 #include "Layer.h"
 #include "NodeEditor.h"
-#include "NodeEditorTypes.h"
-#include "NodeFactory.h"
-#include "NodeRenderer.h"
-#include "SelectionManager.h"
+#include "Rendering/NodeRenderer.h"
+#include "UI/ContextMenuRenderer.h"
+#include "UI/FileDialogManager.h"
 
 #include <memory>
 #include <unordered_map>

@@ -111,15 +111,23 @@ VisionCraft automatically manages its dependencies through vcpkg:
 vision-craft/
 ├── external/
 │   ├── kappa-core/           # Core GUI application framework (git submodule)
-│   └── ImGuiFileDialog/      # File dialog library (git submodule)
+│   └── ImGuiFileDialog/      # File dialog library
 ├── src/
 │   ├── VisionCraftEngine/    # Node system and CV logic
 │   │   ├── Node.h            # Abstract node base
 │   │   ├── NodeEditor.h      # Node graph management
 │   │   └── Nodes/            # Computer vision nodes
-│   └── VisionCraftApp/       # GUI application
-│       ├── VisionCraftApplication.h  # Main application
-│       └── Layers/           # UI layers
+│   └── VisionCraftApp/       # GUI application (organized by feature)
+│       ├── Main/             # Application entry point
+│       ├── Editor/           # Node editor layer and factory
+│       ├── Rendering/        # Node rendering system
+│       │   └── Strategies/   # Rendering strategy pattern
+│       ├── Canvas/           # Canvas controller
+│       ├── Connections/      # Connection management
+│       ├── Input/            # Input handling and selection
+│       ├── UI/               # UI components (menus, dialogs)
+│       ├── Layers/           # Application layers
+│       └── Events/           # Application events
 ├── tests/                    # Unit tests
 ├── cmake/                    # Build system extensions
 │   └── CodeQuality.cmake     # Code quality integration

@@ -1,5 +1,5 @@
-#include "NodeDimensionCalculator.h"
-#include "NodeEditorConstants.h"
+#include "Rendering/NodeDimensionCalculator.h"
+#include "Editor/NodeEditorConstants.h"
 #include <algorithm>
 
 namespace VisionCraft

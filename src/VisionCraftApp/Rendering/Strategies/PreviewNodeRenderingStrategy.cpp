@@ -1,8 +1,8 @@
-#include "PreviewNodeRenderingStrategy.h"
-#include "ConnectionManager.h"
-#include "NodeDimensionCalculator.h"
-#include "NodeEditorConstants.h"
+#include "Rendering/Strategies/PreviewNodeRenderingStrategy.h"
+#include "Connections/ConnectionManager.h"
+#include "Editor/NodeEditorConstants.h"
 #include "Nodes/PreviewNode.h"
+#include "Rendering/NodeDimensionCalculator.h"
 #include <algorithm>
 
 namespace VisionCraft

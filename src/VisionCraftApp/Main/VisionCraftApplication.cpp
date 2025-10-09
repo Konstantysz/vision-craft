@@ -1,4 +1,4 @@
-#include "VisionCraftApplication.h"
+#include "Main/VisionCraftApplication.h"
 
 // clang-format off
 #include <glad/glad.h>

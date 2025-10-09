@@ -1,13 +1,13 @@
 #pragma once
 
-#include "NodeRenderingStrategy.h"
+#include "Rendering/Strategies/NodeRenderingStrategy.h"
 
 namespace VisionCraft
 {
     /**
-     * @brief Default strategy - no custom content.
+     * @brief Rendering strategy for PreviewNode with image display.
      */
-    class DefaultNodeRenderingStrategy : public NodeRenderingStrategy
+    class PreviewNodeRenderingStrategy : public NodeRenderingStrategy
     {
     public:
         void RenderCustomContent(Engine::Node &node,

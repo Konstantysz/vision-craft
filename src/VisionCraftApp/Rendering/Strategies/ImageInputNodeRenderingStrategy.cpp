@@ -1,8 +1,8 @@
-#include "ImageInputNodeRenderingStrategy.h"
-#include "ConnectionManager.h"
-#include "NodeDimensionCalculator.h"
-#include "NodeEditorConstants.h"
+#include "Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
+#include "Connections/ConnectionManager.h"
+#include "Editor/NodeEditorConstants.h"
 #include "Nodes/ImageInputNode.h"
+#include "Rendering/NodeDimensionCalculator.h"
 #include <algorithm>
 
 namespace VisionCraft

@@ -15,6 +15,12 @@ set(EDITOR_SOURCES
     Editor/ClipboardManager.cpp
 )
 
+set(COMMAND_SOURCES
+    Commands/CommandHistory.cpp
+    Commands/NodeCommands.cpp
+    Commands/ConnectionCommands.cpp
+)
+
 set(RENDERING_SOURCES
     Rendering/NodeRenderer.cpp
     Rendering/NodeDimensionCalculator.cpp
@@ -56,6 +62,7 @@ set(EXTERNAL_SOURCES
 set(ALL_SOURCES
     ${MAIN_SOURCES}
     ${EDITOR_SOURCES}
+    ${COMMAND_SOURCES}
     ${RENDERING_SOURCES}
     ${CANVAS_SOURCES}
     ${CONNECTION_SOURCES}

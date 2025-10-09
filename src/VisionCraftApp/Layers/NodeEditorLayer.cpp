@@ -1,4 +1,6 @@
 #include "NodeEditorLayer.h"
+#include "Commands/ConnectionCommands.h"
+#include "Commands/NodeCommands.h"
 #include "Editor/NodeEditorConstants.h"
 #include "Events/LoadGraphEvent.h"
 #include "Events/NewGraphEvent.h"
@@ -558,19 +560,17 @@ namespace VisionCraft
         // Get display name or use type as fallback
         const auto displayName = displayNames.contains(nodeType) ? displayNames.at(nodeType) : nodeType;
 
-        // Use factory to create node
-        auto newNode = nodeFactory.Create(nodeType, nodeId, displayName);
+        // Create command for node creation
+        auto command = std::make_unique<CreateNodeCommand>(
+            [this, nodeType, nodeId, displayName]() { return nodeFactory.Create(nodeType, nodeId, displayName); },
+            [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
+            [this](Engine::NodeId id) { GetNodeEditor().RemoveNode(id); },
+            [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
+            NodePosition{ worldX, worldY },
+            nodeType);
 
-        if (newNode)
-        {
-            auto &nodeEditor = GetNodeEditor();
-
-            const auto actualNodeId = newNode->GetId();
-            nodeEditor.AddNode(std::move(newNode));
-            nodePositions[actualNodeId] = { worldX, worldY };
-
-            selectionManager.ClearSelection();
-        }
+        commandHistory.ExecuteCommand(std::move(command));
+        selectionManager.ClearSelection();
     }
 
 

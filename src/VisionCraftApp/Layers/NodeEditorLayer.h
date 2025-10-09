@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Canvas/CanvasController.h"
+#include "Commands/CommandHistory.h"
 #include "Connections/ConnectionManager.h"
 #include "Editor/ClipboardManager.h"
 #include "Editor/NodeEditorTypes.h"
@@ -215,6 +216,7 @@ namespace VisionCraft
         FileDialogManager fileDialogManager;                            ///< Manages file dialogs
         InputHandler inputHandler;                                      ///< Handles input processing
         ClipboardManager clipboardManager;                              ///< Manages copy/cut/paste operations
+        CommandHistory commandHistory;                                  ///< Manages undo/redo history
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 

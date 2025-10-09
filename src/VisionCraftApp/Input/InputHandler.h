@@ -38,7 +38,9 @@ namespace VisionCraft
         UpdateHoveredConnection,
         CopyNodes,
         CutNodes,
-        PasteNodes
+        PasteNodes,
+        Undo,
+        Redo
     };
 
     /**

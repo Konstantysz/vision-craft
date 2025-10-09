@@ -349,6 +349,14 @@ namespace VisionCraft
                 break;
             }
 
+            case InputActionType::Undo:
+                commandHistory.Undo();
+                break;
+
+            case InputActionType::Redo:
+                commandHistory.Redo();
+                break;
+
             case InputActionType::None:
                 break;
             }

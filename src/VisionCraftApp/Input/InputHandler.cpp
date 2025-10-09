@@ -58,6 +58,25 @@ namespace VisionCraft
             return actions;
         }
 
+        // Handle Ctrl+Z (Undo)
+        if (io.KeyCtrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z))
+        {
+            InputAction action;
+            action.type = InputActionType::Undo;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+Y or Ctrl+Shift+Z (Redo)
+        if ((io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Y))
+            || (io.KeyCtrl && io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Z)))
+        {
+            InputAction action;
+            action.type = InputActionType::Redo;
+            actions.push_back(action);
+            return actions;
+        }
+
         // Early exit if not hovering window or panning
         if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {

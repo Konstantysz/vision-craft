@@ -218,6 +218,135 @@ namespace VisionCraft
                 // Context menu is already opened by InputHandler
                 break;
 
+            case InputActionType::CopyNodes: {
+                // Get node types and names from NodeEditor
+                std::unordered_map<Engine::NodeId, std::string> nodeTypes;
+                std::unordered_map<Engine::NodeId, std::string> nodeNames;
+                for (const auto nodeId : selectionManager.GetSelectedNodes())
+                {
+                    if (auto *node = nodeEditor.GetNode(nodeId))
+                    {
+                        // Convert node class type to factory key
+                        nodeTypes[nodeId] = NodeTypeToFactoryKey(node->GetType());
+                        nodeNames[nodeId] = node->GetName();
+                    }
+                }
+
+                // Copy to clipboard
+                clipboardManager.Copy(selectionManager.GetSelectedNodes(),
+                    nodeTypes,
+                    nodeNames,
+                    nodePositions,
+                    connectionManager.GetConnections());
+                break;
+            }
+
+            case InputActionType::CutNodes: {
+                // Get node types and names from NodeEditor
+                std::unordered_map<Engine::NodeId, std::string> nodeTypes;
+                std::unordered_map<Engine::NodeId, std::string> nodeNames;
+                for (const auto nodeId : selectionManager.GetSelectedNodes())
+                {
+                    if (auto *node = nodeEditor.GetNode(nodeId))
+                    {
+                        // Convert node class type to factory key
+                        nodeTypes[nodeId] = NodeTypeToFactoryKey(node->GetType());
+                        nodeNames[nodeId] = node->GetName();
+                    }
+                }
+
+                // Cut to clipboard
+                clipboardManager.Cut(selectionManager.GetSelectedNodes(),
+                    nodeTypes,
+                    nodeNames,
+                    nodePositions,
+                    connectionManager.GetConnections());
+
+                // Delete nodes immediately (they'll be restored on paste)
+                std::vector<Engine::NodeId> nodesToDelete(
+                    selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
+                for (const auto nodeId : nodesToDelete)
+                {
+                    DeleteNode(nodeId);
+                }
+                selectionManager.ClearSelection();
+                break;
+            }
+
+            case InputActionType::PasteNodes: {
+                if (!clipboardManager.HasData())
+                {
+                    break;
+                }
+
+                // Convert mouse position to world coordinates
+                const auto pasteWorldPos = canvas.ScreenToWorld(action.pastePosition);
+
+                // Calculate center of copied nodes
+                float centerX = 0.0f, centerY = 0.0f;
+                for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+                {
+                    centerX += copiedNode.position.x;
+                    centerY += copiedNode.position.y;
+                }
+                if (!clipboardManager.GetCopiedNodes().empty())
+                {
+                    centerX /= clipboardManager.GetCopiedNodes().size();
+                    centerY /= clipboardManager.GetCopiedNodes().size();
+                }
+
+                // Map old IDs to new IDs for connection remapping
+                std::unordered_map<Engine::NodeId, Engine::NodeId> idMapping;
+
+                // Create new nodes
+                for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+                {
+                    const auto newNodeId = nextNodeId++;
+                    idMapping[copiedNode.originalId] = newNodeId;
+
+                    // Create node using factory
+                    auto newNode = nodeFactory.Create(copiedNode.type, newNodeId, copiedNode.name);
+                    if (newNode)
+                    {
+                        // Calculate offset from center and apply to paste position
+                        const auto offsetX = copiedNode.position.x - centerX;
+                        const auto offsetY = copiedNode.position.y - centerY;
+                        const auto newX = pasteWorldPos.x + offsetX;
+                        const auto newY = pasteWorldPos.y + offsetY;
+                        nodePositions[newNodeId] = { newX, newY };
+
+                        nodeEditor.AddNode(std::move(newNode));
+                    }
+                }
+
+                // Recreate connections using new IDs
+                for (const auto &copiedConnection : clipboardManager.GetCopiedConnections())
+                {
+                    const auto newFromId = idMapping[copiedConnection.fromNodeId];
+                    const auto newToId = idMapping[copiedConnection.toNodeId];
+
+                    PinId outputPin{ newFromId, copiedConnection.fromSlot };
+                    PinId inputPin{ newToId, copiedConnection.toSlot };
+
+                    connectionManager.CreateConnection(outputPin, inputPin, nodeEditor);
+                }
+
+                // Select the newly pasted nodes
+                selectionManager.ClearSelection();
+                for (const auto &[oldId, newId] : idMapping)
+                {
+                    selectionManager.ToggleNodeSelection(newId);
+                }
+
+                // After first paste of cut operation, convert to copy
+                if (clipboardManager.GetOperation() == ClipboardOperation::Cut)
+                {
+                    clipboardManager.CompleteCutOperation();
+                }
+
+                break;
+            }
+
             case InputActionType::None:
                 break;
             }
@@ -260,7 +389,9 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderContextMenu()
     {
-        const auto result = contextMenuRenderer.Render(selectionManager.HasSelection());
+        const auto result = contextMenuRenderer.Render(selectionManager.HasSelection(), clipboardManager.HasData());
+
+        auto &nodeEditor = GetNodeEditor();
 
         switch (result.action)
         {
@@ -277,6 +408,132 @@ namespace VisionCraft
         case ContextMenuResult::Action::CreateNode:
             CreateNodeAtPosition(result.nodeType, inputHandler.GetContextMenuPos());
             break;
+        case ContextMenuResult::Action::CopyNodes: {
+            // Get node types and names from NodeEditor
+            std::unordered_map<Engine::NodeId, std::string> nodeTypes;
+            std::unordered_map<Engine::NodeId, std::string> nodeNames;
+            for (const auto nodeId : selectionManager.GetSelectedNodes())
+            {
+                if (auto *node = nodeEditor.GetNode(nodeId))
+                {
+                    // Convert node class type to factory key
+                    nodeTypes[nodeId] = NodeTypeToFactoryKey(node->GetType());
+                    nodeNames[nodeId] = node->GetName();
+                }
+            }
+
+            // Copy to clipboard
+            clipboardManager.Copy(selectionManager.GetSelectedNodes(),
+                nodeTypes,
+                nodeNames,
+                nodePositions,
+                connectionManager.GetConnections());
+            break;
+        }
+        case ContextMenuResult::Action::CutNodes: {
+            // Get node types and names from NodeEditor
+            std::unordered_map<Engine::NodeId, std::string> nodeTypes;
+            std::unordered_map<Engine::NodeId, std::string> nodeNames;
+            for (const auto nodeId : selectionManager.GetSelectedNodes())
+            {
+                if (auto *node = nodeEditor.GetNode(nodeId))
+                {
+                    // Convert node class type to factory key
+                    nodeTypes[nodeId] = NodeTypeToFactoryKey(node->GetType());
+                    nodeNames[nodeId] = node->GetName();
+                }
+            }
+
+            // Cut to clipboard
+            clipboardManager.Cut(selectionManager.GetSelectedNodes(),
+                nodeTypes,
+                nodeNames,
+                nodePositions,
+                connectionManager.GetConnections());
+
+            // Delete nodes immediately (they'll be restored on paste)
+            std::vector<Engine::NodeId> nodesToDelete(
+                selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
+            for (const auto nodeId : nodesToDelete)
+            {
+                DeleteNode(nodeId);
+            }
+            selectionManager.ClearSelection();
+            break;
+        }
+        case ContextMenuResult::Action::PasteNodes: {
+            if (!clipboardManager.HasData())
+            {
+                break;
+            }
+
+            // Convert context menu position to world coordinates
+            const auto pasteWorldPos = canvas.ScreenToWorld(inputHandler.GetContextMenuPos());
+
+            // Calculate center of copied nodes
+            float centerX = 0.0f, centerY = 0.0f;
+            for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+            {
+                centerX += copiedNode.position.x;
+                centerY += copiedNode.position.y;
+            }
+            if (!clipboardManager.GetCopiedNodes().empty())
+            {
+                centerX /= clipboardManager.GetCopiedNodes().size();
+                centerY /= clipboardManager.GetCopiedNodes().size();
+            }
+
+            // Map old IDs to new IDs for connection remapping
+            std::unordered_map<Engine::NodeId, Engine::NodeId> idMapping;
+
+            // Create new nodes
+            for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+            {
+                const auto newNodeId = nextNodeId++;
+                idMapping[copiedNode.originalId] = newNodeId;
+
+                // Create node using factory
+                auto newNode = nodeFactory.Create(copiedNode.type, newNodeId, copiedNode.name);
+                if (newNode)
+                {
+                    // Calculate offset from center and apply to paste position
+                    const auto offsetX = copiedNode.position.x - centerX;
+                    const auto offsetY = copiedNode.position.y - centerY;
+                    const auto newX = pasteWorldPos.x + offsetX;
+                    const auto newY = pasteWorldPos.y + offsetY;
+                    nodePositions[newNodeId] = { newX, newY };
+
+                    nodeEditor.AddNode(std::move(newNode));
+                }
+            }
+
+            // Recreate connections using new IDs
+            for (const auto &copiedConnection : clipboardManager.GetCopiedConnections())
+            {
+                const auto newFromId = idMapping[copiedConnection.fromNodeId];
+                const auto newToId = idMapping[copiedConnection.toNodeId];
+
+                PinId outputPin{ newFromId, copiedConnection.fromSlot };
+                PinId inputPin{ newToId, copiedConnection.toSlot };
+
+                connectionManager.CreateConnection(outputPin, inputPin, nodeEditor);
+            }
+
+            // Select the newly pasted nodes
+            selectionManager.ClearSelection();
+            for (const auto &[oldId, newId] : idMapping)
+            {
+                selectionManager.ToggleNodeSelection(newId);
+            }
+
+            // After first paste of cut operation, convert to copy
+            if (clipboardManager.GetOperation() == ClipboardOperation::Cut)
+            {
+                clipboardManager.CompleteCutOperation();
+            }
+
+            break;
+        }
         case ContextMenuResult::Action::None:
             break;
         }
@@ -548,5 +805,26 @@ namespace VisionCraft
     bool NodeEditorLayer::IsNodeSelected(Engine::NodeId nodeId) const
     {
         return selectionManager.IsNodeSelected(nodeId);
+    }
+
+    std::string NodeEditorLayer::NodeTypeToFactoryKey(const std::string &nodeType) const
+    {
+        // Mapping from node class type to factory registration key
+        static const std::unordered_map<std::string, std::string> typeToFactoryKey = { { "ImageInputNode",
+                                                                                           "ImageInput" },
+            { "ImageOutputNode", "ImageOutput" },
+            { "PreviewNode", "Preview" },
+            { "GrayscaleNode", "Grayscale" },
+            { "CannyEdgeNode", "CannyEdge" },
+            { "ThresholdNode", "Threshold" } };
+
+        if (typeToFactoryKey.contains(nodeType))
+        {
+            return typeToFactoryKey.at(nodeType);
+        }
+
+        // Fallback: return the original type
+        LOG_WARN("NodeEditorLayer::NodeTypeToFactoryKey - Unknown node type: {}", nodeType);
+        return nodeType;
     }
 } // namespace VisionCraft

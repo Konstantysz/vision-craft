@@ -12,6 +12,7 @@ set(MAIN_SOURCES
 
 set(EDITOR_SOURCES
     Editor/NodeFactory.cpp
+    Editor/ClipboardManager.cpp
 )
 
 set(RENDERING_SOURCES

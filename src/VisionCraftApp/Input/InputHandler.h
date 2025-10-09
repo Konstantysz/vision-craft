@@ -35,7 +35,10 @@ namespace VisionCraft
         DeleteConnection,
         OpenContextMenu,
         UpdateNodePositions,
-        UpdateHoveredConnection
+        UpdateHoveredConnection,
+        CopyNodes,
+        CutNodes,
+        PasteNodes
     };
 
     /**
@@ -49,6 +52,7 @@ namespace VisionCraft
         ImVec2 contextMenuPos{ 0.0f, 0.0f };                            ///< For OpenContextMenu
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< For UpdateNodePositions
         std::optional<NodeConnection> hoveredConnection;                ///< For UpdateHoveredConnection
+        ImVec2 pastePosition{ 0.0f, 0.0f };                             ///< For PasteNodes
     };
 
     /**

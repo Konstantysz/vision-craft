@@ -5,14 +5,37 @@
 
 namespace VisionCraft
 {
-    ContextMenuResult ContextMenuRenderer::Render(bool hasSelection)
+    ContextMenuResult ContextMenuRenderer::Render(bool hasSelection, bool hasClipboardData)
     {
         ContextMenuResult result;
 
         if (ImGui::BeginPopup("NodeContextMenu"))
         {
+            // Copy operation (disabled when no selection)
+            if (ImGui::MenuItem("Copy", "Ctrl+C", false, hasSelection))
+            {
+                result.action = ContextMenuResult::Action::CopyNodes;
+                ImGui::CloseCurrentPopup();
+            }
+
+            // Cut operation (disabled when no selection)
+            if (ImGui::MenuItem("Cut", "Ctrl+X", false, hasSelection))
+            {
+                result.action = ContextMenuResult::Action::CutNodes;
+                ImGui::CloseCurrentPopup();
+            }
+
+            // Paste operation (disabled when clipboard is empty)
+            if (ImGui::MenuItem("Paste", "Ctrl+V", false, hasClipboardData))
+            {
+                result.action = ContextMenuResult::Action::PasteNodes;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::Separator();
+
             // Delete operation (disabled when no selection)
-            if (ImGui::MenuItem("Delete", nullptr, false, hasSelection))
+            if (ImGui::MenuItem("Delete", "Del", false, hasSelection))
             {
                 result.action = ContextMenuResult::Action::DeleteNodes;
                 ImGui::CloseCurrentPopup();

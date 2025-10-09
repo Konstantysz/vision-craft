@@ -17,7 +17,10 @@ namespace VisionCraft
         {
             None,
             DeleteNodes,
-            CreateNode
+            CreateNode,
+            CopyNodes,
+            CutNodes,
+            PasteNodes
         };
 
         Action action = Action::None;
@@ -46,9 +49,10 @@ namespace VisionCraft
         /**
          * @brief Renders the context menu and returns user action.
          * @param hasSelection Whether any nodes are selected
+         * @param hasClipboardData Whether clipboard has data for paste
          * @return Result indicating what action was taken
          */
-        [[nodiscard]] ContextMenuResult Render(bool hasSelection);
+        [[nodiscard]] ContextMenuResult Render(bool hasSelection, bool hasClipboardData = false);
 
         /**
          * @brief Registers available node types for creation menu.

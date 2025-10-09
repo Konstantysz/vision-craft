@@ -2,6 +2,7 @@
 
 #include "Canvas/CanvasController.h"
 #include "Connections/ConnectionManager.h"
+#include "Editor/ClipboardManager.h"
 #include "Editor/NodeEditorTypes.h"
 #include "Editor/NodeFactory.h"
 #include "Input/InputHandler.h"
@@ -197,6 +198,13 @@ namespace VisionCraft
          */
         void RenderLoadDialog();
 
+        /**
+         * @brief Converts node class type to factory registration key.
+         * @param nodeType Node class type (e.g., "GrayscaleNode")
+         * @return Factory key (e.g., "Grayscale")
+         */
+        [[nodiscard]] std::string NodeTypeToFactoryKey(const std::string &nodeType) const;
+
         // Core components
         CanvasController canvas;                                        ///< Canvas management component
         ConnectionManager connectionManager;                            ///< Connection management component
@@ -206,6 +214,7 @@ namespace VisionCraft
         ContextMenuRenderer contextMenuRenderer;                        ///< Renders context menu
         FileDialogManager fileDialogManager;                            ///< Manages file dialogs
         InputHandler inputHandler;                                      ///< Handles input processing
+        ClipboardManager clipboardManager;                              ///< Manages copy/cut/paste operations
         std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
         Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
 

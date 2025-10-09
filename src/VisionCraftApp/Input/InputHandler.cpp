@@ -30,6 +30,34 @@ namespace VisionCraft
             return actions;
         }
 
+        // Handle Ctrl+C (Copy)
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_C) && selectionManager.HasSelection())
+        {
+            InputAction action;
+            action.type = InputActionType::CopyNodes;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+X (Cut)
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_X) && selectionManager.HasSelection())
+        {
+            InputAction action;
+            action.type = InputActionType::CutNodes;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+V (Paste)
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_V))
+        {
+            InputAction action;
+            action.type = InputActionType::PasteNodes;
+            action.pastePosition = mousePos;
+            actions.push_back(action);
+            return actions;
+        }
+
         // Early exit if not hovering window or panning
         if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {

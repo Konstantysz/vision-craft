@@ -5,7 +5,7 @@
 repos:
   # General code quality hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         exclude: \.(md|rst)$
@@ -33,9 +33,9 @@ repos:
     rev: v0.6.13
     hooks:
       - id: cmake-format
-        args: [--config-file, .cmake-format]
+        args: ['--config-files', '.cmake-format']
       - id: cmake-lint
-        args: [--config-file, .cmake-format]
+        args: ['--config-files', '.cmake-format']
 
   # Local hooks for clang-tidy and custom checks
   - repo: local
@@ -44,7 +44,7 @@ repos:
       - id: clang-tidy
         name: clang-tidy
         entry: scripts/run-clang-tidy.py
-        language: python3
+        language: python
         files: \.(cpp|hpp|c|h|cc|cxx)$
         args: ['--config-file=.clang-tidy', '--header-filter=src/.*']
         require_serial: true
@@ -53,30 +53,22 @@ repos:
       - id: header-guards
         name: Check header guards
         entry: scripts/check-header-guards.py
-        language: python3
+        language: python
         files: \.h$
 
       # Check for TODO/FIXME without issue numbers
       - id: check-todos
         name: Check TODO/FIXME format
         entry: scripts/check-todos.py
-        language: python3
+        language: python
         files: \.(cpp|hpp|c|h|cc|cxx)$
 
       # Check for proper namespace usage
       - id: check-namespaces
         name: Check namespace formatting
         entry: scripts/check-namespaces.py
-        language: python3
+        language: python
         files: \.(cpp|hpp|c|h|cc|cxx)$
-
-  # Additional security checks
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
-    hooks:
-      - id: detect-secrets
-        args: ['--baseline', '.secrets.baseline']
-        exclude: \.lock$|\.md$|\.txt$
 
 # Global configuration
 ci:

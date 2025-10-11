@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Layer.h"
+#include "Persistence/RecentFilesManager.h"
 
 namespace VisionCraft
 {
@@ -13,7 +14,7 @@ namespace VisionCraft
         /**
          * @brief Default constructor.
          */
-        DockSpaceLayer() = default;
+        DockSpaceLayer();
 
         /**
          * @brief Virtual destructor.
@@ -38,6 +39,11 @@ namespace VisionCraft
         void OnRender() override;
 
     private:
-        bool dockspaceOpen = true; ///< Flag indicating if the dockspace is open
+        void RenderFileMenu();
+        void RenderRecentFilesMenu();
+
+        bool dockspaceOpen = true;             ///< Flag indicating if the dockspace is open
+        bool isFirstFrame = true;              ///< Flag to detect first frame for default layout setup
+        RecentFilesManager recentFilesManager; ///< Manager for recent files
     };
 } // namespace VisionCraft

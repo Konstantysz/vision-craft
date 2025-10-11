@@ -2,6 +2,7 @@
 #include "Commands/ConnectionCommands.h"
 #include "Commands/NodeCommands.h"
 #include "Editor/NodeEditorConstants.h"
+#include "Events/FileOpenedEvent.h"
 #include "Events/LoadGraphEvent.h"
 #include "Events/NewGraphEvent.h"
 #include "Events/SaveGraphEvent.h"
@@ -90,6 +91,10 @@ namespace VisionCraft
         else if (dynamic_cast<LoadGraphEvent *>(&event))
         {
             HandleLoadGraph();
+        }
+        else if (auto *loadFileEvent = dynamic_cast<LoadGraphFromFileEvent *>(&event))
+        {
+            HandleLoadGraphFromFile(loadFileEvent->GetFilePath());
         }
         else if (dynamic_cast<NewGraphEvent *>(&event))
         {
@@ -732,6 +737,9 @@ namespace VisionCraft
             if (GetNodeEditor().SaveToFile(currentFilePath, positions))
             {
                 LOG_INFO("Graph saved successfully to: {}", currentFilePath);
+
+                FileOpenedEvent fileEvent(currentFilePath);
+                Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
             {
@@ -743,6 +751,40 @@ namespace VisionCraft
     void NodeEditorLayer::HandleLoadGraph()
     {
         fileDialogManager.OpenLoadDialog();
+    }
+
+    void NodeEditorLayer::HandleLoadGraphFromFile(const std::string &filePath)
+    {
+        std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+
+        if (GetNodeEditor().LoadFromFile(filePath, positions))
+        {
+            nodePositions.clear();
+            for (const auto &[id, pos] : positions)
+            {
+                nodePositions[id] = NodePosition{ pos.first, pos.second };
+            }
+
+            currentFilePath = filePath;
+            selectionManager.ClearSelection();
+
+            Engine::NodeId maxId = 0;
+            for (const auto &id : GetNodeEditor().GetNodeIds())
+            {
+                if (id > maxId)
+                    maxId = id;
+            }
+            nextNodeId = maxId + 1;
+
+            LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
+
+            FileOpenedEvent fileEvent(currentFilePath);
+            Kappa::Application::Get().GetEventBus().Publish(fileEvent);
+        }
+        else
+        {
+            LOG_ERROR("Failed to load graph from: {}", filePath);
+        }
     }
 
     void NodeEditorLayer::HandleNewGraph()
@@ -772,6 +814,9 @@ namespace VisionCraft
             if (GetNodeEditor().SaveToFile(currentFilePath, positions))
             {
                 LOG_INFO("Graph saved successfully to: {}", currentFilePath);
+
+                FileOpenedEvent fileEvent(currentFilePath);
+                Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
             {
@@ -809,6 +854,9 @@ namespace VisionCraft
                 nextNodeId = maxId + 1;
 
                 LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
+
+                FileOpenedEvent fileEvent(currentFilePath);
+                Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
             {

@@ -13,6 +13,7 @@
 #include "Layers/NodeEditorLayer.h"
 #include "Layers/PropertyPanelLayer.h"
 #include "Logger.h"
+#include "WindowStatePersistence.h"
 
 namespace VisionCraft
 {
@@ -20,6 +21,9 @@ namespace VisionCraft
         : Kappa::Application(specification)
     {
         LOG_INFO("VisionCraftApplication: Starting initialization");
+
+        Kappa::WindowStatePersistence::LoadAndApply(GetWindow(), "window_state.json");
+
         LOG_INFO("VisionCraftApplication: Pushing DockSpaceLayer");
         PushLayer<DockSpaceLayer>();
         LOG_INFO("VisionCraftApplication: Pushing NodeEditorLayer");
@@ -33,6 +37,8 @@ namespace VisionCraft
 
     VisionCraftApplication::~VisionCraftApplication()
     {
+        Kappa::WindowStatePersistence::CaptureAndSave(GetWindow(), "window_state.json");
+
         if (imguiInitialized)
         {
             ShutdownImGui();

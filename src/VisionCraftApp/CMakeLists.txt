@@ -54,6 +54,11 @@ set(LAYER_SOURCES
     Layers/GraphExecutionLayer.cpp
 )
 
+set(PERSISTENCE_SOURCES
+    Persistence/RecentFilesManager.cpp
+    Persistence/DockingLayoutHelper.cpp
+)
+
 set(EXTERNAL_SOURCES
     ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
@@ -69,6 +74,7 @@ set(ALL_SOURCES
     ${INPUT_SOURCES}
     ${UI_SOURCES}
     ${LAYER_SOURCES}
+    ${PERSISTENCE_SOURCES}
     ${EXTERNAL_SOURCES}
 )
 

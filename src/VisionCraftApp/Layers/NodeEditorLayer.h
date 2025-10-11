@@ -180,9 +180,15 @@ namespace VisionCraft
         void HandleSaveGraph();
 
         /**
-         * @brief Handles load graph event.
+         * @brief Handles load graph event (opens file dialog).
          */
         void HandleLoadGraph();
+
+        /**
+         * @brief Handles load graph from specific file.
+         * @param filePath Path to the graph file
+         */
+        void HandleLoadGraphFromFile(const std::string &filePath);
 
         /**
          * @brief Handles new graph event.

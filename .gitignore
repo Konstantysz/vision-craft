@@ -11,6 +11,11 @@ vcpkg_installed/
 # Private test data (not tracked by git)
 test_data/
 
+# Application state files (user-specific)
+window_state.json
+recent_files.json
+imgui.ini
+
 # User-specific files
 *.rsuser
 *.suo

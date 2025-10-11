@@ -1,12 +1,21 @@
 #include "Layers/DockSpaceLayer.h"
+#include "Application.h"
+#include "Events/FileOpenedEvent.h"
 #include "Events/LoadGraphEvent.h"
 #include "Events/NewGraphEvent.h"
 #include "Events/SaveGraphEvent.h"
+#include "Persistence/DockingLayoutHelper.h"
 
 #include <imgui.h>
 
 namespace VisionCraft
 {
+    DockSpaceLayer::DockSpaceLayer() : recentFilesManager("recent_files.json")
+    {
+        Kappa::Application::Get().GetEventBus().Subscribe<FileOpenedEvent>(
+            [this](const FileOpenedEvent &event) { recentFilesManager.AddFile(event.GetFilePath()); });
+    }
+
     void DockSpaceLayer::OnEvent(Kappa::Event &event)
     {
     }
@@ -58,41 +67,97 @@ namespace VisionCraft
         {
             ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
             ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+
+            if (isFirstFrame)
+            {
+                isFirstFrame = false;
+                DockingLayoutHelper::SetupDefaultLayout();
+            }
         }
 
         if (ImGui::BeginMenuBar())
         {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::MenuItem("New", "Ctrl+N"))
-                {
-                    NewGraphEvent event;
-                    OnEvent(event);
-                }
-
-                if (ImGui::MenuItem("Open...", "Ctrl+O"))
-                {
-                    LoadGraphEvent event;
-                    OnEvent(event);
-                }
-
-                if (ImGui::MenuItem("Save", "Ctrl+S"))
-                {
-                    SaveGraphEvent event;
-                    OnEvent(event);
-                }
-
-                ImGui::Separator();
-
-                if (ImGui::MenuItem("Exit"))
-                {
-                    // TODO: Signal application to close
-                }
-                ImGui::EndMenu();
-            }
+            RenderFileMenu();
             ImGui::EndMenuBar();
         }
 
         ImGui::End();
+    }
+
+    void DockSpaceLayer::RenderFileMenu()
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("New", "Ctrl+N"))
+            {
+                NewGraphEvent event;
+                OnEvent(event);
+            }
+
+            if (ImGui::MenuItem("Open...", "Ctrl+O"))
+            {
+                LoadGraphEvent event;
+                OnEvent(event);
+            }
+
+            if (ImGui::MenuItem("Save", "Ctrl+S"))
+            {
+                SaveGraphEvent event;
+                OnEvent(event);
+            }
+
+            ImGui::Separator();
+
+            RenderRecentFilesMenu();
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Exit"))
+            {
+                // TODO: Signal application to close
+            }
+            ImGui::EndMenu();
+        }
+    }
+
+    void DockSpaceLayer::RenderRecentFilesMenu()
+    {
+        if (ImGui::BeginMenu("Recent Files"))
+        {
+            const auto &recentFiles = recentFilesManager.GetFiles();
+
+            if (recentFiles.empty())
+            {
+                ImGui::MenuItem("(No recent files)", nullptr, false, false);
+            }
+            else
+            {
+                for (const auto &filePath : recentFiles)
+                {
+                    size_t lastSlash = filePath.find_last_of("/\\");
+                    std::string filename = (lastSlash != std::string::npos) ? filePath.substr(lastSlash + 1) : filePath;
+
+                    if (ImGui::MenuItem(filename.c_str()))
+                    {
+                        LoadGraphFromFileEvent loadEvent(filePath);
+                        Kappa::Application::Get().GetEventBus().Publish(loadEvent);
+                    }
+
+                    if (ImGui::IsItemHovered())
+                    {
+                        ImGui::SetTooltip("%s", filePath.c_str());
+                    }
+                }
+
+                ImGui::Separator();
+
+                if (ImGui::MenuItem("Clear Recent Files"))
+                {
+                    recentFilesManager.Clear();
+                }
+            }
+
+            ImGui::EndMenu();
+        }
     }
 } // namespace VisionCraft

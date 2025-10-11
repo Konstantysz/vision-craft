@@ -11,6 +11,9 @@ vcpkg_installed/
 # Private test data (not tracked by git)
 test_data/
 
+# Claude Code configuration (personal assistant context)
+.claude/
+
 # Application state files (user-specific)
 window_state.json
 recent_files.json

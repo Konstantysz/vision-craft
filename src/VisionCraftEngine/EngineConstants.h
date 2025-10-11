@@ -67,6 +67,6 @@ namespace VisionCraft::Engine::Constants
             /// @brief Warning color (yellow) for no image
             constexpr float kWarningColor[4] = { 0.8f, 0.8f, 0.0f, 1.0f };
         } // namespace StatusColors
-    } // namespace ImageInputNode
+    }     // namespace ImageInputNode
 
 } // namespace VisionCraft::Engine::Constants

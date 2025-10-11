@@ -108,7 +108,7 @@ namespace VisionCraft::Constants
             /// @brief Vertical offset when creating nodes at cursor position
             constexpr float kOffsetY = 40.0f;
         } // namespace Creation
-    } // namespace Node
+    }     // namespace Node
 
     // ========================================
     // PIN CONSTANTS
@@ -272,7 +272,7 @@ namespace VisionCraft::Constants
             /// @brief Color for grid lines (uses Canvas::kGridAlpha for transparency)
             constexpr ImU32 kLines = IM_COL32(200, 200, 200, Canvas::kGridAlpha);
         } // namespace Grid
-    } // namespace Colors
+    }     // namespace Colors
 
     // ========================================
     // SPECIAL CONSTANTS
@@ -313,7 +313,7 @@ namespace VisionCraft::Constants
             /// @brief Display format for float values
             constexpr const char *kFormat = "%.2f";
         } // namespace Float
-    } // namespace Input
+    }     // namespace Input
 
 
     /**
@@ -386,6 +386,6 @@ namespace VisionCraft::Constants
             /// @brief Float display format
             constexpr const char *kFloatFormat = "%.2f";
         } // namespace ParameterInput
-    } // namespace NodeRenderer
+    }     // namespace NodeRenderer
 
 } // namespace VisionCraft::Constants

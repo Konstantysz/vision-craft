@@ -22,9 +22,9 @@ target_include_directories(VisionCraftEngine PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-target_link_libraries(VisionCraftEngine PUBLIC 
-    opencv_core 
-    opencv_imgcodecs 
+target_link_libraries(VisionCraftEngine PUBLIC
+    opencv_core
+    opencv_imgcodecs
     opencv_imgproc)
 
 target_link_libraries(VisionCraftEngine PUBLIC

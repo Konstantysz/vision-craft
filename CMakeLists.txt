@@ -18,6 +18,8 @@ endif()
 # Option to enable static analysis
 option(ENABLE_CLANG_TIDY "Enable clang-tidy static analysis" OFF)
 option(ENABLE_COMPILE_COMMANDS "Generate compile_commands.json for tooling" ON)
+option(BUILD_TESTS "Build test executables" ON)
+option(ENABLE_COVERAGE "Enable code coverage analysis" OFF)
 
 # Generate compile_commands.json for clang-tidy and other tools
 if(ENABLE_COMPILE_COMMANDS)
@@ -52,6 +54,37 @@ if(ENABLE_CLANG_TIDY)
     endif()
 endif()
 
+# =======================
+# LLVM Coverage Integration
+# =======================
+if(ENABLE_COVERAGE)
+    find_program(LLVM_PROFDATA_EXE
+        NAMES "llvm-profdata"
+        PATHS "C:/Program Files/LLVM/bin"
+    )
+    find_program(LLVM_COV_EXE
+        NAMES "llvm-cov"
+        PATHS "C:/Program Files/LLVM/bin"
+    )
+
+    if(LLVM_PROFDATA_EXE AND LLVM_COV_EXE)
+        message(STATUS "LLVM coverage tools found:")
+        message(STATUS "  llvm-profdata: ${LLVM_PROFDATA_EXE}")
+        message(STATUS "  llvm-cov: ${LLVM_COV_EXE}")
+
+        # Ustaw zmienne globalnie dla CodeQuality.cmake
+        set(LLVM_PROFDATA_EXE ${LLVM_PROFDATA_EXE} CACHE INTERNAL "")
+        set(LLVM_COV_EXE ${LLVM_COV_EXE} CACHE INTERNAL "")
+
+        add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+        add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+
+        message(STATUS "Code coverage enabled.")
+    else()
+        message(FATAL_ERROR "LLVM coverage tools not found! Please ensure llvm-profdata and llvm-cov are in your PATH.")
+    endif()
+endif()
+
 # ========================================
 # Compiler Options
 # ========================================
@@ -81,4 +114,8 @@ setup_ide_integration()
 add_subdirectory(external/kappa-core)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

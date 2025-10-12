@@ -107,9 +107,17 @@ function(add_code_quality_targets)
         COMMENT "Simulating pre-commit checks"
     )
 
+    # Add coverage targets if coverage is enabled
+    if(ENABLE_COVERAGE)
+        add_coverage_targets()
+    endif()
+
     message(STATUS "Added comprehensive code quality targets:")
     message(STATUS "  - Individual: tidy-{core,engine,app,all}, format-{core,engine,app,all}")
     message(STATUS "  - Meta: code-quality, pre-commit-check")
+    if(ENABLE_COVERAGE)
+        message(STATUS "  - Coverage: coverage, coverage-html, coverage-report, coverage-clean")
+    endif()
 endfunction()
 
 # Function to setup IDE integration
@@ -136,4 +144,120 @@ function(add_static_analysis_to_target TARGET_NAME)
         )
         message(STATUS "Added clang-tidy to target: ${TARGET_NAME}")
     endif()
+endfunction()
+
+# ========================================
+# Coverage Functions
+# ========================================
+
+# Function to add coverage targets
+function(add_coverage_targets)
+    if(NOT ENABLE_COVERAGE)
+        return()
+    endif()
+
+    # Set coverage output directories
+    set(COVERAGE_DIR "${CMAKE_BINARY_DIR}/coverage")
+    set(COVERAGE_RAW_DIR "${COVERAGE_DIR}/raw")
+    set(COVERAGE_HTML_DIR "${COVERAGE_DIR}/html")
+    set(COVERAGE_DATA_FILE "${COVERAGE_DIR}/coverage.profdata")
+
+    # Get test executable (assumes it's named TestVisionCraftNodes)
+    set(TEST_EXECUTABLE "${CMAKE_BINARY_DIR}/tests/TestVisionCraftNodes${CMAKE_EXECUTABLE_SUFFIX}")
+
+    # Get all source files for coverage (only src directory, not tests or external)
+    file(GLOB_RECURSE COVERAGE_SOURCE_FILES
+        "${CMAKE_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_SOURCE_DIR}/src/*.hpp"
+    )
+
+    # Target: coverage-clean - Clean coverage data
+    add_custom_target(coverage-clean
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${COVERAGE_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR}/tests/default.profraw"
+        COMMAND ${CMAKE_COMMAND} -E rm -f "default.profraw"
+        COMMENT "Cleaning coverage data"
+        VERBATIM
+    )
+
+    # Target: coverage-run - Run tests to generate coverage data
+    add_custom_target(coverage-run
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${COVERAGE_RAW_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${COVERAGE_RAW_DIR}/coverage-%p.profraw
+                "${TEST_EXECUTABLE}"
+        DEPENDS TestVisionCraftNodes
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running tests to generate coverage data"
+        VERBATIM
+    )
+
+    # Target: coverage-process - Process raw coverage data
+    add_custom_target(coverage-process
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${COVERAGE_DIR}"
+        COMMAND ${LLVM_PROFDATA_EXE} merge
+                -sparse
+                "${COVERAGE_RAW_DIR}/coverage-*.profraw"
+                -o "${COVERAGE_DATA_FILE}"
+        DEPENDS coverage-run
+        COMMENT "Processing coverage data with llvm-profdata"
+        VERBATIM
+    )
+
+    # Target: coverage-report - Generate text coverage report
+    add_custom_target(coverage-report
+        COMMAND ${LLVM_COV_EXE} report
+                "${TEST_EXECUTABLE}"
+                -instr-profile="${COVERAGE_DATA_FILE}"
+                ${COVERAGE_SOURCE_FILES}
+        DEPENDS coverage-process
+        COMMENT "Generating coverage report"
+        VERBATIM
+    )
+
+    # Target: coverage-html - Generate HTML coverage report
+    add_custom_target(coverage-html
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${COVERAGE_HTML_DIR}"
+        COMMAND ${LLVM_COV_EXE} show
+                "${TEST_EXECUTABLE}"
+                -instr-profile=${COVERAGE_DATA_FILE}
+                -format=html
+                -output-dir=${COVERAGE_HTML_DIR}
+                -show-line-counts-or-regions
+                -show-instantiation-summary
+                ${COVERAGE_SOURCE_FILES}
+        COMMAND ${CMAKE_COMMAND} -E echo "Coverage HTML report generated: ${COVERAGE_HTML_DIR}/index.html"
+        DEPENDS coverage-process
+        COMMENT "Generating HTML coverage report"
+        VERBATIM
+    )
+
+    # Target: coverage-summary - Generate summary with statistics
+    add_custom_target(coverage-summary
+        COMMAND ${LLVM_COV_EXE} report
+                "${TEST_EXECUTABLE}"
+                -instr-profile="${COVERAGE_DATA_FILE}"
+                -show-region-summary=false
+                ${COVERAGE_SOURCE_FILES}
+        DEPENDS coverage-process
+        COMMENT "Generating coverage summary"
+        VERBATIM
+    )
+
+    # Target: coverage - Main coverage target (generates both reports)
+    add_custom_target(coverage
+        DEPENDS coverage-html coverage-report
+        COMMENT "Generating all coverage reports"
+    )
+
+    # Target: coverage-open - Open HTML report in browser (Windows)
+    if(WIN32)
+        add_custom_target(coverage-open
+            COMMAND cmd /c start "" "${COVERAGE_HTML_DIR}/index.html"
+            DEPENDS coverage-html
+            COMMENT "Opening coverage report in browser"
+            VERBATIM
+        )
+    endif()
+
+    message(STATUS "Added coverage targets: coverage, coverage-html, coverage-report, coverage-clean, coverage-open")
 endfunction()

@@ -438,3 +438,8 @@ FodyWeavers.xsd
 code-quality-report.md
 clang-tidy-report.md
 build-test/
+
+# LLVM Coverage files
+*.profraw
+*.profdata
+coverage/

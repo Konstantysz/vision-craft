@@ -22,6 +22,4 @@ target_link_libraries(TestVisionCraftNodes
     VisionCraftEngine
 )
 
-include(CTest)
-enable_testing()
 add_test(NAME TestVisionCraftNodes COMMAND TestVisionCraftNodes)

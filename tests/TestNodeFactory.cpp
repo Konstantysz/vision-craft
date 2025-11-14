@@ -1,7 +1,7 @@
-#include "Nodes/Factory/NodeFactory.h"
 #include "Vision/Algorithms/CannyEdgeNode.h"
 #include "Vision/Algorithms/GrayscaleNode.h"
 #include "Vision/Algorithms/ThresholdNode.h"
+#include "Vision/Factory/NodeFactory.h"
 #include "Vision/IO/ImageInputNode.h"
 #include "Vision/IO/ImageOutputNode.h"
 #include "Vision/IO/PreviewNode.h"
@@ -17,7 +17,7 @@ protected:
     void SetUp() override
     {
         // Register all nodes before each test
-        Nodes::NodeFactory::RegisterAllNodes();
+        Vision::NodeFactory::RegisterAllNodes();
     }
 };
 
@@ -27,7 +27,7 @@ protected:
 
 TEST_F(NodeFactoryTest, CreateImageInputNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("ImageInput", 1, "Test Input");
+    auto node = Vision::NodeFactory::CreateNode("ImageInput", 1, "Test Input");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 1);
@@ -41,7 +41,7 @@ TEST_F(NodeFactoryTest, CreateImageInputNode)
 
 TEST_F(NodeFactoryTest, CreateImageOutputNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("ImageOutput", 2, "Test Output");
+    auto node = Vision::NodeFactory::CreateNode("ImageOutput", 2, "Test Output");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 2);
@@ -54,7 +54,7 @@ TEST_F(NodeFactoryTest, CreateImageOutputNode)
 
 TEST_F(NodeFactoryTest, CreatePreviewNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Preview", 3, "Test Preview");
+    auto node = Vision::NodeFactory::CreateNode("Preview", 3, "Test Preview");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 3);
@@ -67,7 +67,7 @@ TEST_F(NodeFactoryTest, CreatePreviewNode)
 
 TEST_F(NodeFactoryTest, CreateGrayscaleNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", 4, "Test Grayscale");
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", 4, "Test Grayscale");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 4);
@@ -80,7 +80,7 @@ TEST_F(NodeFactoryTest, CreateGrayscaleNode)
 
 TEST_F(NodeFactoryTest, CreateCannyEdgeNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("CannyEdge", 5, "Test Canny");
+    auto node = Vision::NodeFactory::CreateNode("CannyEdge", 5, "Test Canny");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 5);
@@ -93,7 +93,7 @@ TEST_F(NodeFactoryTest, CreateCannyEdgeNode)
 
 TEST_F(NodeFactoryTest, CreateThresholdNode)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Threshold", 6, "Test Threshold");
+    auto node = Vision::NodeFactory::CreateNode("Threshold", 6, "Test Threshold");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 6);
@@ -110,21 +110,21 @@ TEST_F(NodeFactoryTest, CreateThresholdNode)
 
 TEST_F(NodeFactoryTest, CreateUnknownNodeType)
 {
-    auto node = Nodes::NodeFactory::CreateNode("UnknownNodeType", 99, "Unknown");
+    auto node = Vision::NodeFactory::CreateNode("UnknownNodeType", 99, "Unknown");
 
     EXPECT_EQ(node, nullptr);
 }
 
 TEST_F(NodeFactoryTest, CreateWithEmptyType)
 {
-    auto node = Nodes::NodeFactory::CreateNode("", 100, "Empty Type");
+    auto node = Vision::NodeFactory::CreateNode("", 100, "Empty Type");
 
     EXPECT_EQ(node, nullptr);
 }
 
 TEST_F(NodeFactoryTest, CreateWithInvalidType)
 {
-    auto node = Nodes::NodeFactory::CreateNode("InvalidNode", 101, "Invalid");
+    auto node = Vision::NodeFactory::CreateNode("InvalidNode", 101, "Invalid");
 
     EXPECT_EQ(node, nullptr);
 }
@@ -132,7 +132,7 @@ TEST_F(NodeFactoryTest, CreateWithInvalidType)
 TEST_F(NodeFactoryTest, CreateWithWrongCaseType)
 {
     // Type names are case-sensitive
-    auto node = Nodes::NodeFactory::CreateNode("imageinputnode", 102, "Wrong Case");
+    auto node = Vision::NodeFactory::CreateNode("imageinputnode", 102, "Wrong Case");
 
     EXPECT_EQ(node, nullptr);
 }
@@ -143,9 +143,9 @@ TEST_F(NodeFactoryTest, CreateWithWrongCaseType)
 
 TEST_F(NodeFactoryTest, CreateMultipleNodesOfSameType)
 {
-    auto node1 = Nodes::NodeFactory::CreateNode("Grayscale", 1, "Gray1");
-    auto node2 = Nodes::NodeFactory::CreateNode("Grayscale", 2, "Gray2");
-    auto node3 = Nodes::NodeFactory::CreateNode("Grayscale", 3, "Gray3");
+    auto node1 = Vision::NodeFactory::CreateNode("Grayscale", 1, "Gray1");
+    auto node2 = Vision::NodeFactory::CreateNode("Grayscale", 2, "Gray2");
+    auto node3 = Vision::NodeFactory::CreateNode("Grayscale", 3, "Gray3");
 
     ASSERT_NE(node1, nullptr);
     ASSERT_NE(node2, nullptr);
@@ -162,12 +162,12 @@ TEST_F(NodeFactoryTest, CreateMultipleNodesOfSameType)
 
 TEST_F(NodeFactoryTest, CreateMultipleNodesOfDifferentTypes)
 {
-    auto input = Nodes::NodeFactory::CreateNode("ImageInput", 1, "Input");
-    auto grayscale = Nodes::NodeFactory::CreateNode("Grayscale", 2, "Grayscale");
-    auto threshold = Nodes::NodeFactory::CreateNode("Threshold", 3, "Threshold");
-    auto canny = Nodes::NodeFactory::CreateNode("CannyEdge", 4, "Canny");
-    auto preview = Nodes::NodeFactory::CreateNode("Preview", 5, "Preview");
-    auto output = Nodes::NodeFactory::CreateNode("ImageOutput", 6, "Output");
+    auto input = Vision::NodeFactory::CreateNode("ImageInput", 1, "Input");
+    auto grayscale = Vision::NodeFactory::CreateNode("Grayscale", 2, "Grayscale");
+    auto threshold = Vision::NodeFactory::CreateNode("Threshold", 3, "Threshold");
+    auto canny = Vision::NodeFactory::CreateNode("CannyEdge", 4, "Canny");
+    auto preview = Vision::NodeFactory::CreateNode("Preview", 5, "Preview");
+    auto output = Vision::NodeFactory::CreateNode("ImageOutput", 6, "Output");
 
     ASSERT_NE(input, nullptr);
     ASSERT_NE(grayscale, nullptr);
@@ -190,7 +190,7 @@ TEST_F(NodeFactoryTest, CreateMultipleNodesOfDifferentTypes)
 
 TEST_F(NodeFactoryTest, CreateWithZeroId)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", 0, "Zero ID");
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", 0, "Zero ID");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), 0);
@@ -198,7 +198,7 @@ TEST_F(NodeFactoryTest, CreateWithZeroId)
 
 TEST_F(NodeFactoryTest, CreateWithNegativeId)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", -1, "Negative ID");
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", -1, "Negative ID");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetId(), -1);
@@ -206,7 +206,7 @@ TEST_F(NodeFactoryTest, CreateWithNegativeId)
 
 TEST_F(NodeFactoryTest, CreateWithEmptyName)
 {
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", 1, "");
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", 1, "");
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetName(), "");
@@ -215,7 +215,7 @@ TEST_F(NodeFactoryTest, CreateWithEmptyName)
 TEST_F(NodeFactoryTest, CreateWithLongName)
 {
     std::string longName(1000, 'a');
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", 1, longName);
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", 1, longName);
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetName(), longName);
@@ -224,7 +224,7 @@ TEST_F(NodeFactoryTest, CreateWithLongName)
 TEST_F(NodeFactoryTest, CreateWithSpecialCharactersInName)
 {
     std::string specialName = "Node-with_special.chars!@#$%";
-    auto node = Nodes::NodeFactory::CreateNode("Grayscale", 1, specialName);
+    auto node = Vision::NodeFactory::CreateNode("Grayscale", 1, specialName);
 
     ASSERT_NE(node, nullptr);
     EXPECT_EQ(node->GetName(), specialName);
@@ -236,8 +236,8 @@ TEST_F(NodeFactoryTest, CreateWithSpecialCharactersInName)
 
 TEST_F(NodeFactoryTest, EachCreatedNodeIsUnique)
 {
-    auto node1 = Nodes::NodeFactory::CreateNode("Grayscale", 1, "Node1");
-    auto node2 = Nodes::NodeFactory::CreateNode("Grayscale", 1, "Node1");
+    auto node1 = Vision::NodeFactory::CreateNode("Grayscale", 1, "Node1");
+    auto node2 = Vision::NodeFactory::CreateNode("Grayscale", 1, "Node1");
 
     ASSERT_NE(node1, nullptr);
     ASSERT_NE(node2, nullptr);
@@ -252,7 +252,7 @@ TEST_F(NodeFactoryTest, EachCreatedNodeIsUnique)
 
 TEST_F(NodeFactoryTest, CreatedNodeHasCorrectSlots)
 {
-    auto thresholdNode = Nodes::NodeFactory::CreateNode("Threshold", 1, "Threshold");
+    auto thresholdNode = Vision::NodeFactory::CreateNode("Threshold", 1, "Threshold");
 
     ASSERT_NE(thresholdNode, nullptr);
 
@@ -263,7 +263,7 @@ TEST_F(NodeFactoryTest, CreatedNodeHasCorrectSlots)
 
 TEST_F(NodeFactoryTest, CreatedNodeCanProcess)
 {
-    auto grayscaleNode = Nodes::NodeFactory::CreateNode("Grayscale", 1, "Grayscale");
+    auto grayscaleNode = Vision::NodeFactory::CreateNode("Grayscale", 1, "Grayscale");
 
     ASSERT_NE(grayscaleNode, nullptr);
 
@@ -291,7 +291,7 @@ TEST_F(NodeFactoryTest, CreateAllAvailableNodeTypes)
     for (size_t i = 0; i < nodeTypes.size(); ++i)
     {
         const auto &[typeName, expectedType] = nodeTypes[i];
-        auto node = Nodes::NodeFactory::CreateNode(typeName, static_cast<Nodes::NodeId>(i), "Test");
+        auto node = Vision::NodeFactory::CreateNode(typeName, static_cast<Nodes::NodeId>(i), "Test");
 
         ASSERT_NE(node, nullptr) << "Failed to create node type: " << typeName;
         EXPECT_EQ(node->GetType(), expectedType) << "Wrong type for: " << typeName;

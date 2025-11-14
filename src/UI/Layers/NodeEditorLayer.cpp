@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstring>
 #include <iterator>
+#include <limits>
 
 #include <imgui.h>
 
@@ -28,7 +29,7 @@ namespace VisionCraft::UI::Layers
           inputHandler(selectionManager, contextMenuRenderer, canvas)
     {
         // Register all available node types with the factory
-        Nodes::NodeFactory::RegisterAllNodes();
+        Vision::NodeFactory::RegisterAllNodes();
 
         // Register node types for context menu
         contextMenuRenderer.SetAvailableNodeTypes({
@@ -94,8 +95,12 @@ namespace VisionCraft::UI::Layers
 
         if (nodeEditor.GetNodeIds().empty())
         {
-            auto starterNode = std::make_unique<Vision::IO::ImageInputNode>(nextNodeId++);
-            const auto nodeId = starterNode->GetId();
+            const auto nodeId = AllocateNodeId();
+            if (nodeId == 0)
+            {
+                return;
+            }
+            auto starterNode = std::make_unique<Vision::IO::ImageInputNode>(nodeId);
             nodeEditor.AddNode(std::move(starterNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };
 
@@ -199,7 +204,7 @@ namespace VisionCraft::UI::Layers
                         [this](Nodes::NodeId id) -> Widgets::NodePosition { return nodePositions[id]; },
                         [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
                         [this](const std::string &type, Nodes::NodeId id, const std::string &name) {
-                            return Nodes::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
+                            return Vision::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
                         });
 
                     commandHistory.ExecuteCommand(std::move(command));
@@ -300,30 +305,38 @@ namespace VisionCraft::UI::Layers
                 // Convert mouse position to world coordinates
                 const auto pasteWorldPos = canvas.ScreenToWorld(action.pastePosition);
 
+                // Get copied nodes once and store reference
+                const auto &copiedNodes = clipboardManager.GetCopiedNodes();
+                if (copiedNodes.empty())
+                {
+                    break;
+                }
+
                 // Calculate center of copied nodes
                 float centerX = 0.0f, centerY = 0.0f;
-                for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+                for (const auto &copiedNode : copiedNodes)
                 {
                     centerX += copiedNode.position.x;
                     centerY += copiedNode.position.y;
                 }
-                if (!clipboardManager.GetCopiedNodes().empty())
-                {
-                    centerX /= clipboardManager.GetCopiedNodes().size();
-                    centerY /= clipboardManager.GetCopiedNodes().size();
-                }
+                centerX /= copiedNodes.size();
+                centerY /= copiedNodes.size();
 
                 // Map old IDs to new IDs for connection remapping
                 std::unordered_map<Nodes::NodeId, Nodes::NodeId> idMapping;
 
                 // Create new nodes
-                for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+                for (const auto &copiedNode : copiedNodes)
                 {
-                    const auto newNodeId = nextNodeId++;
+                    const auto newNodeId = AllocateNodeId();
+                    if (newNodeId == 0)
+                    {
+                        break; // Stop if we can't allocate more IDs
+                    }
                     idMapping[copiedNode.originalId] = newNodeId;
 
                     // Create node using factory
-                    auto newNode = Nodes::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
+                    auto newNode = Vision::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
                     if (newNode)
                     {
                         // Calculate offset from center and apply to paste position
@@ -453,7 +466,7 @@ namespace VisionCraft::UI::Layers
                     [this](Nodes::NodeId id) -> Widgets::NodePosition { return nodePositions[id]; },
                     [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
                     [this](const std::string &type, Nodes::NodeId id, const std::string &name) {
-                        return Nodes::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
+                        return Vision::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
                     });
 
                 commandHistory.ExecuteCommand(std::move(command));
@@ -526,30 +539,38 @@ namespace VisionCraft::UI::Layers
             // Convert context menu position to world coordinates
             const auto pasteWorldPos = canvas.ScreenToWorld(inputHandler.GetContextMenuPos());
 
+            // Get copied nodes once and store reference
+            const auto &copiedNodes = clipboardManager.GetCopiedNodes();
+            if (copiedNodes.empty())
+            {
+                break;
+            }
+
             // Calculate center of copied nodes
             float centerX = 0.0f, centerY = 0.0f;
-            for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+            for (const auto &copiedNode : copiedNodes)
             {
                 centerX += copiedNode.position.x;
                 centerY += copiedNode.position.y;
             }
-            if (!clipboardManager.GetCopiedNodes().empty())
-            {
-                centerX /= clipboardManager.GetCopiedNodes().size();
-                centerY /= clipboardManager.GetCopiedNodes().size();
-            }
+            centerX /= copiedNodes.size();
+            centerY /= copiedNodes.size();
 
             // Map old IDs to new IDs for connection remapping
             std::unordered_map<Nodes::NodeId, Nodes::NodeId> idMapping;
 
             // Create new nodes
-            for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
+            for (const auto &copiedNode : copiedNodes)
             {
-                const auto newNodeId = nextNodeId++;
+                const auto newNodeId = AllocateNodeId();
+                if (newNodeId == 0)
+                {
+                    break; // Stop if we can't allocate more IDs
+                }
                 idMapping[copiedNode.originalId] = newNodeId;
 
                 // Create node using factory
-                auto newNode = Nodes::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
+                auto newNode = Vision::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
                 if (newNode)
                 {
                     // Calculate offset from center and apply to paste position
@@ -601,7 +622,12 @@ namespace VisionCraft::UI::Layers
         const auto worldX = worldPos.x - Constants::Node::Creation::kOffsetX;
         const auto worldY = worldPos.y - Constants::Node::Creation::kOffsetY;
 
-        const auto nodeId = nextNodeId++;
+        const auto nodeId = AllocateNodeId();
+        if (nodeId == 0)
+        {
+            LOG_ERROR("NodeEditorLayer: Cannot create node - ID allocation failed");
+            return;
+        }
 
         // Map node types to display names
         static const std::unordered_map<std::string, std::string> displayNames = { { "ImageInput", "Image Input" },
@@ -617,7 +643,7 @@ namespace VisionCraft::UI::Layers
         // Create command for node creation
         auto command = std::make_unique<Editor::Commands::CreateNodeCommand>(
             [this, nodeType, nodeId, displayName]() {
-                return Nodes::NodeFactory::CreateNode(nodeType, nodeId, displayName);
+                return Vision::NodeFactory::CreateNode(nodeType, nodeId, displayName);
             },
             [this](std::unique_ptr<Nodes::Node> node) { nodeEditor.AddNode(std::move(node)); },
             [this](Nodes::NodeId id) { nodeEditor.RemoveNode(id); },
@@ -835,7 +861,10 @@ namespace VisionCraft::UI::Layers
             selectionManager.RemoveFromSelection(nodeId);
         }
 
-        // Remove node (also removes connections)
+        // Remove connections from UI layer
+        connectionManager.RemoveConnectionsForNode(nodeId);
+
+        // Remove node (also removes connections from core layer)
         nodeEditor.RemoveNode(nodeId);
 
         // Remove node position
@@ -913,5 +942,16 @@ namespace VisionCraft::UI::Layers
         // Fallback: return the original type
         LOG_WARN("NodeEditorLayer::NodeTypeToFactoryKey - Unknown node type: {}", nodeType);
         return nodeType;
+    }
+
+    Nodes::NodeId NodeEditorLayer::AllocateNodeId()
+    {
+        constexpr Nodes::NodeId kMaxNodeId = std::numeric_limits<Nodes::NodeId>::max() - 1;
+        if (nextNodeId >= kMaxNodeId)
+        {
+            LOG_ERROR("NodeEditorLayer: Node ID overflow - cannot create more nodes");
+            return 0; // Invalid node ID
+        }
+        return nextNodeId++;
     }
 } // namespace VisionCraft::UI::Layers

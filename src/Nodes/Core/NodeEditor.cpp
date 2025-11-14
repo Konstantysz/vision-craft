@@ -1,6 +1,6 @@
 #include "Nodes/Core/NodeEditor.h"
 #include "Logger.h"
-#include "Nodes/Factory/NodeFactory.h"
+#include "Vision/Factory/NodeFactory.h"
 
 #include <algorithm>
 #include <fstream>
@@ -333,7 +333,22 @@ namespace VisionCraft::Nodes
                     std::string type = nodeJson["type"];
                     std::string name = nodeJson["name"];
 
-                    auto node = NodeFactory::CreateNode(type, id, name);
+                    // Validate node type is registered
+                    if (!Vision::NodeFactory::IsRegistered(type))
+                    {
+                        LOG_ERROR("Attempted to load unregistered node type: {} - skipping", type);
+                        continue;
+                    }
+
+                    // Validate node ID is reasonable
+                    constexpr NodeId kMaxNodeId = 1000000;
+                    if (id < 0 || id > kMaxNodeId)
+                    {
+                        LOG_ERROR("Invalid node ID: {} - skipping", id);
+                        continue;
+                    }
+
+                    auto node = Vision::NodeFactory::CreateNode(type, id, name);
                     if (node)
                     {
                         AddNode(std::move(node));

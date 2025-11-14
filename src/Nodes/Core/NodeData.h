@@ -6,7 +6,7 @@
 #include <variant>
 #include <vector>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
     /**
      * @brief Type-safe variant representing all data types that can flow between nodes.
@@ -38,4 +38,4 @@ namespace VisionCraft::Engine
         std::vector<cv::Point>                    // Contours, keypoints (future)
         >;
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

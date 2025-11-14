@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <opencv2/opencv.hpp>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
     /**
      * @brief Node for displaying and saving processed images.
      */
-    class ImageOutputNode : public Node
+    class ImageOutputNode : public Nodes::Node
     {
     public:
         /**
@@ -16,7 +16,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        ImageOutputNode(NodeId id, const std::string &name = "Image Output");
+        ImageOutputNode(Nodes::NodeId id, const std::string &name = "Image Output");
 
         /**
          * @brief Virtual destructor.
@@ -85,4 +85,4 @@ namespace VisionCraft::Engine
          */
         bool SaveImage(const std::string &filepath);
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

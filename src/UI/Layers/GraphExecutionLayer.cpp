@@ -1,18 +1,17 @@
-#include "Layers/GraphExecutionLayer.h"
+#include "UI/Layers/GraphExecutionLayer.h"
 
 #include <imgui.h>
 
-#include "Events/GraphExecuteEvent.h"
-#include "Main/VisionCraftApplication.h"
+#include "UI/Events/GraphExecuteEvent.h"
 #include "Application.h"
 #include "Logger.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
-    GraphExecutionLayer::GraphExecutionLayer()
+    GraphExecutionLayer::GraphExecutionLayer(Nodes::NodeEditor &nodeEditor) : nodeEditor(nodeEditor)
     {
-        Kappa::Application::Get().GetEventBus().Subscribe<GraphExecuteEvent>(
-            [this]([[maybe_unused]] const GraphExecuteEvent &event) { ExecuteGraph(); });
+        Kappa::Application::Get().GetEventBus().Subscribe<Events::GraphExecuteEvent>(
+            [this]([[maybe_unused]] const Events::GraphExecuteEvent &event) { ExecuteGraph(); });
     }
 
     void GraphExecutionLayer::OnEvent([[maybe_unused]] Kappa::Event &event)
@@ -29,7 +28,7 @@ namespace VisionCraft
 
         if (ImGui::Button("Execute Graph"))
         {
-            Kappa::Application::Get().GetEventBus().Publish(GraphExecuteEvent{});
+            Kappa::Application::Get().GetEventBus().Publish(Events::GraphExecuteEvent{});
         }
 
         ImGui::SameLine();
@@ -67,9 +66,6 @@ namespace VisionCraft
         isExecuting = true;
         showResultsWindow = true;
 
-        auto &app = static_cast<VisionCraftApplication &>(Kappa::Application::Get());
-        auto &nodeEditor = app.GetNodeEditor();
-
         const bool success = nodeEditor.Execute();
 
         isExecuting = false;
@@ -79,4 +75,4 @@ namespace VisionCraft
             LOG_ERROR("Graph execution failed");
         }
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

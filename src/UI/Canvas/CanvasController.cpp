@@ -1,9 +1,9 @@
-#include "Canvas/CanvasController.h"
+#include "UI/Canvas/CanvasController.h"
 
 #include <algorithm>
 #include <cmath>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Canvas
 {
     CanvasController::CanvasController()
     {
@@ -163,4 +163,4 @@ namespace VisionCraft
         return ImVec2(std::max(size.x, Constants::Canvas::kMinSize), std::max(size.y, Constants::Canvas::kMinSize));
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Canvas

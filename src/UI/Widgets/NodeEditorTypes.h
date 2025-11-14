@@ -1,10 +1,10 @@
 #pragma once
 
-#include "NodeEditor.h"
+#include "Nodes/Core/NodeEditor.h"
 #include <imgui.h>
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     /**
      * @brief Structure representing the visual position of a node in the editor.
@@ -54,7 +54,7 @@ namespace VisionCraft
      */
     struct PinId
     {
-        Engine::NodeId nodeId;
+        Nodes::NodeId nodeId;
         std::string pinName;
 
         bool operator==(const PinId &other) const
@@ -95,4 +95,4 @@ namespace VisionCraft
         ImVec2 endPosition;
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

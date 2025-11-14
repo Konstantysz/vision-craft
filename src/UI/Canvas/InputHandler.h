@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Canvas/CanvasController.h"
-#include "Editor/NodeEditorTypes.h"
-#include "Input/SelectionManager.h"
-#include "UI/ContextMenuRenderer.h"
+#include "Editor/State/SelectionManager.h"
+#include "UI/Canvas/CanvasController.h"
+#include "UI/Widgets/ContextMenuRenderer.h"
+#include "UI/Widgets/NodeEditorTypes.h"
 
 #include <functional>
 #include <optional>
@@ -11,17 +11,17 @@
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Canvas
 {
     /**
      * @brief Callback to find node at position.
      */
-    using FindNodeCallback = std::function<Engine::NodeId(const ImVec2 &)>;
+    using FindNodeCallback = std::function<Nodes::NodeId(const ImVec2 &)>;
 
     /**
      * @brief Callback to find connection at position.
      */
-    using FindConnectionCallback = std::function<std::optional<NodeConnection>(const ImVec2 &)>;
+    using FindConnectionCallback = std::function<std::optional<UI::Widgets::NodeConnection>(const ImVec2 &)>;
 
     /**
      * @brief Callback to update box selection.
@@ -49,14 +49,16 @@ namespace VisionCraft
      */
     struct InputAction
     {
-        InputActionType type = InputActionType::None;                      ///< Type of the input action
-        std::vector<Engine::NodeId> nodeIds;                               ///< For DeleteNodes
-        std::optional<NodeConnection> connection;                          ///< For DeleteConnection
-        ImVec2 contextMenuPos{ 0.0f, 0.0f };                               ///< For OpenContextMenu
-        std::unordered_map<Engine::NodeId, NodePosition> nodePositions;    ///< For UpdateNodePositions
-        std::optional<NodeConnection> hoveredConnection;                   ///< For UpdateHoveredConnection
-        ImVec2 pastePosition{ 0.0f, 0.0f };                                ///< For PasteNodes
-        std::unordered_map<Engine::NodeId, NodePosition> oldNodePositions; ///< For FinishNodeMove (old positions)
+        InputActionType type = InputActionType::None;          ///< Type of the input action
+        std::vector<Nodes::NodeId> nodeIds;                    ///< For DeleteNodes
+        std::optional<UI::Widgets::NodeConnection> connection; ///< For DeleteConnection
+        ImVec2 contextMenuPos{ 0.0f, 0.0f };                   ///< For OpenContextMenu
+        std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition>
+            nodePositions;                                            ///< For UpdateUI::Widgets::NodePositions
+        std::optional<UI::Widgets::NodeConnection> hoveredConnection; ///< For UpdateHoveredConnection
+        ImVec2 pastePosition{ 0.0f, 0.0f };                           ///< For PasteNodes
+        std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition>
+            oldNodePositions; ///< For FinishNodeMove (old positions)
     };
 
     /**
@@ -74,8 +76,8 @@ namespace VisionCraft
          * @param contextMenuRenderer Reference to context menu renderer
          * @param canvas Reference to canvas controller
          */
-        InputHandler(SelectionManager &selectionManager,
-            ContextMenuRenderer &contextMenuRenderer,
+        InputHandler(Editor::State::SelectionManager &selectionManager,
+            UI::Widgets::ContextMenuRenderer &contextMenuRenderer,
             CanvasController &canvas);
 
         /**
@@ -88,8 +90,8 @@ namespace VisionCraft
          * @return Vector of input actions to process
          */
         [[nodiscard]] std::vector<InputAction> ProcessInput(
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const PinId &hoveredPin,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+            const UI::Widgets::PinId &hoveredPin,
             const FindNodeCallback &findNode,
             const FindConnectionCallback &findConnection,
             const UpdateBoxSelectionCallback &updateBoxSelection);
@@ -126,7 +128,7 @@ namespace VisionCraft
          * @param findNode Callback to find node at position
          */
         void HandleLeftClick(const ImVec2 &mousePos,
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
             const FindNodeCallback &findNode);
 
         /**
@@ -137,7 +139,7 @@ namespace VisionCraft
          * @return Vector of actions (update node positions)
          */
         [[nodiscard]] std::vector<InputAction> HandleMouseDrag(const ImVec2 &mousePos,
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
             const UpdateBoxSelectionCallback &updateBoxSelection);
 
         /**
@@ -146,7 +148,7 @@ namespace VisionCraft
          * @return Vector of actions (finish node move)
          */
         [[nodiscard]] std::vector<InputAction> HandleMouseRelease(
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions);
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions);
 
         /**
          * @brief Updates hovered connection.
@@ -156,15 +158,16 @@ namespace VisionCraft
          * @return Action to update hovered connection
          */
         [[nodiscard]] InputAction UpdateHoveredConnection(const ImVec2 &mousePos,
-            const PinId &hoveredPin,
+            const UI::Widgets::PinId &hoveredPin,
             const FindConnectionCallback &findConnection);
 
-        SelectionManager &selectionManager;
-        ContextMenuRenderer &contextMenuRenderer;
+        Editor::State::SelectionManager &selectionManager;
+        UI::Widgets::ContextMenuRenderer &contextMenuRenderer;
         CanvasController &canvas;
 
         ImVec2 contextMenuPos{ 0.0f, 0.0f };
-        std::optional<NodeConnection> hoveredConnection;
-        std::unordered_map<Engine::NodeId, NodePosition> dragStartPositions; ///< Node positions when drag started
+        std::optional<UI::Widgets::NodeConnection> hoveredConnection;
+        std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition>
+            dragStartPositions; ///< Nodes::Node positions when drag started
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Canvas

@@ -1,8 +1,8 @@
-#include "Layers/PropertyPanelLayer.h"
+#include "UI/Layers/PropertyPanelLayer.h"
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     void PropertyPanelLayer::OnEvent(Kappa::Event &event)
     {
@@ -23,4 +23,4 @@ namespace VisionCraft
 
         ImGui::End();
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

@@ -2,7 +2,7 @@
 
 #include "Event.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Events
 {
     /**
      * @brief Event for triggering graph execution.
@@ -20,4 +20,4 @@ namespace VisionCraft
          */
         virtual ~GraphExecuteEvent() = default;
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Events

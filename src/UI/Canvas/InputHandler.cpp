@@ -1,19 +1,19 @@
-#include "Input/InputHandler.h"
+#include "UI/Canvas/InputHandler.h"
 
-#include "Editor/NodeEditorConstants.h"
+#include "UI/Widgets/NodeEditorConstants.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Canvas
 {
-    InputHandler::InputHandler(SelectionManager &selectionManager,
-        ContextMenuRenderer &contextMenuRenderer,
+    InputHandler::InputHandler(Editor::State::SelectionManager &selectionManager,
+        Widgets::ContextMenuRenderer &contextMenuRenderer,
         CanvasController &canvas)
         : selectionManager(selectionManager), contextMenuRenderer(contextMenuRenderer), canvas(canvas)
     {
     }
 
     std::vector<InputAction> InputHandler::ProcessInput(
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const PinId &hoveredPin,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
+        const Widgets::PinId &hoveredPin,
         const FindNodeCallback &findNode,
         const FindConnectionCallback &findConnection,
         const UpdateBoxSelectionCallback &updateBoxSelection)
@@ -127,7 +127,7 @@ namespace VisionCraft
         {
             InputAction action;
             action.type = InputActionType::DeleteNodes;
-            action.nodeIds = std::vector<Engine::NodeId>(
+            action.nodeIds = std::vector<Nodes::NodeId>(
                 selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
             return action;
         }
@@ -178,7 +178,7 @@ namespace VisionCraft
     }
 
     void InputHandler::HandleLeftClick(const ImVec2 &mousePos,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const FindNodeCallback &findNode)
     {
         const auto clickedNodeId = findNode(mousePos);
@@ -203,7 +203,7 @@ namespace VisionCraft
 
             // Start dragging all selected nodes
             // Convert nodePositions to screen positions for drag calculation
-            std::unordered_map<Engine::NodeId, ImVec2> screenPositions;
+            std::unordered_map<Nodes::NodeId, ImVec2> screenPositions;
             for (const auto nodeId : selectionManager.GetSelectedNodes())
             {
                 const auto &nodePos = nodePositions.at(nodeId);
@@ -225,7 +225,7 @@ namespace VisionCraft
     }
 
     std::vector<InputAction> InputHandler::HandleMouseDrag(const ImVec2 &mousePos,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const UpdateBoxSelectionCallback &updateBoxSelection)
     {
         std::vector<InputAction> actions;
@@ -248,7 +248,7 @@ namespace VisionCraft
             {
                 const auto newWorldPos = ImVec2(mousePos.x - offset.x, mousePos.y - offset.y);
                 const auto newNodePos = canvas.ScreenToWorld(newWorldPos);
-                action.nodePositions[nodeId] = NodePosition{ newNodePos.x, newNodePos.y };
+                action.nodePositions[nodeId] = Widgets::NodePosition{ newNodePos.x, newNodePos.y };
             }
 
             actions.push_back(action);
@@ -258,7 +258,7 @@ namespace VisionCraft
     }
 
     std::vector<InputAction> InputHandler::HandleMouseRelease(
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions)
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions)
     {
         std::vector<InputAction> actions;
 
@@ -294,7 +294,7 @@ namespace VisionCraft
     }
 
     InputAction InputHandler::UpdateHoveredConnection(const ImVec2 &mousePos,
-        const PinId &hoveredPin,
+        const Widgets::PinId &hoveredPin,
         const FindConnectionCallback &findConnection)
     {
         InputAction action;
@@ -314,4 +314,4 @@ namespace VisionCraft
 
         return action;
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Canvas

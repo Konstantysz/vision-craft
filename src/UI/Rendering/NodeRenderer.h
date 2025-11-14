@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Canvas/CanvasController.h"
-#include "Connections/ConnectionManager.h"
-#include "Editor/NodeEditorTypes.h"
-#include "Rendering/Strategies/NodeRenderingStrategy.h"
-#include "Node.h"
+#include "UI/Canvas/CanvasController.h"
+#include "UI/Canvas/ConnectionManager.h"
+#include "UI/Rendering/Strategies/NodeRenderingStrategy.h"
+#include "UI/Widgets/NodeEditorTypes.h"
+#include "Nodes/Core/Node.h"
 
 #include <functional>
 #include <string>
@@ -12,7 +12,7 @@
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering
 {
     /**
      * @brief Pin interaction state result.
@@ -34,49 +34,49 @@ namespace VisionCraft
          * @param canvas Canvas controller
          * @param connectionManager Connection manager
          */
-        NodeRenderer(CanvasController &canvas, ConnectionManager &connectionManager);
+        NodeRenderer(Canvas::CanvasController &canvas, Canvas::ConnectionManager &connectionManager);
 
         /**
          * @brief Renders node.
-         * @param node Node to render
-         * @param nodePos Node position
+         * @param node Nodes::Node to render
+         * @param nodePos Nodes::Node position
          * @param selectedNodeId Selected node ID
          * @param getPinInteractionState Pin interaction state function
          */
-        void RenderNode(Engine::Node *node,
-            const NodePosition &nodePos,
-            Engine::NodeId selectedNodeId,
-            std::function<PinInteractionState(Engine::NodeId, const std::string &)> getPinInteractionState);
+        void RenderNode(Nodes::Node *node,
+            const Widgets::NodePosition &nodePos,
+            Nodes::NodeId selectedNodeId,
+            std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState);
 
         /**
          * @brief Renders parameters in columns.
-         * @param node Node
+         * @param node Nodes::Node
          * @param startPos Start position
-         * @param nodeSize Node size
+         * @param nodeSize Nodes::Node size
          * @param inputPins Input pins
          * @param outputPins Output pins
          */
-        void RenderNodeParametersInColumns(Engine::Node *node,
+        void RenderNodeParametersInColumns(Nodes::Node *node,
             const ImVec2 &startPos,
             const ImVec2 &nodeSize,
-            const std::vector<NodePin> &inputPins,
-            const std::vector<NodePin> &outputPins);
+            const std::vector<Widgets::NodePin> &inputPins,
+            const std::vector<Widgets::NodePin> &outputPins);
 
         /**
          * @brief Renders pins in column.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pins Pins to render
-         * @param nodeWorldPos Node world position
-         * @param dimensions Node dimensions
+         * @param nodeWorldPos Nodes::Node world position
+         * @param dimensions Nodes::Node dimensions
          * @param isInputColumn True if input column
          * @param getPinInteractionState Pin interaction state function
          */
-        void RenderPinsInColumn(Engine::Node *node,
-            const std::vector<NodePin> &pins,
+        void RenderPinsInColumn(Nodes::Node *node,
+            const std::vector<Widgets::NodePin> &pins,
             const ImVec2 &nodeWorldPos,
-            const NodeDimensions &dimensions,
+            const Widgets::NodeDimensions &dimensions,
             bool isInputColumn,
-            std::function<PinInteractionState(Engine::NodeId, const std::string &)> getPinInteractionState);
+            std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState);
 
     private:
         /**
@@ -88,7 +88,7 @@ namespace VisionCraft
          * @param zoomLevel Zoom level
          * @param state Interaction state
          */
-        void RenderPinWithLabel(const NodePin &pin,
+        void RenderPinWithLabel(const Widgets::NodePin &pin,
             const ImVec2 &pinPos,
             const ImVec2 &labelPos,
             float pinRadius,
@@ -102,7 +102,7 @@ namespace VisionCraft
          * @param radius Radius
          * @param state Interaction state
          */
-        void RenderPin(const NodePin &pin,
+        void RenderPin(const Widgets::NodePin &pin,
             const ImVec2 &position,
             float radius,
             const PinInteractionState &state = {}) const;
@@ -112,7 +112,7 @@ namespace VisionCraft
          * @param dataType Data type
          * @return Color
          */
-        [[nodiscard]] ImU32 GetDataTypeColor(PinDataType dataType) const;
+        [[nodiscard]] ImU32 GetDataTypeColor(Widgets::PinDataType dataType) const;
 
         /**
          * @brief Formats parameter name for display.
@@ -135,7 +135,7 @@ namespace VisionCraft
 
         /**
          * @brief Calculates column layout.
-         * @param nodeSize Node size
+         * @param nodeSize Nodes::Node size
          * @param inputPinCount Input pin count
          * @param outputPinCount Output pin count
          * @return Column layout
@@ -153,70 +153,88 @@ namespace VisionCraft
 
         /**
          * @brief Renders parameter in column.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param position Position
          * @param columnWidth Column width
          */
-        void RenderParameterInColumn(Engine::Node *node, const NodePin &pin, const ImVec2 &position, float columnWidth);
+        void RenderParameterInColumn(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const ImVec2 &position,
+            float columnWidth);
 
         /**
          * @brief Renders parameter input widget.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param pinPos Pin position
          * @param pinRadius Pin radius
          */
-        void RenderParameterInputWidget(Engine::Node *node, const NodePin &pin, const ImVec2 &pinPos, float pinRadius);
+        void RenderParameterInputWidget(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const ImVec2 &pinPos,
+            float pinRadius);
 
         /**
          * @brief Renders string input.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param widgetId Widget ID
          * @param inputWidth Input width
          */
-        void RenderStringInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+        void RenderStringInput(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const std::string &widgetId,
+            float inputWidth);
 
         /**
          * @brief Renders float input.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param widgetId Widget ID
          * @param inputWidth Input width
          */
-        void RenderFloatInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+        void RenderFloatInput(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const std::string &widgetId,
+            float inputWidth);
 
         /**
          * @brief Renders integer input.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param widgetId Widget ID
          * @param inputWidth Input width
          */
-        void RenderIntInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+        void RenderIntInput(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const std::string &widgetId,
+            float inputWidth);
 
         /**
          * @brief Renders boolean input.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param widgetId Widget ID
          */
-        void RenderBoolInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId);
+        void RenderBoolInput(Nodes::Node *node, const Widgets::NodePin &pin, const std::string &widgetId);
 
         /**
          * @brief Renders path input.
-         * @param node Node
+         * @param node Nodes::Node
          * @param pin Pin
          * @param widgetId Widget ID
          * @param inputWidth Input width
          */
-        void RenderPathInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId, float inputWidth);
+        void RenderPathInput(Nodes::Node *node,
+            const Widgets::NodePin &pin,
+            const std::string &widgetId,
+            float inputWidth);
 
         /**
          * @brief Renders node background.
          * @param worldPos World position
-         * @param nodeSize Node size
+         * @param nodeSize Nodes::Node size
          * @param isSelected Whether selected
          */
         void RenderNodeBackground(const ImVec2 &worldPos, const ImVec2 &nodeSize, bool isSelected);
@@ -224,63 +242,65 @@ namespace VisionCraft
         /**
          * @brief Renders title bar.
          * @param worldPos World position
-         * @param nodeSize Node size
+         * @param nodeSize Nodes::Node size
          */
         void RenderNodeTitleBar(const ImVec2 &worldPos, const ImVec2 &nodeSize);
 
         /**
          * @brief Renders title text.
-         * @param node Node
+         * @param node Nodes::Node
          * @param worldPos World position
          */
-        void RenderNodeTitleText(Engine::Node *node, const ImVec2 &worldPos);
+        void RenderNodeTitleText(Nodes::Node *node, const ImVec2 &worldPos);
 
         /**
          * @brief Separates pins into input and output.
          * @param pins All pins
          * @return Input and output pins
          */
-        [[nodiscard]] std::pair<std::vector<NodePin>, std::vector<NodePin>> SeparateInputOutputPins(
-            const std::vector<NodePin> &pins);
+        [[nodiscard]] std::pair<std::vector<Widgets::NodePin>, std::vector<Widgets::NodePin>> SeparateInputOutputPins(
+            const std::vector<Widgets::NodePin> &pins);
 
         /**
          * @brief Renders custom node content.
-         * @param node Node
-         * @param nodePos Node position
-         * @param nodeSize Node size
+         * @param node Nodes::Node
+         * @param nodePos Nodes::Node position
+         * @param nodeSize Nodes::Node size
          */
-        void RenderCustomNodeContent(Engine::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize);
+        void RenderCustomNodeContent(Nodes::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize);
 
     public:
         /**
          * @brief Calculates node dimensions.
          * @param pins Pins
          * @param zoomLevel Zoom level
-         * @param node Node
-         * @return Node dimensions
+         * @param node Nodes::Node
+         * @return Nodes::Node dimensions
          */
-        [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins,
+        [[nodiscard]] static Widgets::NodeDimensions CalculateNodeDimensions(const std::vector<Widgets::NodePin> &pins,
             float zoomLevel,
-            const Engine::Node *node = nullptr);
+            const Nodes::Node *node = nullptr);
 
     private:
         /**
          * @brief Creates rendering strategy.
-         * @param node Node
+         * @param node Nodes::Node
          * @return Rendering strategy
          */
-        [[nodiscard]] static std::unique_ptr<NodeRenderingStrategy> CreateRenderingStrategy(const Engine::Node *node);
-        CanvasController &canvas_;
-        ConnectionManager &connectionManager_;
+        [[nodiscard]] static std::unique_ptr<Rendering::Strategies::NodeRenderingStrategy> CreateRenderingStrategy(
+            const Nodes::Node *node);
 
         /**
          * @brief Renders file browser dialog.
          */
         void RenderFileBrowser();
 
+        Canvas::CanvasController &canvas_;
+        Canvas::ConnectionManager &connectionManager_;
+
         bool fileBrowserOpen = false;
-        Engine::Node *fileBrowserTargetNode = nullptr;
+        Nodes::Node *fileBrowserTargetNode = nullptr;
         char *fileBrowserTargetBuffer = nullptr;
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering

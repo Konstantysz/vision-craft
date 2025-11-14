@@ -1,13 +1,13 @@
 #pragma once
 
 #include "Application.h"
-#include "NodeEditor.h"
+#include "Nodes/Core/NodeEditor.h"
 
 // TODO: Move all member variable initializations from declarations to constructors across entire repository
 // Example: Instead of `bool flag = true;` in class declaration, use `flag(true)` in constructor initializer list
 // This improves code clarity and follows C++ best practices for initialization order
 
-namespace VisionCraft
+namespace VisionCraft::App
 {
     /**
      * @brief Application with node editor and ImGui integration.
@@ -32,13 +32,13 @@ namespace VisionCraft
          * @brief Returns the node editor instance.
          * @return Node editor
          */
-        [[nodiscard]] Engine::NodeEditor &GetNodeEditor();
+        [[nodiscard]] Nodes::NodeEditor &GetNodeEditor();
 
         /**
          * @brief Returns the node editor instance.
          * @return Node editor
          */
-        [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
+        [[nodiscard]] const Nodes::NodeEditor &GetNodeEditor() const;
 
     protected:
         /**
@@ -63,6 +63,6 @@ namespace VisionCraft
         void ShutdownImGui();
 
         bool imguiInitialized = false; ///< Flag indicating if ImGui has been initialized
-        Engine::NodeEditor nodeEditor; ///< Shared node editor instance accessed by all layers
+        Nodes::NodeEditor nodeEditor;  ///< Shared node editor instance accessed by all layers
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::App

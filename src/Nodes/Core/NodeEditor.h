@@ -1,5 +1,5 @@
 #pragma once
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
 
     /**
@@ -133,4 +133,4 @@ namespace VisionCraft::Engine
         NodeId nextId;                             ///< Next available ID
     };
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

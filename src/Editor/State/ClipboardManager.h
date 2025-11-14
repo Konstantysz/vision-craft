@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NodeEditorTypes.h"
+#include "UI/Widgets/NodeEditorTypes.h"
 
 #include <string>
 #include <unordered_map>
@@ -9,17 +9,17 @@
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::State
 {
     /**
      * @brief Stores copied node data for clipboard operations.
      */
     struct CopiedNode
     {
-        std::string type;          ///< Node type identifier
-        std::string name;          ///< Node name
-        NodePosition position;     ///< Node position
-        Engine::NodeId originalId; ///< Original node ID (for connection remapping)
+        std::string type;                   ///< Nodes::Node type identifier
+        std::string name;                   ///< Nodes::Node name
+        UI::Widgets::NodePosition position; ///< Nodes::Node position
+        Nodes::NodeId originalId;           ///< Original node ID (for connection remapping)
     };
 
     /**
@@ -27,10 +27,10 @@ namespace VisionCraft
      */
     struct CopiedConnection
     {
-        Engine::NodeId fromNodeId; ///< Source node original ID
-        Engine::NodeId toNodeId;   ///< Destination node original ID
-        std::string fromSlot;      ///< Source slot name
-        std::string toSlot;        ///< Destination slot name
+        Nodes::NodeId fromNodeId; ///< Source node original ID
+        Nodes::NodeId toNodeId;   ///< Destination node original ID
+        std::string fromSlot;     ///< Source slot name
+        std::string toSlot;       ///< Destination slot name
     };
 
     /**
@@ -60,11 +60,11 @@ namespace VisionCraft
          * @param nodePositions Map of node ID to position
          * @param connections All connections in the graph
          */
-        void Copy(const std::unordered_set<Engine::NodeId> &selectedNodes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const std::vector<NodeConnection> &connections);
+        void Copy(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+            const std::vector<UI::Widgets::NodeConnection> &connections);
 
         /**
          * @brief Cuts selected nodes to clipboard (copy + mark for deletion).
@@ -74,11 +74,11 @@ namespace VisionCraft
          * @param nodePositions Map of node ID to position
          * @param connections All connections in the graph
          */
-        void Cut(const std::unordered_set<Engine::NodeId> &selectedNodes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const std::vector<NodeConnection> &connections);
+        void Cut(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+            const std::vector<UI::Widgets::NodeConnection> &connections);
 
         /**
          * @brief Checks if clipboard has data.
@@ -108,7 +108,7 @@ namespace VisionCraft
          * @brief Gets node IDs to delete (for Cut operation).
          * @return Set of node IDs that should be deleted after paste
          */
-        [[nodiscard]] const std::unordered_set<Engine::NodeId> &GetNodesToDelete() const;
+        [[nodiscard]] const std::unordered_set<Nodes::NodeId> &GetNodesToDelete() const;
 
         /**
          * @brief Clears clipboard.
@@ -139,7 +139,7 @@ namespace VisionCraft
     private:
         std::vector<CopiedNode> copiedNodes;
         std::vector<CopiedConnection> copiedConnections;
-        std::unordered_set<Engine::NodeId> nodesToDelete; ///< For Cut operation
+        std::unordered_set<Nodes::NodeId> nodesToDelete; ///< For Cut operation
         ClipboardOperation operation = ClipboardOperation::None;
         int pasteCount = 0; ///< Number of times pasted (for offset calculation)
 
@@ -149,10 +149,10 @@ namespace VisionCraft
         /**
          * @brief Internal copy implementation (used by both Copy and Cut).
          */
-        void DoCopy(const std::unordered_set<Engine::NodeId> &selectedNodes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-            const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-            const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-            const std::vector<NodeConnection> &connections);
+        void DoCopy(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+            const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+            const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+            const std::vector<UI::Widgets::NodeConnection> &connections);
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::State

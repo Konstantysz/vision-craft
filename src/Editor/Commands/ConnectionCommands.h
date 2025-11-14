@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Editor/NodeEditorTypes.h"
+#include "UI/Widgets/NodeEditorTypes.h"
 #include "Command.h"
 
 #include <functional>
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     /**
      * @brief Command for creating a connection between nodes.
@@ -15,12 +15,12 @@ namespace VisionCraft
     {
     public:
         /** @brief Function that creates a connection */
-        using ConnectionCreator = std::function<void(const PinId &, const PinId &)>;
+        using ConnectionCreator = std::function<void(const UI::Widgets::PinId &, const UI::Widgets::PinId &)>;
         /** @brief Function that removes a connection */
-        using ConnectionRemover = std::function<void(const NodeConnection &)>;
+        using ConnectionRemover = std::function<void(const UI::Widgets::NodeConnection &)>;
 
-        CreateConnectionCommand(const PinId &outputPin,
-            const PinId &inputPin,
+        CreateConnectionCommand(const UI::Widgets::PinId &outputPin,
+            const UI::Widgets::PinId &inputPin,
             ConnectionCreator creator,
             ConnectionRemover remover);
 
@@ -31,11 +31,11 @@ namespace VisionCraft
         [[nodiscard]] std::string GetDescription() const override;
 
     private:
-        PinId outputPin;                  ///< Source pin
-        PinId inputPin;                   ///< Target pin
-        ConnectionCreator creator;        ///< Creates connection
-        ConnectionRemover remover;        ///< Removes connection
-        NodeConnection createdConnection; ///< Stored for undo
+        UI::Widgets::PinId outputPin;                  ///< Source pin
+        UI::Widgets::PinId inputPin;                   ///< Target pin
+        ConnectionCreator creator;                     ///< Creates connection
+        ConnectionRemover remover;                     ///< Removes connection
+        UI::Widgets::NodeConnection createdConnection; ///< Stored for undo
     };
 
     /**
@@ -45,11 +45,13 @@ namespace VisionCraft
     {
     public:
         /** @brief Function that creates a connection */
-        using ConnectionCreator = std::function<void(const PinId &, const PinId &)>;
+        using ConnectionCreator = std::function<void(const UI::Widgets::PinId &, const UI::Widgets::PinId &)>;
         /** @brief Function that removes a connection */
-        using ConnectionRemover = std::function<void(const NodeConnection &)>;
+        using ConnectionRemover = std::function<void(const UI::Widgets::NodeConnection &)>;
 
-        DeleteConnectionCommand(const NodeConnection &connection, ConnectionCreator creator, ConnectionRemover remover);
+        DeleteConnectionCommand(const UI::Widgets::NodeConnection &connection,
+            ConnectionCreator creator,
+            ConnectionRemover remover);
 
         void Execute() override;
 
@@ -58,9 +60,9 @@ namespace VisionCraft
         [[nodiscard]] std::string GetDescription() const override;
 
     private:
-        NodeConnection connection; ///< Connection to delete
-        ConnectionCreator creator; ///< Creates connection
-        ConnectionRemover remover; ///< Removes connection
+        UI::Widgets::NodeConnection connection; ///< Connection to delete
+        ConnectionCreator creator;              ///< Creates connection
+        ConnectionRemover remover;              ///< Removes connection
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

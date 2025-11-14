@@ -1,17 +1,17 @@
-#include "VisionCraftEngine/Node.h"
-#include "VisionCraftEngine/NodeData.h"
+#include "Nodes/Core/Node.h"
+#include "Nodes/Core/NodeData.h"
 
+#include <gtest/gtest.h>
 #include <algorithm>
 #include <filesystem>
-#include <gtest/gtest.h>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 // Dummy derived Node for testing abstract Process()
-class DummyNode : public Node
+class DummyNode : public Nodes::Node
 {
 public:
-    DummyNode(NodeId id, std::string name) : Node(id, std::move(name))
+    DummyNode(Nodes::NodeId id, std::string name) : Nodes::Node(id, std::move(name))
     {
     }
 
@@ -131,7 +131,7 @@ TEST_F(NodeTest, CreateOutputSlot)
 TEST_F(NodeTest, SetAndGetInputSlotData)
 {
     node.CreateInputSlot("Input");
-    node.SetInputSlotData("Input", NodeData(42));
+    node.SetInputSlotData("Input", Nodes::NodeData(42));
 
     const auto &slot = node.GetInputSlot("Input");
     EXPECT_TRUE(slot.HasData());
@@ -144,7 +144,7 @@ TEST_F(NodeTest, SetAndGetInputSlotData)
 TEST_F(NodeTest, SetAndGetOutputSlotData)
 {
     node.CreateOutputSlot("Output");
-    node.SetOutputSlotData("Output", NodeData(3.14));
+    node.SetOutputSlotData("Output", Nodes::NodeData(3.14));
 
     const auto &slot = node.GetOutputSlot("Output");
     EXPECT_TRUE(slot.HasData());
@@ -157,7 +157,7 @@ TEST_F(NodeTest, SetAndGetOutputSlotData)
 TEST_F(NodeTest, ClearInputSlot)
 {
     node.CreateInputSlot("Input");
-    node.SetInputSlotData("Input", NodeData(100));
+    node.SetInputSlotData("Input", Nodes::NodeData(100));
 
     EXPECT_TRUE(node.GetInputSlot("Input").HasData());
 
@@ -168,7 +168,7 @@ TEST_F(NodeTest, ClearInputSlot)
 TEST_F(NodeTest, ClearOutputSlot)
 {
     node.CreateOutputSlot("Output");
-    node.SetOutputSlotData("Output", NodeData(200));
+    node.SetOutputSlotData("Output", Nodes::NodeData(200));
 
     EXPECT_TRUE(node.GetOutputSlot("Output").HasData());
 
@@ -189,7 +189,7 @@ TEST_F(NodeTest, GetInputValueWithDefault)
 TEST_F(NodeTest, GetInputValuePrefersConnected)
 {
     node.CreateInputSlot("Threshold", 127.0);
-    node.SetInputSlotData("Threshold", NodeData(200.0));
+    node.SetInputSlotData("Threshold", Nodes::NodeData(200.0));
 
     // Connected data should override default
     auto value = node.GetInputValue<double>("Threshold");
@@ -202,7 +202,7 @@ TEST_F(NodeTest, SetInputSlotDefault)
     node.CreateInputSlot("Param", 100);
 
     // Change default value
-    node.SetInputSlotDefault("Param", NodeData(200));
+    node.SetInputSlotDefault("Param", Nodes::NodeData(200));
 
     auto value = node.GetInputValue<int>("Param");
     ASSERT_TRUE(value.has_value());
@@ -215,7 +215,7 @@ TEST_F(NodeTest, IsInputSlotConnected)
 
     EXPECT_FALSE(node.IsInputSlotConnected("Input"));
 
-    node.SetInputSlotData("Input", NodeData(100));
+    node.SetInputSlotData("Input", Nodes::NodeData(100));
     EXPECT_TRUE(node.IsInputSlotConnected("Input"));
 
     node.ClearInputSlot("Input");
@@ -241,6 +241,6 @@ TEST_F(NodeTest, SlotDoesNotExistThrows)
 {
     EXPECT_THROW(node.GetInputSlot("NonExistent"), std::out_of_range);
     EXPECT_THROW(node.GetOutputSlot("NonExistent"), std::out_of_range);
-    EXPECT_THROW(node.SetInputSlotData("NonExistent", NodeData(42)), std::out_of_range);
-    EXPECT_THROW(node.SetOutputSlotData("NonExistent", NodeData(42)), std::out_of_range);
+    EXPECT_THROW(node.SetInputSlotData("NonExistent", Nodes::NodeData(42)), std::out_of_range);
+    EXPECT_THROW(node.SetOutputSlotData("NonExistent", Nodes::NodeData(42)), std::out_of_range);
 }

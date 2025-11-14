@@ -1,3 +1,5 @@
+find_package(nlohmann_json CONFIG REQUIRED)
+
 add_library(Editor STATIC
     Commands/CommandHistory.cpp
     Commands/NodeCommands.cpp

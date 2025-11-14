@@ -1,18 +1,18 @@
-#include "Rendering/Strategies/PreviewNodeRenderingStrategy.h"
-#include "Connections/ConnectionManager.h"
-#include "Editor/NodeEditorConstants.h"
-#include "Rendering/NodeDimensionCalculator.h"
-#include "Nodes/PreviewNode.h"
+#include "UI/Rendering/Strategies/PreviewNodeRenderingStrategy.h"
+#include "UI/Canvas/ConnectionManager.h"
+#include "UI/Rendering/NodeDimensionCalculator.h"
+#include "UI/Widgets/NodeEditorConstants.h"
+#include "Vision/IO/PreviewNode.h"
 #include <algorithm>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering::Strategies
 {
-    void PreviewNodeRenderingStrategy::RenderCustomContent(Engine::Node &node,
+    void PreviewNodeRenderingStrategy::RenderCustomContent(Nodes::Node &node,
         const ImVec2 &nodePos,
         const ImVec2 &nodeSize,
         float zoomLevel)
     {
-        auto &previewNode = static_cast<Engine::PreviewNode &>(node);
+        auto &previewNode = static_cast<Vision::IO::PreviewNode &>(node);
         if (!previewNode.HasValidImage() || previewNode.GetTextureId() == 0)
         {
             return;
@@ -21,8 +21,8 @@ namespace VisionCraft
         const float titleHeight = Constants::Node::kTitleHeight * zoomLevel;
         const float padding = Constants::Node::kPadding * zoomLevel;
 
-        const auto pins = ConnectionManager::GetNodePins(node.GetName());
-        std::vector<NodePin> inputPins, outputPins;
+        const auto pins = Canvas::ConnectionManager::GetNodePins(node.GetName());
+        std::vector<Widgets::NodePin> inputPins, outputPins;
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
         std::copy_if(
@@ -58,4 +58,4 @@ namespace VisionCraft
         }
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering::Strategies

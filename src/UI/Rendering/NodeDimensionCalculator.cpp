@@ -1,10 +1,10 @@
-#include "Rendering/NodeDimensionCalculator.h"
-#include "Editor/NodeEditorConstants.h"
+#include "UI/Rendering/NodeDimensionCalculator.h"
+#include "UI/Widgets/NodeEditorConstants.h"
 #include <algorithm>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering
 {
-    float NodeDimensionCalculator::CalculatePinColumnHeight(const std::vector<NodePin> &pins, float zoomLevel)
+    float NodeDimensionCalculator::CalculatePinColumnHeight(const std::vector<Widgets::NodePin> &pins, float zoomLevel)
     {
         const auto compactPinHeight = Constants::Pin::kCompactHeight * zoomLevel;
         const auto extendedPinHeight = Constants::Pin::kHeight * zoomLevel;
@@ -14,7 +14,7 @@ namespace VisionCraft
         float totalHeight = 0;
         for (const auto &pin : pins)
         {
-            const bool needsInputWidget = pin.dataType != PinDataType::Image;
+            const bool needsInputWidget = pin.dataType != Widgets::PinDataType::Image;
             const auto pinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
             const auto spacing = needsInputWidget ? normalSpacing : compactSpacing;
             totalHeight += pinHeight + spacing;
@@ -23,8 +23,8 @@ namespace VisionCraft
         return totalHeight;
     }
 
-    float NodeDimensionCalculator::CalculateBaseContentHeight(const std::vector<NodePin> &inputPins,
-        const std::vector<NodePin> &outputPins,
+    float NodeDimensionCalculator::CalculateBaseContentHeight(const std::vector<Widgets::NodePin> &inputPins,
+        const std::vector<Widgets::NodePin> &outputPins,
         float zoomLevel)
     {
         const auto padding = Constants::Node::kPadding * zoomLevel;
@@ -36,11 +36,11 @@ namespace VisionCraft
         return pinsHeight + padding * 2;
     }
 
-    NodeDimensions NodeDimensionCalculator::CalculateNodeDimensions(const std::vector<NodePin> &pins,
+    Widgets::NodeDimensions NodeDimensionCalculator::CalculateNodeDimensions(const std::vector<Widgets::NodePin> &pins,
         float zoomLevel,
-        const Engine::Node *node)
+        const Nodes::Node *node)
     {
-        std::vector<NodePin> inputPins, outputPins;
+        std::vector<Widgets::NodePin> inputPins, outputPins;
 
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
@@ -70,4 +70,4 @@ namespace VisionCraft
             0 };
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering

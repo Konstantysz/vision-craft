@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     /**
      * @brief Base interface for all undoable commands.
@@ -37,7 +37,7 @@ namespace VisionCraft
 
         /**
          * @brief Returns a human-readable description of this command.
-         * @return Description string (e.g., "Create Node", "Delete Connection")
+         * @return Description string (e.g., "Create Nodes::Node", "Delete Connection")
          */
         [[nodiscard]] virtual std::string GetDescription() const = 0;
 
@@ -54,4 +54,4 @@ namespace VisionCraft
         Command &operator=(Command &&) = delete;
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

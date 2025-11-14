@@ -1,16 +1,16 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include "Texture.h"
 #include <glad/glad.h>
 #include <opencv2/opencv.hpp>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
     /**
      * @brief Node for previewing images while passing them through.
      */
-    class PreviewNode : public Node
+    class PreviewNode : public Nodes::Node
     {
     public:
         /**
@@ -18,7 +18,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        PreviewNode(NodeId id, const std::string &name = "Preview");
+        PreviewNode(Nodes::NodeId id, const std::string &name = "Preview");
 
         /**
          * @brief Virtual destructor.
@@ -89,4 +89,4 @@ namespace VisionCraft::Engine
         cv::Mat outputImage;    ///< Output image (same as input)
         Kappa::Texture texture; ///< RAII-managed OpenGL texture for display
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

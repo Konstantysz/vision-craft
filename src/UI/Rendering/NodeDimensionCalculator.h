@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Editor/NodeEditorTypes.h"
-#include "Node.h"
+#include "UI/Widgets/NodeEditorTypes.h"
+#include "Nodes/Core/Node.h"
+
 #include <vector>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering
 {
     /**
      * @brief Utility for calculating node dimensions.
@@ -18,7 +19,8 @@ namespace VisionCraft
          * @param zoomLevel Zoom level
          * @return Column height
          */
-        [[nodiscard]] static float CalculatePinColumnHeight(const std::vector<NodePin> &pins, float zoomLevel);
+        [[nodiscard]] static float CalculatePinColumnHeight(const std::vector<UI::Widgets::NodePin> &pins,
+            float zoomLevel);
 
         /**
          * @brief Calculates base content height.
@@ -27,20 +29,21 @@ namespace VisionCraft
          * @param zoomLevel Zoom level
          * @return Base content height
          */
-        [[nodiscard]] static float CalculateBaseContentHeight(const std::vector<NodePin> &inputPins,
-            const std::vector<NodePin> &outputPins,
+        [[nodiscard]] static float CalculateBaseContentHeight(const std::vector<UI::Widgets::NodePin> &inputPins,
+            const std::vector<UI::Widgets::NodePin> &outputPins,
             float zoomLevel);
 
         /**
          * @brief Calculates node dimensions.
          * @param pins Pins
          * @param zoomLevel Zoom level
-         * @param node Node
-         * @return Node dimensions
+         * @param node Nodes::Node
+         * @return Nodes::Node dimensions
          */
-        [[nodiscard]] static NodeDimensions CalculateNodeDimensions(const std::vector<NodePin> &pins,
+        [[nodiscard]] static UI::Widgets::NodeDimensions CalculateNodeDimensions(
+            const std::vector<UI::Widgets::NodePin> &pins,
             float zoomLevel,
-            const Engine::Node *node = nullptr);
+            const Nodes::Node *node = nullptr);
 
     private:
         NodeDimensionCalculator() = delete;
@@ -49,4 +52,4 @@ namespace VisionCraft
         NodeDimensionCalculator &operator=(const NodeDimensionCalculator &) = delete;
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering

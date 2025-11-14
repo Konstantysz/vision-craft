@@ -1,7 +1,7 @@
-#include "ImageInputNode.h"
+#include "Vision/IO/ImageInputNode.h"
 #include "Logger.h"
+#include "Nodes/Core/EngineConstants.h"
 
-#include "../EngineConstants.h"
 #include <opencv2/opencv.hpp>
 #include <algorithm>
 #include <cctype>
@@ -25,7 +25,7 @@
 #include <cstring>
 #endif
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
     namespace
     {
@@ -33,7 +33,7 @@ namespace VisionCraft::Engine
         inline constexpr std::string_view kErrorPrefix = "ERROR:";
     } // namespace
 
-    ImageInputNode::ImageInputNode(NodeId id, const std::string &name) : Node(id, name)
+    ImageInputNode::ImageInputNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("FilePath", std::filesystem::path{});
         CreateOutputSlot("Output");
@@ -241,4 +241,4 @@ namespace VisionCraft::Engine
         return actualPreviewHeight + imagePreviewSpacing;
     }
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

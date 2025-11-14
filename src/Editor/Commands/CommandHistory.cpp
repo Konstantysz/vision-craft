@@ -1,6 +1,6 @@
 #include "CommandHistory.h"
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     CommandHistory::CommandHistory(size_t maxHistorySize) : maxHistorySize(maxHistorySize)
     {
@@ -108,4 +108,4 @@ namespace VisionCraft
         }
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

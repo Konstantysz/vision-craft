@@ -1,7 +1,6 @@
 add_executable(VisionCraft
-    main.cpp
-    VisionCraftApplication.cpp
     VisionCraftGUI.cpp
+    VisionCraftApplication.cpp
 )
 
 target_include_directories(VisionCraft PRIVATE
@@ -18,9 +17,3 @@ set_target_properties(VisionCraft PROPERTIES
     FOLDER "VisionCraft"
     OUTPUT_NAME "VisionCraft"
 )
-
-if(WIN32)
-    set_target_properties(VisionCraft PROPERTIES
-        WIN32_EXECUTABLE TRUE
-    )
-endif()

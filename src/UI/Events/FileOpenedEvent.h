@@ -3,7 +3,7 @@
 #include "Event.h"
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Events
 {
     /**
      * @brief Event emitted when a file is successfully opened or saved.
@@ -37,4 +37,4 @@ namespace VisionCraft
     private:
         std::string filePath; ///< Path to the opened/saved file
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Events

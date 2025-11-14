@@ -1,11 +1,11 @@
 #include "ConnectionCommands.h"
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     // CreateConnectionCommand
 
-    CreateConnectionCommand::CreateConnectionCommand(const PinId &outputPin,
-        const PinId &inputPin,
+    CreateConnectionCommand::CreateConnectionCommand(const UI::Widgets::PinId &outputPin,
+        const UI::Widgets::PinId &inputPin,
         ConnectionCreator creator,
         ConnectionRemover remover)
         : outputPin(outputPin), inputPin(inputPin), creator(std::move(creator)), remover(std::move(remover))
@@ -31,7 +31,7 @@ namespace VisionCraft
 
     // DeleteConnectionCommand
 
-    DeleteConnectionCommand::DeleteConnectionCommand(const NodeConnection &connection,
+    DeleteConnectionCommand::DeleteConnectionCommand(const UI::Widgets::NodeConnection &connection,
         ConnectionCreator creator,
         ConnectionRemover remover)
         : connection(connection), creator(std::move(creator)), remover(std::move(remover))
@@ -53,4 +53,4 @@ namespace VisionCraft
         return "Delete Connection";
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

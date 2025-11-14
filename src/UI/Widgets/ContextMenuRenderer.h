@@ -6,7 +6,7 @@
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     /**
      * @brief Result of context menu rendering.
@@ -69,9 +69,9 @@ namespace VisionCraft
         std::vector<NodeTypeInfo> availableNodeTypes;
 
         /**
-         * @brief Renders the "Add Node" submenu.
-         * @return Node type ID if selected, empty string otherwise
+         * @brief Renders the "Add Nodes::Node" submenu.
+         * @return Nodes::Node type ID if selected, empty string otherwise
          */
         [[nodiscard]] std::string RenderAddNodeSubmenu();
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

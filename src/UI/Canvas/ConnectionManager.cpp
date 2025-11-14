@@ -1,6 +1,6 @@
-#include "Connections/ConnectionManager.h"
-#include "Layers/NodeEditorLayer.h"
-#include "Rendering/NodeRenderer.h"
+#include "UI/Canvas/ConnectionManager.h"
+#include "UI/Layers/NodeEditorLayer.h"
+#include "UI/Rendering/NodeRenderer.h"
 #include "Logger.h"
 
 #include <algorithm>
@@ -9,7 +9,7 @@
 #include <limits>
 #include <optional>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Canvas
 {
     ConnectionManager::ConnectionManager()
     {
@@ -19,8 +19,8 @@ namespace VisionCraft
     {
     }
 
-    void ConnectionManager::HandleConnectionInteractions(Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    void ConnectionManager::HandleConnectionInteractions(Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas)
     {
         const auto &io = ImGui::GetIO();
@@ -108,10 +108,10 @@ namespace VisionCraft
         }
     }
 
-    void ConnectionManager::RenderConnections(const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    void ConnectionManager::RenderConnections(const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas,
-        const std::optional<NodeConnection> &hoveredConnection)
+        const std::optional<Widgets::NodeConnection> &hoveredConnection)
     {
         auto *drawList = ImGui::GetWindowDrawList();
         for (const auto &connection : connections)
@@ -131,9 +131,9 @@ namespace VisionCraft
         }
     }
 
-    bool ConnectionManager::CreateConnection(const PinId &outputPin,
-        const PinId &inputPin,
-        Engine::NodeEditor &nodeEditor,
+    bool ConnectionManager::CreateConnection(const Widgets::PinId &outputPin,
+        const Widgets::PinId &inputPin,
+        Nodes::NodeEditor &nodeEditor,
         bool notifyCallback)
     {
         if (!IsConnectionValid(outputPin, inputPin, nodeEditor))
@@ -142,7 +142,7 @@ namespace VisionCraft
         }
 
         RemoveConnectionToInput(inputPin);
-        const NodeConnection newConnection{ outputPin, inputPin };
+        const Widgets::NodeConnection newConnection{ outputPin, inputPin };
         connections.push_back(newConnection);
         nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
 
@@ -155,9 +155,9 @@ namespace VisionCraft
         return true;
     }
 
-    bool ConnectionManager::IsConnectionValid(const PinId &outputPin,
-        const PinId &inputPin,
-        const Engine::NodeEditor &nodeEditor) const
+    bool ConnectionManager::IsConnectionValid(const Widgets::PinId &outputPin,
+        const Widgets::PinId &inputPin,
+        const Nodes::NodeEditor &nodeEditor) const
     {
         if (outputPin.nodeId == inputPin.nodeId)
         {
@@ -199,7 +199,7 @@ namespace VisionCraft
         return true;
     }
 
-    bool ConnectionManager::IsPinConnected(const PinId &pin) const
+    bool ConnectionManager::IsPinConnected(const Widgets::PinId &pin) const
     {
         for (const auto &connection : connections)
         {
@@ -211,17 +211,17 @@ namespace VisionCraft
         return false;
     }
 
-    bool ConnectionManager::PinNeedsInputWidget(Engine::NodeId nodeId, const NodePin &pin) const
+    bool ConnectionManager::PinNeedsInputWidget(Nodes::NodeId nodeId, const Widgets::NodePin &pin) const
     {
-        return pin.isInput && pin.dataType != PinDataType::Image && !IsPinConnected({ nodeId, pin.name });
+        return pin.isInput && pin.dataType != Widgets::PinDataType::Image && !IsPinConnected({ nodeId, pin.name });
     }
 
-    PinId ConnectionManager::FindPinAtPosition(const ImVec2 &mousePos,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    Widgets::PinId ConnectionManager::FindPinAtPosition(const ImVec2 &mousePos,
+        const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas) const
     {
-        PinId closestPin = { Constants::Special::kInvalidNodeId, "" };
+        Widgets::PinId closestPin = { Constants::Special::kInvalidNodeId, "" };
         float closestDistanceSquared = std::numeric_limits<float>::max();
 
         const auto nodeIds = nodeEditor.GetNodeIds();
@@ -234,7 +234,7 @@ namespace VisionCraft
             }
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+            const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
             const auto &nodePos = nodePositions.at(nodeId);
             const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
@@ -248,10 +248,10 @@ namespace VisionCraft
         return closestPin;
     }
 
-    PinId ConnectionManager::FindPinAtPositionInNode(const ImVec2 &mousePos,
-        Engine::NodeId nodeId,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    Widgets::PinId ConnectionManager::FindPinAtPositionInNode(const ImVec2 &mousePos,
+        Nodes::NodeId nodeId,
+        const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas) const
     {
         const auto *node = nodeEditor.GetNode(nodeId);
@@ -261,11 +261,11 @@ namespace VisionCraft
         }
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+        const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
-        std::vector<NodePin> inputPins, outputPins;
+        std::vector<Widgets::NodePin> inputPins, outputPins;
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
         std::copy_if(
@@ -325,9 +325,9 @@ namespace VisionCraft
         return { Constants::Special::kInvalidNodeId, "" };
     }
 
-    ImVec2 ConnectionManager::GetPinWorldPosition(const PinId &pinId,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    ImVec2 ConnectionManager::GetPinWorldPosition(const Widgets::PinId &pinId,
+        const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas) const
     {
         if (pinId.nodeId == Constants::Special::kInvalidNodeId
@@ -343,7 +343,7 @@ namespace VisionCraft
         }
 
         const auto pins = GetNodePins(node->GetName());
-        const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+        const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(pinId.nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
@@ -354,7 +354,7 @@ namespace VisionCraft
         const auto normalSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
 
-        std::vector<NodePin> inputPins, outputPins;
+        std::vector<Widgets::NodePin> inputPins, outputPins;
         std::copy_if(
             pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
         std::copy_if(
@@ -393,44 +393,47 @@ namespace VisionCraft
         return ImVec2(0, 0);
     }
 
-    const std::vector<NodeConnection> &ConnectionManager::GetConnections() const
+    const std::vector<Widgets::NodeConnection> &ConnectionManager::GetConnections() const
     {
         return connections;
     }
 
-    const ConnectionState &ConnectionManager::GetConnectionState() const
+    const Widgets::ConnectionState &ConnectionManager::GetConnectionState() const
     {
         return connectionState;
     }
 
-    std::vector<NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
+    std::vector<Widgets::NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
     {
-        static const std::unordered_map<std::string, std::vector<NodePin>> nodePinDefinitions = {
-            { "Image Input", { { "FilePath", PinDataType::Path, true }, { "Output", PinDataType::Image, false } } },
+        static const std::unordered_map<std::string, std::vector<Widgets::NodePin>> nodePinDefinitions = {
+            { "Image Input",
+                { { "FilePath", Widgets::PinDataType::Path, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
             { "Image Output",
-                { { "Input", PinDataType::Image, true },
-                    { "SavePath", PinDataType::Path, true },
-                    { "AutoSave", PinDataType::Bool, true },
-                    { "Format", PinDataType::String, true } } },
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "SavePath", Widgets::PinDataType::Path, true },
+                    { "AutoSave", Widgets::PinDataType::Bool, true },
+                    { "Format", Widgets::PinDataType::String, true } } },
             { "Grayscale",
-                { { "Input", PinDataType::Image, true },
-                    { "Method", PinDataType::String, true },
-                    { "PreserveAlpha", PinDataType::Bool, true },
-                    { "Output", PinDataType::Image, false } } },
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Method", Widgets::PinDataType::String, true },
+                    { "PreserveAlpha", Widgets::PinDataType::Bool, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
             { "Canny Edge",
-                { { "Input", PinDataType::Image, true },
-                    { "LowThreshold", PinDataType::Float, true },
-                    { "HighThreshold", PinDataType::Float, true },
-                    { "ApertureSize", PinDataType::Int, true },
-                    { "L2Gradient", PinDataType::Bool, true },
-                    { "Output", PinDataType::Image, false } } },
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "LowThreshold", Widgets::PinDataType::Float, true },
+                    { "HighThreshold", Widgets::PinDataType::Float, true },
+                    { "ApertureSize", Widgets::PinDataType::Int, true },
+                    { "L2Gradient", Widgets::PinDataType::Bool, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
             { "Threshold",
-                { { "Input", PinDataType::Image, true },
-                    { "Threshold", PinDataType::Float, true },
-                    { "MaxValue", PinDataType::Float, true },
-                    { "Type", PinDataType::String, true },
-                    { "Output", PinDataType::Image, false } } },
-            { "Preview", { { "Input", PinDataType::Image, true }, { "Output", PinDataType::Image, false } } }
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Threshold", Widgets::PinDataType::Float, true },
+                    { "MaxValue", Widgets::PinDataType::Float, true },
+                    { "Type", Widgets::PinDataType::String, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Preview",
+                { { "Input", Widgets::PinDataType::Image, true }, { "Output", Widgets::PinDataType::Image, false } } }
         };
 
         auto it = nodePinDefinitions.find(nodeName);
@@ -447,22 +450,22 @@ namespace VisionCraft
         return connectionState.isCreating;
     }
 
-    const PinId &ConnectionManager::GetStartPin() const
+    const Widgets::PinId &ConnectionManager::GetStartPin() const
     {
         return connectionState.startPin;
     }
 
-    void ConnectionManager::RemoveConnectionToInput(const PinId &inputPin)
+    void ConnectionManager::RemoveConnectionToInput(const Widgets::PinId &inputPin)
     {
         connections.erase(std::remove_if(connections.begin(),
                               connections.end(),
-                              [&inputPin](const NodeConnection &conn) { return conn.inputPin == inputPin; }),
+                              [&inputPin](const Widgets::NodeConnection &conn) { return conn.inputPin == inputPin; }),
             connections.end());
     }
 
-    void ConnectionManager::RenderConnection(const NodeConnection &connection,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    void ConnectionManager::RenderConnection(const Widgets::NodeConnection &connection,
+        const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas,
         bool isHovered)
     {
@@ -493,9 +496,9 @@ namespace VisionCraft
         drawList->AddBezierCubic(startPos, cp1, cp2, endPos, connectionColor, connectionThickness);
     }
 
-    std::optional<NodeConnection> ConnectionManager::FindConnectionAtPosition(const ImVec2 &mousePos,
-        const Engine::NodeEditor &nodeEditor,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
+    std::optional<Widgets::NodeConnection> ConnectionManager::FindConnectionAtPosition(const ImVec2 &mousePos,
+        const Nodes::NodeEditor &nodeEditor,
+        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const CanvasController &canvas) const
     {
         const float clickThreshold = 10.0f; // Distance threshold for clicking on a connection
@@ -542,7 +545,7 @@ namespace VisionCraft
         return std::nullopt;
     }
 
-    void ConnectionManager::RemoveConnection(const NodeConnection &connection)
+    void ConnectionManager::RemoveConnection(const Widgets::NodeConnection &connection)
     {
         connections.erase(std::remove(connections.begin(), connections.end(), connection), connections.end());
     }
@@ -551,4 +554,4 @@ namespace VisionCraft
     {
         onConnectionCreated = std::move(callback);
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Canvas

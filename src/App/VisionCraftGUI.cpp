@@ -1,4 +1,4 @@
-#include "Main/VisionCraftApplication.h"
+#include "App/VisionCraftApplication.h"
 
 int main()
 {
@@ -8,7 +8,7 @@ int main()
     appSpec.windowSpecification.width = 1920;
     appSpec.windowSpecification.height = 1080;
 
-    VisionCraft::VisionCraftApplication app(appSpec);
+    VisionCraft::App::VisionCraftApplication app(appSpec);
     app.Run();
 
     return 0;

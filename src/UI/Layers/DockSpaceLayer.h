@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Persistence/RecentFilesManager.h"
+#include "Editor/Persistence/RecentFilesManager.h"
 #include "Layer.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     /**
      * @brief Layer providing fullscreen dockspace and menu bar.
@@ -42,8 +42,8 @@ namespace VisionCraft
         void RenderFileMenu();
         void RenderRecentFilesMenu();
 
-        bool dockspaceOpen = true;             ///< Flag indicating if the dockspace is open
-        bool isFirstFrame = true;              ///< Flag to detect first frame for default layout setup
-        RecentFilesManager recentFilesManager; ///< Manager for recent files
+        bool dockspaceOpen = true; ///< Flag indicating if the dockspace is open
+        bool isFirstFrame = true;  ///< Flag to detect first frame for default layout setup
+        Editor::Persistence::RecentFilesManager recentFilesManager; ///< Manager for recent files
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

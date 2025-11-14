@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering::Strategies
 {
     /**
      * @brief Strategy for node-specific content rendering.
@@ -15,13 +15,13 @@ namespace VisionCraft
 
         /**
          * @brief Renders custom node content.
-         * @param node Node
-         * @param nodePos Node position
-         * @param nodeSize Node size
+         * @param node Nodes::Node
+         * @param nodePos Nodes::Node position
+         * @param nodeSize Nodes::Node size
          * @param zoomLevel Zoom level
          */
         virtual void
-            RenderCustomContent(Engine::Node &node, const ImVec2 &nodePos, const ImVec2 &nodeSize, float zoomLevel) = 0;
+            RenderCustomContent(Nodes::Node &node, const ImVec2 &nodePos, const ImVec2 &nodeSize, float zoomLevel) = 0;
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering::Strategies

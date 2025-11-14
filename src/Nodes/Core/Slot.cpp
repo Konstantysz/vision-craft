@@ -1,6 +1,6 @@
-#include "Slot.h"
+#include "Nodes/Core/Slot.h"
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
     Slot::Slot(std::optional<NodeData> defaultValue) : defaultValue(std::move(defaultValue))
     {
@@ -46,4 +46,4 @@ namespace VisionCraft::Engine
         return data;
     }
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

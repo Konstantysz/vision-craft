@@ -1,10 +1,10 @@
-#include "PreviewNode.h"
-#include "EngineConstants.h"
+#include "Vision/IO/PreviewNode.h"
 #include "Logger.h"
+#include "Nodes/Core/EngineConstants.h"
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
-    PreviewNode::PreviewNode(NodeId id, const std::string &name) : Node(id, name)
+    PreviewNode::PreviewNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("Input");
         CreateOutputSlot("Output");
@@ -109,4 +109,4 @@ namespace VisionCraft::Engine
         return actualPreviewHeight + imagePreviewSpacing;
     }
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

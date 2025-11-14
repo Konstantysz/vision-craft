@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     /**
      * @brief Helper for setting up ImGui docking layouts.
@@ -15,4 +15,4 @@ namespace VisionCraft
          */
         static void SetupDefaultLayout();
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

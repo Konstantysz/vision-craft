@@ -3,7 +3,7 @@
 #include "Event.h"
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Events
 {
     /**
      * @brief Event for triggering graph load (via file dialog).
@@ -54,4 +54,4 @@ namespace VisionCraft
     private:
         std::string filePath; ///< Path to the graph file
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Events

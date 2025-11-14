@@ -1,12 +1,12 @@
 #pragma once
 
 #include "Layer.h"
-#include "Node.h"
-#include "NodeEditor.h"
+#include "Nodes/Core/Node.h"
+#include "Nodes/Core/NodeEditor.h"
 
 #include <vector>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     /**
      * @brief Layer for graph execution and results display.
@@ -16,8 +16,9 @@ namespace VisionCraft
     public:
         /**
          * @brief Constructor that subscribes to graph execution events.
+         * @param nodeEditor Reference to the shared node editor instance
          */
-        GraphExecutionLayer();
+        explicit GraphExecutionLayer(Nodes::NodeEditor &nodeEditor);
 
         /**
          * @brief Virtual destructor.
@@ -47,7 +48,8 @@ namespace VisionCraft
          */
         void ExecuteGraph();
 
+        Nodes::NodeEditor &nodeEditor;  ///< Reference to the shared node editor instance
         bool isExecuting = false;       ///< Whether the graph is currently executing
         bool showResultsWindow = false; ///< Whether to display the results window
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

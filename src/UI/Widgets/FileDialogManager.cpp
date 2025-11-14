@@ -1,10 +1,10 @@
-#include "UI/FileDialogManager.h"
+#include "UI/Widgets/FileDialogManager.h"
 
 #include <cstring>
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     FileDialogResult FileDialogManager::RenderSaveDialog()
     {
@@ -129,4 +129,4 @@ namespace VisionCraft
     {
         std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

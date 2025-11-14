@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Editor/NodeEditorConstants.h"
+#include "UI/Widgets/NodeEditorConstants.h"
 #include "Event.h"
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Canvas
 {
     /**
      * @brief Canvas management for pan, zoom, grid, and coordinate transformations.
@@ -233,4 +233,4 @@ namespace VisionCraft
         ImVec2 currentCanvasSize = ImVec2(0, 0); ///< Current canvas size
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Canvas

@@ -1,19 +1,19 @@
-#include "Layers/DockSpaceLayer.h"
-#include "Events/FileOpenedEvent.h"
-#include "Events/LoadGraphEvent.h"
-#include "Events/NewGraphEvent.h"
-#include "Events/SaveGraphEvent.h"
-#include "Persistence/DockingLayoutHelper.h"
+#include "UI/Layers/DockSpaceLayer.h"
+#include "UI/Events/FileOpenedEvent.h"
+#include "UI/Events/LoadGraphEvent.h"
+#include "UI/Events/NewGraphEvent.h"
+#include "UI/Events/SaveGraphEvent.h"
+#include "UI/Widgets/DockingLayoutHelper.h"
 #include "Application.h"
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     DockSpaceLayer::DockSpaceLayer() : recentFilesManager("recent_files.json")
     {
-        Kappa::Application::Get().GetEventBus().Subscribe<FileOpenedEvent>(
-            [this](const FileOpenedEvent &event) { recentFilesManager.AddFile(event.GetFilePath()); });
+        Kappa::Application::Get().GetEventBus().Subscribe<Events::FileOpenedEvent>(
+            [this](const Events::FileOpenedEvent &event) { recentFilesManager.AddFile(event.GetFilePath()); });
     }
 
     void DockSpaceLayer::OnEvent(Kappa::Event &event)
@@ -71,7 +71,7 @@ namespace VisionCraft
             if (isFirstFrame)
             {
                 isFirstFrame = false;
-                DockingLayoutHelper::SetupDefaultLayout();
+                Widgets::DockingLayoutHelper::SetupDefaultLayout();
             }
         }
 
@@ -90,19 +90,19 @@ namespace VisionCraft
         {
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
-                NewGraphEvent event;
+                Events::NewGraphEvent event;
                 OnEvent(event);
             }
 
             if (ImGui::MenuItem("Open...", "Ctrl+O"))
             {
-                LoadGraphEvent event;
+                Events::LoadGraphEvent event;
                 OnEvent(event);
             }
 
             if (ImGui::MenuItem("Save", "Ctrl+S"))
             {
-                SaveGraphEvent event;
+                Events::SaveGraphEvent event;
                 OnEvent(event);
             }
 
@@ -139,7 +139,7 @@ namespace VisionCraft
 
                     if (ImGui::MenuItem(filename.c_str()))
                     {
-                        LoadGraphFromFileEvent loadEvent(filePath);
+                        Events::LoadGraphFromFileEvent loadEvent(filePath);
                         Kappa::Application::Get().GetEventBus().Publish(loadEvent);
                     }
 
@@ -160,4 +160,4 @@ namespace VisionCraft
             ImGui::EndMenu();
         }
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

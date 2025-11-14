@@ -1,19 +1,19 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <glad/glad.h>
 #include <opencv2/opencv.hpp>
 #include <string>
 
-#include "EngineConstants.h"
+#include "Nodes/Core/EngineConstants.h"
 #include "Texture.h"
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
     /**
      * @brief Node for loading images from file system.
      */
-    class ImageInputNode : public Node
+    class ImageInputNode : public Nodes::Node
     {
     public:
         /**
@@ -21,7 +21,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        ImageInputNode(NodeId id, const std::string &name = "Image Input");
+        ImageInputNode(Nodes::NodeId id, const std::string &name = "Image Input");
 
         /**
          * @brief Returns node type identifier.
@@ -105,4 +105,4 @@ namespace VisionCraft::Engine
         char filePathBuffer[Constants::Buffers::kFilePathBufferSize] =
             ""; ///< Buffer for file path input (ImGui requirement)
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

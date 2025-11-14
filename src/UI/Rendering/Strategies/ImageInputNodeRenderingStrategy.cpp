@@ -1,11 +1,11 @@
-#include "Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
-#include "Connections/ConnectionManager.h"
-#include "Editor/NodeEditorConstants.h"
-#include "Rendering/NodeDimensionCalculator.h"
-#include "Nodes/ImageInputNode.h"
+#include "UI/Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
+#include "UI/Canvas/ConnectionManager.h"
+#include "UI/Rendering/NodeDimensionCalculator.h"
+#include "UI/Widgets/NodeEditorConstants.h"
+#include "Vision/IO/ImageInputNode.h"
 #include <algorithm>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering::Strategies
 {
     namespace
     {
@@ -18,13 +18,13 @@ namespace VisionCraft
             float contentY;
         };
 
-        ContentAreaInfo CalculateContentArea(const Engine::Node &node, const ImVec2 &nodePos, float zoomLevel)
+        ContentAreaInfo CalculateContentArea(const Nodes::Node &node, const ImVec2 &nodePos, float zoomLevel)
         {
             const float titleHeight = Constants::Node::kTitleHeight * zoomLevel;
             const float padding = Constants::Node::kPadding * zoomLevel;
 
-            const auto pins = ConnectionManager::GetNodePins(node.GetName());
-            std::vector<NodePin> inputPins, outputPins;
+            const auto pins = Canvas::ConnectionManager::GetNodePins(node.GetName());
+            std::vector<Widgets::NodePin> inputPins, outputPins;
             std::copy_if(
                 pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
             std::copy_if(
@@ -40,12 +40,12 @@ namespace VisionCraft
         }
     } // anonymous namespace
 
-    void ImageInputNodeRenderingStrategy::RenderCustomContent(Engine::Node &node,
+    void ImageInputNodeRenderingStrategy::RenderCustomContent(Nodes::Node &node,
         const ImVec2 &nodePos,
         const ImVec2 &nodeSize,
         float zoomLevel)
     {
-        auto &imageNode = static_cast<Engine::ImageInputNode &>(node);
+        auto &imageNode = static_cast<Vision::IO::ImageInputNode &>(node);
 
         const float padding = Constants::Node::kPadding * zoomLevel;
         const auto [parameterAreaHeight, contentY] = CalculateContentArea(node, nodePos, zoomLevel);
@@ -90,4 +90,4 @@ namespace VisionCraft
         }
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering::Strategies

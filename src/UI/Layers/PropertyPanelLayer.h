@@ -2,7 +2,7 @@
 
 #include "Layer.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     /**
      * @brief Layer for editing node properties.
@@ -40,4 +40,4 @@ namespace VisionCraft
     private:
         // TODO: Handle node selection through events or shared state
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

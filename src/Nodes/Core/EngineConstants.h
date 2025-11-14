@@ -10,7 +10,7 @@
  * from App layer constants to maintain proper layering architecture.
  */
 
-namespace VisionCraft::Engine::Constants
+namespace VisionCraft::Constants
 {
     /**
      * @brief Buffer and storage constants for Engine layer.
@@ -69,4 +69,4 @@ namespace VisionCraft::Engine::Constants
         } // namespace StatusColors
     }     // namespace ImageInputNode
 
-} // namespace VisionCraft::Engine::Constants
+} // namespace VisionCraft::Constants

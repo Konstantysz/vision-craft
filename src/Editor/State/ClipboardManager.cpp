@@ -1,34 +1,34 @@
 #include "ClipboardManager.h"
 
-namespace VisionCraft
+namespace VisionCraft::Editor::State
 {
-    void ClipboardManager::Copy(const std::unordered_set<Engine::NodeId> &selectedNodes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const std::vector<NodeConnection> &connections)
+    void ClipboardManager::Copy(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+        const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+        const std::vector<UI::Widgets::NodeConnection> &connections)
     {
         operation = ClipboardOperation::Copy;
         nodesToDelete.clear();
         DoCopy(selectedNodes, nodeTypes, nodeNames, nodePositions, connections);
     }
 
-    void ClipboardManager::Cut(const std::unordered_set<Engine::NodeId> &selectedNodes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const std::vector<NodeConnection> &connections)
+    void ClipboardManager::Cut(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+        const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+        const std::vector<UI::Widgets::NodeConnection> &connections)
     {
         operation = ClipboardOperation::Cut;
         nodesToDelete.clear(); // Nodes are deleted immediately, no need to track
         DoCopy(selectedNodes, nodeTypes, nodeNames, nodePositions, connections);
     }
 
-    void ClipboardManager::DoCopy(const std::unordered_set<Engine::NodeId> &selectedNodes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeTypes,
-        const std::unordered_map<Engine::NodeId, std::string> &nodeNames,
-        const std::unordered_map<Engine::NodeId, NodePosition> &nodePositions,
-        const std::vector<NodeConnection> &connections)
+    void ClipboardManager::DoCopy(const std::unordered_set<Nodes::NodeId> &selectedNodes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeTypes,
+        const std::unordered_map<Nodes::NodeId, std::string> &nodeNames,
+        const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &nodePositions,
+        const std::vector<UI::Widgets::NodeConnection> &connections)
     {
         copiedNodes.clear();
         copiedConnections.clear();
@@ -100,7 +100,7 @@ namespace VisionCraft
         return copiedConnections;
     }
 
-    const std::unordered_set<Engine::NodeId> &ClipboardManager::GetNodesToDelete() const
+    const std::unordered_set<Nodes::NodeId> &ClipboardManager::GetNodesToDelete() const
     {
         return nodesToDelete;
     }
@@ -134,4 +134,4 @@ namespace VisionCraft
         nodesToDelete.clear();
         operation = ClipboardOperation::Copy; // Convert to copy after cut is complete
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::State

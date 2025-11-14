@@ -1,12 +1,12 @@
-#include "Rendering/NodeRenderer.h"
-#include "Editor/NodeEditorConstants.h"
-#include "Rendering/NodeDimensionCalculator.h"
-#include "Rendering/Strategies/DefaultNodeRenderingStrategy.h"
-#include "Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
-#include "Rendering/Strategies/PreviewNodeRenderingStrategy.h"
+#include "UI/Rendering/NodeRenderer.h"
+#include "UI/Rendering/NodeDimensionCalculator.h"
+#include "UI/Rendering/Strategies/DefaultNodeRenderingStrategy.h"
+#include "UI/Rendering/Strategies/ImageInputNodeRenderingStrategy.h"
+#include "UI/Rendering/Strategies/PreviewNodeRenderingStrategy.h"
+#include "UI/Widgets/NodeEditorConstants.h"
 #include "Logger.h"
-#include "Nodes/ImageInputNode.h"
-#include "Nodes/PreviewNode.h"
+#include "Vision/IO/ImageInputNode.h"
+#include "Vision/IO/PreviewNode.h"
 
 #include <ImGuiFileDialog.h>
 
@@ -15,17 +15,17 @@
 #include <filesystem>
 #include <iterator>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Rendering
 {
-    NodeRenderer::NodeRenderer(CanvasController &canvas, ConnectionManager &connectionManager)
+    NodeRenderer::NodeRenderer(Canvas::CanvasController &canvas, Canvas::ConnectionManager &connectionManager)
         : canvas_(canvas), connectionManager_(connectionManager)
     {
     }
 
-    void NodeRenderer::RenderNode(Engine::Node *node,
-        const NodePosition &nodePos,
-        Engine::NodeId selectedNodeId,
-        std::function<PinInteractionState(Engine::NodeId, const std::string &)> getPinInteractionState)
+    void NodeRenderer::RenderNode(Nodes::Node *node,
+        const Widgets::NodePosition &nodePos,
+        Nodes::NodeId selectedNodeId,
+        std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
     {
         const auto worldPos = canvas_.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
         const auto pins = connectionManager_.GetNodePins(node->GetName());
@@ -79,7 +79,7 @@ namespace VisionCraft
             ImDrawFlags_RoundCornersTop);
     }
 
-    void NodeRenderer::RenderNodeTitleText(Engine::Node *node, const ImVec2 &worldPos)
+    void NodeRenderer::RenderNodeTitleText(Nodes::Node *node, const ImVec2 &worldPos)
     {
         if (canvas_.GetZoomLevel() > Constants::Zoom::kMinForText)
         {
@@ -90,11 +90,11 @@ namespace VisionCraft
         }
     }
 
-    std::pair<std::vector<NodePin>, std::vector<NodePin>> NodeRenderer::SeparateInputOutputPins(
-        const std::vector<NodePin> &pins)
+    std::pair<std::vector<Widgets::NodePin>, std::vector<Widgets::NodePin>> NodeRenderer::SeparateInputOutputPins(
+        const std::vector<Widgets::NodePin> &pins)
     {
-        std::vector<NodePin> inputPins;
-        std::vector<NodePin> outputPins;
+        std::vector<Widgets::NodePin> inputPins;
+        std::vector<Widgets::NodePin> outputPins;
 
         for (const auto &pin : pins)
         {
@@ -111,11 +111,11 @@ namespace VisionCraft
         return { inputPins, outputPins };
     }
 
-    void NodeRenderer::RenderNodeParametersInColumns(Engine::Node *node,
+    void NodeRenderer::RenderNodeParametersInColumns(Nodes::Node *node,
         const ImVec2 &startPos,
         const ImVec2 &nodeSize,
-        const std::vector<NodePin> &inputPins,
-        const std::vector<NodePin> &outputPins)
+        const std::vector<Widgets::NodePin> &inputPins,
+        const std::vector<Widgets::NodePin> &outputPins)
     {
         if (inputPins.empty() && outputPins.empty())
         {
@@ -158,12 +158,12 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderPinsInColumn(Engine::Node *node,
-        const std::vector<NodePin> &pins,
+    void NodeRenderer::RenderPinsInColumn(Nodes::Node *node,
+        const std::vector<Widgets::NodePin> &pins,
         const ImVec2 &nodeWorldPos,
-        const NodeDimensions &dimensions,
+        const Widgets::NodeDimensions &dimensions,
         bool isInputColumn,
-        std::function<PinInteractionState(Engine::NodeId, const std::string &)> getPinInteractionState)
+        std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
     {
         if (pins.empty())
         {
@@ -219,7 +219,7 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderPinWithLabel(const NodePin &pin,
+    void NodeRenderer::RenderPinWithLabel(const Widgets::NodePin &pin,
         const ImVec2 &pinPos,
         const ImVec2 &labelPos,
         float pinRadius,
@@ -236,7 +236,7 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderPin(const NodePin &pin,
+    void NodeRenderer::RenderPin(const Widgets::NodePin &pin,
         const ImVec2 &position,
         float radius,
         const PinInteractionState &state) const
@@ -263,21 +263,21 @@ namespace VisionCraft
         drawList->AddCircle(position, radius, borderColor, 0, Constants::Pin::kBorderThickness);
     }
 
-    ImU32 NodeRenderer::GetDataTypeColor(PinDataType dataType) const
+    ImU32 NodeRenderer::GetDataTypeColor(Widgets::PinDataType dataType) const
     {
         switch (dataType)
         {
-        case PinDataType::Image:
+        case Widgets::PinDataType::Image:
             return Constants::Colors::Pin::kImage;
-        case PinDataType::String:
+        case Widgets::PinDataType::String:
             return Constants::Colors::Pin::kString;
-        case PinDataType::Float:
+        case Widgets::PinDataType::Float:
             return Constants::Colors::Pin::kFloat;
-        case PinDataType::Int:
+        case Widgets::PinDataType::Int:
             return Constants::Colors::Pin::kInt;
-        case PinDataType::Bool:
+        case Widgets::PinDataType::Bool:
             return Constants::Colors::Pin::kBool;
-        case PinDataType::Path:
+        case Widgets::PinDataType::Path:
             return Constants::Colors::Pin::kPath;
         default:
             return Constants::Colors::Pin::kDefault;
@@ -388,8 +388,8 @@ namespace VisionCraft
     }
 
 
-    void NodeRenderer::RenderParameterInColumn(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderParameterInColumn(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const ImVec2 &position,
         float columnWidth)
     {
@@ -409,23 +409,23 @@ namespace VisionCraft
 
         switch (pin.dataType)
         {
-        case PinDataType::String:
+        case Widgets::PinDataType::String:
             RenderStringInput(node, pin, widgetId, inputWidth);
             break;
 
-        case PinDataType::Float:
+        case Widgets::PinDataType::Float:
             RenderFloatInput(node, pin, widgetId, inputWidth);
             break;
 
-        case PinDataType::Int:
+        case Widgets::PinDataType::Int:
             RenderIntInput(node, pin, widgetId, inputWidth);
             break;
 
-        case PinDataType::Bool:
+        case Widgets::PinDataType::Bool:
             RenderBoolInput(node, pin, widgetId);
             break;
 
-        case PinDataType::Path:
+        case Widgets::PinDataType::Path:
             RenderPathInput(node, pin, widgetId, inputWidth);
             break;
 
@@ -437,8 +437,8 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderParameterInputWidget(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderParameterInputWidget(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const ImVec2 &pinPos,
         float pinRadius)
     {
@@ -456,19 +456,19 @@ namespace VisionCraft
 
         switch (pin.dataType)
         {
-        case PinDataType::String:
+        case Widgets::PinDataType::String:
             RenderStringInput(node, pin, widgetId, inputWidth);
             break;
-        case PinDataType::Float:
+        case Widgets::PinDataType::Float:
             RenderFloatInput(node, pin, widgetId, inputWidth);
             break;
-        case PinDataType::Int:
+        case Widgets::PinDataType::Int:
             RenderIntInput(node, pin, widgetId, inputWidth);
             break;
-        case PinDataType::Bool:
+        case Widgets::PinDataType::Bool:
             RenderBoolInput(node, pin, widgetId);
             break;
-        case PinDataType::Path:
+        case Widgets::PinDataType::Path:
             RenderPathInput(node, pin, widgetId, inputWidth);
             break;
         default:
@@ -476,8 +476,8 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderStringInput(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderStringInput(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const std::string &widgetId,
         float inputWidth)
     {
@@ -494,8 +494,8 @@ namespace VisionCraft
         ImGui::PopItemWidth();
     }
 
-    void NodeRenderer::RenderFloatInput(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderFloatInput(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const std::string &widgetId,
         float inputWidth)
     {
@@ -514,8 +514,8 @@ namespace VisionCraft
         ImGui::PopItemWidth();
     }
 
-    void NodeRenderer::RenderIntInput(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderIntInput(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const std::string &widgetId,
         float inputWidth)
     {
@@ -529,7 +529,7 @@ namespace VisionCraft
         ImGui::PopItemWidth();
     }
 
-    void NodeRenderer::RenderBoolInput(Engine::Node *node, const NodePin &pin, const std::string &widgetId)
+    void NodeRenderer::RenderBoolInput(Nodes::Node *node, const Widgets::NodePin &pin, const std::string &widgetId)
     {
         bool value = node->GetInputValue<bool>(pin.name).value_or(false);
 
@@ -539,8 +539,8 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderPathInput(Engine::Node *node,
-        const NodePin &pin,
+    void NodeRenderer::RenderPathInput(Nodes::Node *node,
+        const Widgets::NodePin &pin,
         const std::string &widgetId,
         float inputWidth)
     {
@@ -550,7 +550,8 @@ namespace VisionCraft
         std::strncpy(buffer, pathStr.c_str(), sizeof(buffer) - 1);
         buffer[sizeof(buffer) - 1] = '\0';
 
-        bool isImageInputFilepath = (pin.name == "FilePath" && dynamic_cast<Engine::ImageInputNode *>(node) != nullptr);
+        bool isImageInputFilepath =
+            (pin.name == "FilePath" && dynamic_cast<Vision::IO::ImageInputNode *>(node) != nullptr);
 
         if (isImageInputFilepath)
         {
@@ -599,7 +600,7 @@ namespace VisionCraft
         }
     }
 
-    void NodeRenderer::RenderCustomNodeContent(Engine::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize)
+    void NodeRenderer::RenderCustomNodeContent(Nodes::Node *node, const ImVec2 &nodePos, const ImVec2 &nodeSize)
     {
         if (!node)
             return;
@@ -608,31 +609,32 @@ namespace VisionCraft
         strategy->RenderCustomContent(*node, nodePos, nodeSize, canvas_.GetZoomLevel());
     }
 
-    NodeDimensions NodeRenderer::CalculateNodeDimensions(const std::vector<NodePin> &pins,
+    Widgets::NodeDimensions NodeRenderer::CalculateNodeDimensions(const std::vector<Widgets::NodePin> &pins,
         float zoomLevel,
-        const Engine::Node *node)
+        const Nodes::Node *node)
     {
         return NodeDimensionCalculator::CalculateNodeDimensions(pins, zoomLevel, node);
     }
 
-    std::unique_ptr<NodeRenderingStrategy> NodeRenderer::CreateRenderingStrategy(const Engine::Node *node)
+    std::unique_ptr<Rendering::Strategies::NodeRenderingStrategy> NodeRenderer::CreateRenderingStrategy(
+        const Nodes::Node *node)
     {
         if (!node)
         {
-            return std::make_unique<DefaultNodeRenderingStrategy>();
+            return std::make_unique<Rendering::Strategies::DefaultNodeRenderingStrategy>();
         }
 
-        if (const auto *imageNode = dynamic_cast<const Engine::ImageInputNode *>(node))
+        if (const auto *imageNode = dynamic_cast<const Vision::IO::ImageInputNode *>(node))
         {
-            return std::make_unique<ImageInputNodeRenderingStrategy>();
+            return std::make_unique<Rendering::Strategies::ImageInputNodeRenderingStrategy>();
         }
 
-        if (const auto *previewNode = dynamic_cast<const Engine::PreviewNode *>(node))
+        if (const auto *previewNode = dynamic_cast<const Vision::IO::PreviewNode *>(node))
         {
-            return std::make_unique<PreviewNodeRenderingStrategy>();
+            return std::make_unique<Rendering::Strategies::PreviewNodeRenderingStrategy>();
         }
 
-        return std::make_unique<DefaultNodeRenderingStrategy>();
+        return std::make_unique<Rendering::Strategies::DefaultNodeRenderingStrategy>();
     }
 
     void NodeRenderer::RenderFileBrowser()
@@ -671,4 +673,4 @@ namespace VisionCraft
         }
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Rendering

@@ -1,18 +1,18 @@
-#include "VisionCraftEngine/NodeEditor.h"
-#include "VisionCraftEngine/Nodes/CannyEdgeNode.h"
-#include "VisionCraftEngine/Nodes/ImageInputNode.h"
-#include "VisionCraftEngine/Nodes/ThresholdNode.h"
+#include "Nodes/Core/NodeEditor.h"
+#include "Vision/Algorithms/CannyEdgeNode.h"
+#include "Vision/Algorithms/ThresholdNode.h"
+#include "Vision/IO/ImageInputNode.h"
 
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 // Dummy test node for testing
-class TestNode : public Node
+class TestNode : public Nodes::Node
 {
 public:
-    TestNode(NodeId id, std::string name) : Node(id, std::move(name))
+    TestNode(Nodes::NodeId id, std::string name) : Nodes::Node(id, std::move(name))
     {
     }
 
@@ -29,7 +29,7 @@ public:
 class NodeEditorTest : public ::testing::Test
 {
 protected:
-    NodeEditor editor;
+    Nodes::NodeEditor editor;
 };
 
 // ============================================================================
@@ -402,9 +402,9 @@ TEST_F(NodeEditorTest, ConnectionsToNonExistentNodes)
 
 TEST_F(NodeEditorTest, RealNodeTypes)
 {
-    auto inputNode = std::make_unique<ImageInputNode>(1, "Input");
-    auto thresholdNode = std::make_unique<ThresholdNode>(2, "Threshold");
-    auto cannyNode = std::make_unique<CannyEdgeNode>(3, "Canny");
+    auto inputNode = std::make_unique<Vision::IO::ImageInputNode>(1, "Input");
+    auto thresholdNode = std::make_unique<Vision::Algorithms::ThresholdNode>(2, "Threshold");
+    auto cannyNode = std::make_unique<Vision::Algorithms::CannyEdgeNode>(3, "Canny");
 
     editor.AddNode(std::move(inputNode));
     editor.AddNode(std::move(thresholdNode));
@@ -443,10 +443,10 @@ TEST_F(NodeEditorTest, NextIdTracking)
 // Slot-Based Data Passing Tests
 // ============================================================================
 
-class SlotTestNode : public Node
+class SlotTestNode : public Nodes::Node
 {
 public:
-    SlotTestNode(NodeId id, std::string name) : Node(id, std::move(name))
+    SlotTestNode(Nodes::NodeId id, std::string name) : Nodes::Node(id, std::move(name))
     {
         CreateInputSlot("Input");
         CreateInputSlot("Multiplier", 2.0);
@@ -666,10 +666,10 @@ TEST_F(NodeEditorTest, ExecuteLongChain)
     }
 }
 
-class ErrorThrowingNode : public Node
+class ErrorThrowingNode : public Nodes::Node
 {
 public:
-    ErrorThrowingNode(NodeId id, std::string name) : Node(id, std::move(name))
+    ErrorThrowingNode(Nodes::NodeId id, std::string name) : Nodes::Node(id, std::move(name))
     {
         CreateInputSlot("Input");
         CreateOutputSlot("Output");

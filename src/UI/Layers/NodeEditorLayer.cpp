@@ -1,12 +1,12 @@
 #include "NodeEditorLayer.h"
-#include "Commands/ConnectionCommands.h"
-#include "Commands/NodeCommands.h"
-#include "Editor/NodeEditorConstants.h"
-#include "Events/FileOpenedEvent.h"
-#include "Events/LoadGraphEvent.h"
-#include "Events/NewGraphEvent.h"
-#include "Events/SaveGraphEvent.h"
-#include "Rendering/NodeRenderer.h"
+#include "Editor/Commands/ConnectionCommands.h"
+#include "Editor/Commands/NodeCommands.h"
+#include "UI/Events/FileOpenedEvent.h"
+#include "UI/Events/LoadGraphEvent.h"
+#include "UI/Events/NewGraphEvent.h"
+#include "UI/Events/SaveGraphEvent.h"
+#include "UI/Rendering/NodeRenderer.h"
+#include "UI/Widgets/NodeEditorConstants.h"
 #include "Logger.h"
 
 #include <algorithm>
@@ -16,46 +16,19 @@
 
 #include <imgui.h>
 
-#include "Main/VisionCraftApplication.h"
 #include "Application.h"
 
-#include "Nodes/CannyEdgeNode.h"
-#include "Nodes/GrayscaleNode.h"
-#include "Nodes/ImageInputNode.h"
-#include "Nodes/ImageOutputNode.h"
-#include "Nodes/PreviewNode.h"
-#include "Nodes/ThresholdNode.h"
+#include "Vision/IO/ImageInputNode.h"
 
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
-    NodeEditorLayer::NodeEditorLayer()
-        : nodeRenderer(canvas, connectionManager), inputHandler(selectionManager, contextMenuRenderer, canvas)
+    NodeEditorLayer::NodeEditorLayer(Nodes::NodeEditor &nodeEditor)
+        : nodeEditor(nodeEditor), nodeRenderer(canvas, connectionManager),
+          inputHandler(selectionManager, contextMenuRenderer, canvas)
     {
         // Register all available node types with the factory
-        nodeFactory.Register("ImageInput", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::ImageInputNode>(id, std::string(name));
-        });
-
-        nodeFactory.Register("ImageOutput", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::ImageOutputNode>(id, std::string(name));
-        });
-
-        nodeFactory.Register("Preview", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::PreviewNode>(id, std::string(name));
-        });
-
-        nodeFactory.Register("Grayscale", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::GrayscaleNode>(id, std::string(name));
-        });
-
-        nodeFactory.Register("CannyEdge", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::CannyEdgeNode>(id, std::string(name));
-        });
-
-        nodeFactory.Register("Threshold", [](Engine::NodeId id, std::string_view name) {
-            return std::make_unique<Engine::ThresholdNode>(id, std::string(name));
-        });
+        Nodes::NodeFactory::RegisterAllNodes();
 
         // Register node types for context menu
         contextMenuRenderer.SetAvailableNodeTypes({
@@ -68,15 +41,15 @@ namespace VisionCraft
         });
 
         // Set connection creation callback for undo/redo
-        connectionManager.SetConnectionCreatedCallback([this](const NodeConnection &connection) {
-            auto command = std::make_unique<CreateConnectionCommand>(
+        connectionManager.SetConnectionCreatedCallback([this](const Widgets::NodeConnection &connection) {
+            auto command = std::make_unique<Editor::Commands::CreateConnectionCommand>(
                 connection.outputPin,
                 connection.inputPin,
-                [this](const PinId &outputPin, const PinId &inputPin) {
+                [this](const Widgets::PinId &outputPin, const Widgets::PinId &inputPin) {
                     // Pass false to avoid triggering callback again
-                    connectionManager.CreateConnection(outputPin, inputPin, GetNodeEditor(), false);
+                    connectionManager.CreateConnection(outputPin, inputPin, this->nodeEditor, false);
                 },
-                [this](const NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
+                [this](const Widgets::NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
 
             commandHistory.ExecuteCommand(std::move(command));
         });
@@ -84,19 +57,19 @@ namespace VisionCraft
 
     void NodeEditorLayer::OnEvent(Kappa::Event &event)
     {
-        if (dynamic_cast<SaveGraphEvent *>(&event))
+        if (dynamic_cast<Events::SaveGraphEvent *>(&event))
         {
             HandleSaveGraph();
         }
-        else if (dynamic_cast<LoadGraphEvent *>(&event))
+        else if (dynamic_cast<Events::LoadGraphEvent *>(&event))
         {
             HandleLoadGraph();
         }
-        else if (auto *loadFileEvent = dynamic_cast<LoadGraphFromFileEvent *>(&event))
+        else if (auto *loadFileEvent = dynamic_cast<Events::LoadGraphFromFileEvent *>(&event))
         {
             HandleLoadGraphFromFile(loadFileEvent->GetFilePath());
         }
-        else if (dynamic_cast<NewGraphEvent *>(&event))
+        else if (dynamic_cast<Events::NewGraphEvent *>(&event))
         {
             HandleNewGraph();
         }
@@ -108,7 +81,7 @@ namespace VisionCraft
 
     void NodeEditorLayer::OnRender()
     {
-        ImGui::Begin("Node Editor");
+        ImGui::Begin("Nodes::Node Editor");
 
         auto *drawList = ImGui::GetWindowDrawList();
         const auto canvasPos = ImGui::GetCursorScreenPos();
@@ -119,11 +92,9 @@ namespace VisionCraft
         const auto &io = ImGui::GetIO();
         canvas.HandleImGuiInput(io, ImGui::IsWindowHovered());
 
-        auto &nodeEditor = GetNodeEditor();
-
         if (nodeEditor.GetNodeIds().empty())
         {
-            auto starterNode = std::make_unique<Engine::ImageInputNode>(nextNodeId++);
+            auto starterNode = std::make_unique<Vision::IO::ImageInputNode>(nextNodeId++);
             const auto nodeId = starterNode->GetId();
             nodeEditor.AddNode(std::move(starterNode));
             nodePositions[nodeId] = { 100.0f, 100.0f };
@@ -152,8 +123,6 @@ namespace VisionCraft
 
     void NodeEditorLayer::RenderNodes()
     {
-        auto &nodeEditor = GetNodeEditor();
-
         for (const auto nodeId : nodeEditor.GetNodeIds())
         {
             auto *node = nodeEditor.GetNode(nodeId);
@@ -164,21 +133,22 @@ namespace VisionCraft
         }
     }
 
-    void NodeEditorLayer::RenderNode(Engine::Node *node, const NodePosition &nodePos)
+    void NodeEditorLayer::RenderNode(Nodes::Node *node, const Widgets::NodePosition &nodePos)
     {
-        auto getPinInteractionState = [this](Engine::NodeId nodeId, const std::string &pinName) -> PinInteractionState {
+        auto getPinInteractionState = [this](Nodes::NodeId nodeId,
+                                          const std::string &pinName) -> Rendering::PinInteractionState {
             return this->GetPinInteractionState(nodeId, pinName);
         };
 
         // Determine if this node is selected
         const bool isSelected = selectionManager.IsNodeSelected(node->GetId());
-        const Engine::NodeId displaySelectedId = isSelected ? node->GetId() : Constants::Special::kInvalidNodeId;
+        const Nodes::NodeId displaySelectedId = isSelected ? node->GetId() : Constants::Special::kInvalidNodeId;
 
         nodeRenderer.RenderNode(node, nodePos, displaySelectedId, getPinInteractionState);
     }
 
     bool NodeEditorLayer::IsMouseOverNode(const ImVec2 &mousePos,
-        const NodePosition &nodePos,
+        const Widgets::NodePosition &nodePos,
         const ImVec2 &nodeSize) const
     {
         const auto worldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
@@ -189,13 +159,11 @@ namespace VisionCraft
 
     void NodeEditorLayer::HandleMouseInteractions()
     {
-        auto &nodeEditor = GetNodeEditor();
-
         // Create callbacks for InputHandler
         auto findNode = [this](const ImVec2 &pos) { return FindNodeAtPosition(pos); };
 
-        auto findConnection = [this, &nodeEditor](const ImVec2 &pos) {
-            return connectionManager.FindConnectionAtPosition(pos, nodeEditor, nodePositions, canvas);
+        auto findConnection = [this](const ImVec2 &pos) {
+            return connectionManager.FindConnectionAtPosition(pos, this->nodeEditor, nodePositions, canvas);
         };
 
         auto updateBoxSelection = [this]() { UpdateBoxSelection(); };
@@ -209,29 +177,29 @@ namespace VisionCraft
         {
             switch (action.type)
             {
-            case InputActionType::DeleteNodes:
+            case Canvas::InputActionType::DeleteNodes:
                 for (const auto nodeId : action.nodeIds)
                 {
                     auto *node = nodeEditor.GetNode(nodeId);
                     if (!node)
                         continue;
 
-                    auto command = std::make_unique<DeleteNodeCommand>(
+                    auto command = std::make_unique<Editor::Commands::DeleteNodeCommand>(
                         nodeId,
-                        [this](Engine::NodeId id) -> Engine::Node * { return GetNodeEditor().GetNode(id); },
-                        [this](Engine::NodeId id) {
-                            GetNodeEditor().RemoveNode(id);
+                        [this](Nodes::NodeId id) -> Nodes::Node * { return nodeEditor.GetNode(id); },
+                        [this](Nodes::NodeId id) {
+                            nodeEditor.RemoveNode(id);
                             nodePositions.erase(id);
                             if (selectionManager.IsNodeSelected(id))
                             {
                                 selectionManager.RemoveFromSelection(id);
                             }
                         },
-                        [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
-                        [this](Engine::NodeId id) -> NodePosition { return nodePositions[id]; },
-                        [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
-                        [this](const std::string &type, Engine::NodeId id, const std::string &name) {
-                            return nodeFactory.Create(NodeTypeToFactoryKey(type), id, name);
+                        [this](std::unique_ptr<Nodes::Node> node) { nodeEditor.AddNode(std::move(node)); },
+                        [this](Nodes::NodeId id) -> Widgets::NodePosition { return nodePositions[id]; },
+                        [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
+                        [this](const std::string &type, Nodes::NodeId id, const std::string &name) {
+                            return Nodes::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
                         });
 
                     commandHistory.ExecuteCommand(std::move(command));
@@ -239,39 +207,39 @@ namespace VisionCraft
                 selectionManager.ClearSelection();
                 break;
 
-            case InputActionType::DeleteConnection:
+            case Canvas::InputActionType::DeleteConnection:
                 if (action.connection.has_value())
                 {
-                    auto command = std::make_unique<DeleteConnectionCommand>(
+                    auto command = std::make_unique<Editor::Commands::DeleteConnectionCommand>(
                         action.connection.value(),
-                        [this](const PinId &outputPin, const PinId &inputPin) {
-                            connectionManager.CreateConnection(outputPin, inputPin, GetNodeEditor(), false);
+                        [this](const Widgets::PinId &outputPin, const Widgets::PinId &inputPin) {
+                            connectionManager.CreateConnection(outputPin, inputPin, nodeEditor, false);
                         },
-                        [this](const NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
+                        [this](const Widgets::NodeConnection &conn) { connectionManager.RemoveConnection(conn); });
 
                     commandHistory.ExecuteCommand(std::move(command));
                 }
                 break;
 
-            case InputActionType::UpdateNodePositions:
+            case Canvas::InputActionType::UpdateNodePositions:
                 for (const auto &[nodeId, pos] : action.nodePositions)
                 {
                     nodePositions[nodeId] = pos;
                 }
                 break;
 
-            case InputActionType::UpdateHoveredConnection:
+            case Canvas::InputActionType::UpdateHoveredConnection:
                 hoveredConnection = action.hoveredConnection;
                 break;
 
-            case InputActionType::OpenContextMenu:
+            case Canvas::InputActionType::OpenContextMenu:
                 // Context menu is already opened by InputHandler
                 break;
 
-            case InputActionType::CopyNodes: {
-                // Get node types and names from NodeEditor
-                std::unordered_map<Engine::NodeId, std::string> nodeTypes;
-                std::unordered_map<Engine::NodeId, std::string> nodeNames;
+            case Canvas::InputActionType::CopyNodes: {
+                // Get node types and names from Nodes::NodeEditor
+                std::unordered_map<Nodes::NodeId, std::string> nodeTypes;
+                std::unordered_map<Nodes::NodeId, std::string> nodeNames;
                 for (const auto nodeId : selectionManager.GetSelectedNodes())
                 {
                     if (auto *node = nodeEditor.GetNode(nodeId))
@@ -291,10 +259,10 @@ namespace VisionCraft
                 break;
             }
 
-            case InputActionType::CutNodes: {
-                // Get node types and names from NodeEditor
-                std::unordered_map<Engine::NodeId, std::string> nodeTypes;
-                std::unordered_map<Engine::NodeId, std::string> nodeNames;
+            case Canvas::InputActionType::CutNodes: {
+                // Get node types and names from Nodes::NodeEditor
+                std::unordered_map<Nodes::NodeId, std::string> nodeTypes;
+                std::unordered_map<Nodes::NodeId, std::string> nodeNames;
                 for (const auto nodeId : selectionManager.GetSelectedNodes())
                 {
                     if (auto *node = nodeEditor.GetNode(nodeId))
@@ -313,7 +281,7 @@ namespace VisionCraft
                     connectionManager.GetConnections());
 
                 // Delete nodes immediately (they'll be restored on paste)
-                std::vector<Engine::NodeId> nodesToDelete(
+                std::vector<Nodes::NodeId> nodesToDelete(
                     selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
                 for (const auto nodeId : nodesToDelete)
                 {
@@ -323,7 +291,7 @@ namespace VisionCraft
                 break;
             }
 
-            case InputActionType::PasteNodes: {
+            case Canvas::InputActionType::PasteNodes: {
                 if (!clipboardManager.HasData())
                 {
                     break;
@@ -346,7 +314,7 @@ namespace VisionCraft
                 }
 
                 // Map old IDs to new IDs for connection remapping
-                std::unordered_map<Engine::NodeId, Engine::NodeId> idMapping;
+                std::unordered_map<Nodes::NodeId, Nodes::NodeId> idMapping;
 
                 // Create new nodes
                 for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
@@ -355,7 +323,7 @@ namespace VisionCraft
                     idMapping[copiedNode.originalId] = newNodeId;
 
                     // Create node using factory
-                    auto newNode = nodeFactory.Create(copiedNode.type, newNodeId, copiedNode.name);
+                    auto newNode = Nodes::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
                     if (newNode)
                     {
                         // Calculate offset from center and apply to paste position
@@ -375,8 +343,8 @@ namespace VisionCraft
                     const auto newFromId = idMapping[copiedConnection.fromNodeId];
                     const auto newToId = idMapping[copiedConnection.toNodeId];
 
-                    PinId outputPin{ newFromId, copiedConnection.fromSlot };
-                    PinId inputPin{ newToId, copiedConnection.toSlot };
+                    Widgets::PinId outputPin{ newFromId, copiedConnection.fromSlot };
+                    Widgets::PinId inputPin{ newToId, copiedConnection.toSlot };
 
                     connectionManager.CreateConnection(outputPin, inputPin, nodeEditor);
                 }
@@ -389,7 +357,7 @@ namespace VisionCraft
                 }
 
                 // After first paste of cut operation, convert to copy
-                if (clipboardManager.GetOperation() == ClipboardOperation::Cut)
+                if (clipboardManager.GetOperation() == Editor::State::ClipboardOperation::Cut)
                 {
                     clipboardManager.CompleteCutOperation();
                 }
@@ -397,26 +365,26 @@ namespace VisionCraft
                 break;
             }
 
-            case InputActionType::Undo:
+            case Canvas::InputActionType::Undo:
                 commandHistory.Undo();
                 break;
 
-            case InputActionType::Redo:
+            case Canvas::InputActionType::Redo:
                 commandHistory.Redo();
                 break;
 
-            case InputActionType::FinishNodeMove:
+            case Canvas::InputActionType::FinishNodeMove:
                 if (!action.oldNodePositions.empty() && !action.nodePositions.empty())
                 {
-                    auto command = std::make_unique<MoveNodesCommand>(action.oldNodePositions,
+                    auto command = std::make_unique<Editor::Commands::MoveNodesCommand>(action.oldNodePositions,
                         action.nodePositions,
-                        [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; });
+                        [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; });
 
                     commandHistory.ExecuteCommand(std::move(command));
                 }
                 break;
 
-            case InputActionType::None:
+            case Canvas::InputActionType::None:
                 break;
             }
         }
@@ -440,15 +408,14 @@ namespace VisionCraft
             return;
         }
 
-        auto &nodeEditor = GetNodeEditor();
-
         hoveredPin =
             connectionManager.FindPinAtPositionInNode(mousePos, hoveredNodeId, nodeEditor, nodePositions, canvas);
     }
 
-    PinInteractionState NodeEditorLayer::GetPinInteractionState(Engine::NodeId nodeId, const std::string &pinName) const
+    Rendering::PinInteractionState NodeEditorLayer::GetPinInteractionState(Nodes::NodeId nodeId,
+        const std::string &pinName) const
     {
-        PinInteractionState state;
+        Rendering::PinInteractionState state;
         state.isHovered = (hoveredPin.nodeId == nodeId && hoveredPin.pinName == pinName);
         state.isActive = (connectionManager.IsCreatingConnection() && connectionManager.GetStartPin().nodeId == nodeId
                           && connectionManager.GetStartPin().pinName == pinName);
@@ -460,12 +427,10 @@ namespace VisionCraft
     {
         const auto result = contextMenuRenderer.Render(selectionManager.HasSelection(), clipboardManager.HasData());
 
-        auto &nodeEditor = GetNodeEditor();
-
         switch (result.action)
         {
-        case ContextMenuResult::Action::DeleteNodes: {
-            std::vector<Engine::NodeId> nodesToDelete(
+        case Widgets::ContextMenuResult::Action::DeleteNodes: {
+            std::vector<Nodes::NodeId> nodesToDelete(
                 selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
             for (const auto nodeId : nodesToDelete)
             {
@@ -473,22 +438,22 @@ namespace VisionCraft
                 if (!node)
                     continue;
 
-                auto command = std::make_unique<DeleteNodeCommand>(
+                auto command = std::make_unique<Editor::Commands::DeleteNodeCommand>(
                     nodeId,
-                    [this](Engine::NodeId id) -> Engine::Node * { return GetNodeEditor().GetNode(id); },
-                    [this](Engine::NodeId id) {
-                        GetNodeEditor().RemoveNode(id);
+                    [this](Nodes::NodeId id) -> Nodes::Node * { return nodeEditor.GetNode(id); },
+                    [this](Nodes::NodeId id) {
+                        nodeEditor.RemoveNode(id);
                         nodePositions.erase(id);
                         if (selectionManager.IsNodeSelected(id))
                         {
                             selectionManager.RemoveFromSelection(id);
                         }
                     },
-                    [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
-                    [this](Engine::NodeId id) -> NodePosition { return nodePositions[id]; },
-                    [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
-                    [this](const std::string &type, Engine::NodeId id, const std::string &name) {
-                        return nodeFactory.Create(NodeTypeToFactoryKey(type), id, name);
+                    [this](std::unique_ptr<Nodes::Node> node) { nodeEditor.AddNode(std::move(node)); },
+                    [this](Nodes::NodeId id) -> Widgets::NodePosition { return nodePositions[id]; },
+                    [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
+                    [this](const std::string &type, Nodes::NodeId id, const std::string &name) {
+                        return Nodes::NodeFactory::CreateNode(NodeTypeToFactoryKey(type), id, name);
                     });
 
                 commandHistory.ExecuteCommand(std::move(command));
@@ -496,13 +461,13 @@ namespace VisionCraft
             selectionManager.ClearSelection();
             break;
         }
-        case ContextMenuResult::Action::CreateNode:
+        case Widgets::ContextMenuResult::Action::CreateNode:
             CreateNodeAtPosition(result.nodeType, inputHandler.GetContextMenuPos());
             break;
-        case ContextMenuResult::Action::CopyNodes: {
-            // Get node types and names from NodeEditor
-            std::unordered_map<Engine::NodeId, std::string> nodeTypes;
-            std::unordered_map<Engine::NodeId, std::string> nodeNames;
+        case Widgets::ContextMenuResult::Action::CopyNodes: {
+            // Get node types and names from Nodes::NodeEditor
+            std::unordered_map<Nodes::NodeId, std::string> nodeTypes;
+            std::unordered_map<Nodes::NodeId, std::string> nodeNames;
             for (const auto nodeId : selectionManager.GetSelectedNodes())
             {
                 if (auto *node = nodeEditor.GetNode(nodeId))
@@ -521,10 +486,10 @@ namespace VisionCraft
                 connectionManager.GetConnections());
             break;
         }
-        case ContextMenuResult::Action::CutNodes: {
-            // Get node types and names from NodeEditor
-            std::unordered_map<Engine::NodeId, std::string> nodeTypes;
-            std::unordered_map<Engine::NodeId, std::string> nodeNames;
+        case Widgets::ContextMenuResult::Action::CutNodes: {
+            // Get node types and names from Nodes::NodeEditor
+            std::unordered_map<Nodes::NodeId, std::string> nodeTypes;
+            std::unordered_map<Nodes::NodeId, std::string> nodeNames;
             for (const auto nodeId : selectionManager.GetSelectedNodes())
             {
                 if (auto *node = nodeEditor.GetNode(nodeId))
@@ -543,7 +508,7 @@ namespace VisionCraft
                 connectionManager.GetConnections());
 
             // Delete nodes immediately (they'll be restored on paste)
-            std::vector<Engine::NodeId> nodesToDelete(
+            std::vector<Nodes::NodeId> nodesToDelete(
                 selectionManager.GetSelectedNodes().begin(), selectionManager.GetSelectedNodes().end());
             for (const auto nodeId : nodesToDelete)
             {
@@ -552,7 +517,7 @@ namespace VisionCraft
             selectionManager.ClearSelection();
             break;
         }
-        case ContextMenuResult::Action::PasteNodes: {
+        case Widgets::ContextMenuResult::Action::PasteNodes: {
             if (!clipboardManager.HasData())
             {
                 break;
@@ -575,7 +540,7 @@ namespace VisionCraft
             }
 
             // Map old IDs to new IDs for connection remapping
-            std::unordered_map<Engine::NodeId, Engine::NodeId> idMapping;
+            std::unordered_map<Nodes::NodeId, Nodes::NodeId> idMapping;
 
             // Create new nodes
             for (const auto &copiedNode : clipboardManager.GetCopiedNodes())
@@ -584,7 +549,7 @@ namespace VisionCraft
                 idMapping[copiedNode.originalId] = newNodeId;
 
                 // Create node using factory
-                auto newNode = nodeFactory.Create(copiedNode.type, newNodeId, copiedNode.name);
+                auto newNode = Nodes::NodeFactory::CreateNode(copiedNode.type, newNodeId, copiedNode.name);
                 if (newNode)
                 {
                     // Calculate offset from center and apply to paste position
@@ -604,8 +569,8 @@ namespace VisionCraft
                 const auto newFromId = idMapping[copiedConnection.fromNodeId];
                 const auto newToId = idMapping[copiedConnection.toNodeId];
 
-                PinId outputPin{ newFromId, copiedConnection.fromSlot };
-                PinId inputPin{ newToId, copiedConnection.toSlot };
+                Widgets::PinId outputPin{ newFromId, copiedConnection.fromSlot };
+                Widgets::PinId inputPin{ newToId, copiedConnection.toSlot };
 
                 connectionManager.CreateConnection(outputPin, inputPin, nodeEditor);
             }
@@ -618,14 +583,14 @@ namespace VisionCraft
             }
 
             // After first paste of cut operation, convert to copy
-            if (clipboardManager.GetOperation() == ClipboardOperation::Cut)
+            if (clipboardManager.GetOperation() == Editor::State::ClipboardOperation::Cut)
             {
                 clipboardManager.CompleteCutOperation();
             }
 
             break;
         }
-        case ContextMenuResult::Action::None:
+        case Widgets::ContextMenuResult::Action::None:
             break;
         }
     }
@@ -650,12 +615,14 @@ namespace VisionCraft
         const auto displayName = displayNames.contains(nodeType) ? displayNames.at(nodeType) : nodeType;
 
         // Create command for node creation
-        auto command = std::make_unique<CreateNodeCommand>(
-            [this, nodeType, nodeId, displayName]() { return nodeFactory.Create(nodeType, nodeId, displayName); },
-            [this](std::unique_ptr<Engine::Node> node) { GetNodeEditor().AddNode(std::move(node)); },
-            [this](Engine::NodeId id) { GetNodeEditor().RemoveNode(id); },
-            [this](Engine::NodeId id, const NodePosition &pos) { nodePositions[id] = pos; },
-            NodePosition{ worldX, worldY },
+        auto command = std::make_unique<Editor::Commands::CreateNodeCommand>(
+            [this, nodeType, nodeId, displayName]() {
+                return Nodes::NodeFactory::CreateNode(nodeType, nodeId, displayName);
+            },
+            [this](std::unique_ptr<Nodes::Node> node) { nodeEditor.AddNode(std::move(node)); },
+            [this](Nodes::NodeId id) { nodeEditor.RemoveNode(id); },
+            [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
+            Widgets::NodePosition{ worldX, worldY },
             nodeType);
 
         commandHistory.ExecuteCommand(std::move(command));
@@ -663,21 +630,21 @@ namespace VisionCraft
     }
 
 
-    ImU32 NodeEditorLayer::GetDataTypeColor(PinDataType dataType) const
+    ImU32 NodeEditorLayer::GetDataTypeColor(Widgets::PinDataType dataType) const
     {
         switch (dataType)
         {
-        case PinDataType::Image:
+        case Widgets::PinDataType::Image:
             return Constants::Colors::Pin::kImage;
-        case PinDataType::String:
+        case Widgets::PinDataType::String:
             return Constants::Colors::Pin::kString;
-        case PinDataType::Float:
+        case Widgets::PinDataType::Float:
             return Constants::Colors::Pin::kFloat;
-        case PinDataType::Int:
+        case Widgets::PinDataType::Int:
             return Constants::Colors::Pin::kInt;
-        case PinDataType::Bool:
+        case Widgets::PinDataType::Bool:
             return Constants::Colors::Pin::kBool;
-        case PinDataType::Path:
+        case Widgets::PinDataType::Path:
             return Constants::Colors::Pin::kPath;
         default:
             return Constants::Colors::Pin::kDefault;
@@ -685,9 +652,8 @@ namespace VisionCraft
     }
 
 
-    Engine::NodeId NodeEditorLayer::FindNodeAtPosition(const ImVec2 &mousePos) const
+    Nodes::NodeId NodeEditorLayer::FindNodeAtPosition(const ImVec2 &mousePos) const
     {
-        const auto &nodeEditor = GetNodeEditor();
         const auto nodeIds = nodeEditor.GetNodeIds();
 
         for (auto it = nodeIds.rbegin(); it != nodeIds.rend(); ++it)
@@ -699,7 +665,7 @@ namespace VisionCraft
                 continue;
 
             const auto pins = connectionManager.GetNodePins(node->GetName());
-            const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+            const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
 
             if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))
             {
@@ -710,15 +676,6 @@ namespace VisionCraft
         return Constants::Special::kInvalidNodeId;
     }
 
-    Engine::NodeEditor &NodeEditorLayer::GetNodeEditor()
-    {
-        return static_cast<VisionCraftApplication &>(Kappa::Application::Get()).GetNodeEditor();
-    }
-
-    const Engine::NodeEditor &NodeEditorLayer::GetNodeEditor() const
-    {
-        return static_cast<const VisionCraftApplication &>(Kappa::Application::Get()).GetNodeEditor();
-    }
 
     void NodeEditorLayer::HandleSaveGraph()
     {
@@ -728,17 +685,17 @@ namespace VisionCraft
         }
         else
         {
-            std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+            std::unordered_map<Nodes::NodeId, std::pair<float, float>> positions;
             for (const auto &[id, pos] : nodePositions)
             {
                 positions[id] = { pos.x, pos.y };
             }
 
-            if (GetNodeEditor().SaveToFile(currentFilePath, positions))
+            if (nodeEditor.SaveToFile(currentFilePath, positions))
             {
                 LOG_INFO("Graph saved successfully to: {}", currentFilePath);
 
-                FileOpenedEvent fileEvent(currentFilePath);
+                Events::FileOpenedEvent fileEvent(currentFilePath);
                 Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
@@ -755,21 +712,21 @@ namespace VisionCraft
 
     void NodeEditorLayer::HandleLoadGraphFromFile(const std::string &filePath)
     {
-        std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+        std::unordered_map<Nodes::NodeId, std::pair<float, float>> positions;
 
-        if (GetNodeEditor().LoadFromFile(filePath, positions))
+        if (nodeEditor.LoadFromFile(filePath, positions))
         {
             nodePositions.clear();
             for (const auto &[id, pos] : positions)
             {
-                nodePositions[id] = NodePosition{ pos.first, pos.second };
+                nodePositions[id] = Widgets::NodePosition{ pos.first, pos.second };
             }
 
             currentFilePath = filePath;
             selectionManager.ClearSelection();
 
-            Engine::NodeId maxId = 0;
-            for (const auto &id : GetNodeEditor().GetNodeIds())
+            Nodes::NodeId maxId = 0;
+            for (const auto &id : nodeEditor.GetNodeIds())
             {
                 if (id > maxId)
                     maxId = id;
@@ -778,7 +735,7 @@ namespace VisionCraft
 
             LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
 
-            FileOpenedEvent fileEvent(currentFilePath);
+            Events::FileOpenedEvent fileEvent(currentFilePath);
             Kappa::Application::Get().GetEventBus().Publish(fileEvent);
         }
         else
@@ -789,7 +746,7 @@ namespace VisionCraft
 
     void NodeEditorLayer::HandleNewGraph()
     {
-        GetNodeEditor().Clear();
+        nodeEditor.Clear();
         nodePositions.clear();
         currentFilePath.clear();
         selectionManager.ClearSelection();
@@ -801,21 +758,21 @@ namespace VisionCraft
     {
         const auto result = fileDialogManager.RenderSaveDialog();
 
-        if (result.action == FileDialogResult::Action::Save)
+        if (result.action == Widgets::FileDialogResult::Action::Save)
         {
             currentFilePath = result.filepath;
 
-            std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+            std::unordered_map<Nodes::NodeId, std::pair<float, float>> positions;
             for (const auto &[id, pos] : nodePositions)
             {
                 positions[id] = { pos.x, pos.y };
             }
 
-            if (GetNodeEditor().SaveToFile(currentFilePath, positions))
+            if (nodeEditor.SaveToFile(currentFilePath, positions))
             {
                 LOG_INFO("Graph saved successfully to: {}", currentFilePath);
 
-                FileOpenedEvent fileEvent(currentFilePath);
+                Events::FileOpenedEvent fileEvent(currentFilePath);
                 Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
@@ -829,24 +786,24 @@ namespace VisionCraft
     {
         const auto result = fileDialogManager.RenderLoadDialog();
 
-        if (result.action == FileDialogResult::Action::Load)
+        if (result.action == Widgets::FileDialogResult::Action::Load)
         {
-            std::unordered_map<Engine::NodeId, std::pair<float, float>> positions;
+            std::unordered_map<Nodes::NodeId, std::pair<float, float>> positions;
 
-            if (GetNodeEditor().LoadFromFile(result.filepath, positions))
+            if (nodeEditor.LoadFromFile(result.filepath, positions))
             {
                 nodePositions.clear();
                 for (const auto &[id, pos] : positions)
                 {
-                    nodePositions[id] = NodePosition{ pos.first, pos.second };
+                    nodePositions[id] = Widgets::NodePosition{ pos.first, pos.second };
                 }
 
                 currentFilePath = result.filepath;
                 selectionManager.ClearSelection();
 
                 // Update nextNodeId to be higher than any loaded ID
-                Engine::NodeId maxId = 0;
-                for (const auto &id : GetNodeEditor().GetNodeIds())
+                Nodes::NodeId maxId = 0;
+                for (const auto &id : nodeEditor.GetNodeIds())
                 {
                     if (id > maxId)
                         maxId = id;
@@ -855,7 +812,7 @@ namespace VisionCraft
 
                 LOG_INFO("Graph loaded successfully from: {}", currentFilePath);
 
-                FileOpenedEvent fileEvent(currentFilePath);
+                Events::FileOpenedEvent fileEvent(currentFilePath);
                 Kappa::Application::Get().GetEventBus().Publish(fileEvent);
             }
             else
@@ -865,14 +822,12 @@ namespace VisionCraft
         }
     }
 
-    void NodeEditorLayer::DeleteNode(Engine::NodeId nodeId)
+    void NodeEditorLayer::DeleteNode(Nodes::NodeId nodeId)
     {
         if (nodeId == Constants::Special::kInvalidNodeId)
         {
             return;
         }
-
-        auto &nodeEditor = GetNodeEditor();
 
         // Remove from selection if it's selected
         if (selectionManager.IsNodeSelected(nodeId))
@@ -934,7 +889,7 @@ namespace VisionCraft
         }
     }
 
-    bool NodeEditorLayer::IsNodeSelected(Engine::NodeId nodeId) const
+    bool NodeEditorLayer::IsNodeSelected(Nodes::NodeId nodeId) const
     {
         return selectionManager.IsNodeSelected(nodeId);
     }
@@ -959,4 +914,4 @@ namespace VisionCraft
         LOG_WARN("NodeEditorLayer::NodeTypeToFactoryKey - Unknown node type: {}", nodeType);
         return nodeType;
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

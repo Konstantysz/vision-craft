@@ -1,10 +1,10 @@
-#include "Input/SelectionManager.h"
+#include "Editor/State/SelectionManager.h"
 
 #include <algorithm>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::State
 {
-    bool SelectionManager::IsNodeSelected(Engine::NodeId nodeId) const
+    bool SelectionManager::IsNodeSelected(Nodes::NodeId nodeId) const
     {
         return selectedNodes.contains(nodeId);
     }
@@ -19,19 +19,19 @@ namespace VisionCraft
         return selectedNodes.size();
     }
 
-    const std::unordered_set<Engine::NodeId> &SelectionManager::GetSelectedNodes() const
+    const std::unordered_set<Nodes::NodeId> &SelectionManager::GetSelectedNodes() const
     {
         return selectedNodes;
     }
 
-    void SelectionManager::SelectNode(Engine::NodeId nodeId)
+    void SelectionManager::SelectNode(Nodes::NodeId nodeId)
     {
         selectedNodes.clear();
         selectedNodes.insert(nodeId);
         primarySelection = nodeId;
     }
 
-    void SelectionManager::ToggleNodeSelection(Engine::NodeId nodeId)
+    void SelectionManager::ToggleNodeSelection(Nodes::NodeId nodeId)
     {
         if (selectedNodes.contains(nodeId))
         {
@@ -48,13 +48,13 @@ namespace VisionCraft
         }
     }
 
-    void SelectionManager::AddToSelection(Engine::NodeId nodeId)
+    void SelectionManager::AddToSelection(Nodes::NodeId nodeId)
     {
         selectedNodes.insert(nodeId);
         primarySelection = nodeId;
     }
 
-    void SelectionManager::RemoveFromSelection(Engine::NodeId nodeId)
+    void SelectionManager::RemoveFromSelection(Nodes::NodeId nodeId)
     {
         selectedNodes.erase(nodeId);
         if (primarySelection == nodeId)
@@ -69,7 +69,7 @@ namespace VisionCraft
         primarySelection = -1;
     }
 
-    Engine::NodeId SelectionManager::GetPrimarySelection() const
+    Nodes::NodeId SelectionManager::GetPrimarySelection() const
     {
         return primarySelection;
     }
@@ -110,7 +110,7 @@ namespace VisionCraft
     }
 
     void SelectionManager::StartDrag(const ImVec2 &mousePos,
-        const std::unordered_map<Engine::NodeId, ImVec2> &nodePositions)
+        const std::unordered_map<Nodes::NodeId, ImVec2> &nodePositions)
     {
         isDragging = true;
         dragOffsets.clear();
@@ -136,7 +136,7 @@ namespace VisionCraft
         return isDragging;
     }
 
-    ImVec2 SelectionManager::GetDragOffset(Engine::NodeId nodeId) const
+    ImVec2 SelectionManager::GetDragOffset(Nodes::NodeId nodeId) const
     {
         if (const auto it = dragOffsets.find(nodeId); it != dragOffsets.end())
         {
@@ -145,8 +145,8 @@ namespace VisionCraft
         return ImVec2(0.0f, 0.0f);
     }
 
-    const std::unordered_map<Engine::NodeId, ImVec2> &SelectionManager::GetDragOffsets() const
+    const std::unordered_map<Nodes::NodeId, ImVec2> &SelectionManager::GetDragOffsets() const
     {
         return dragOffsets;
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::State

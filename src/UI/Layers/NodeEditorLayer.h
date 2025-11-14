@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Canvas/CanvasController.h"
-#include "Commands/CommandHistory.h"
-#include "Connections/ConnectionManager.h"
-#include "Editor/ClipboardManager.h"
-#include "Editor/NodeEditorTypes.h"
-#include "Editor/NodeFactory.h"
-#include "Input/InputHandler.h"
-#include "Input/SelectionManager.h"
-#include "Rendering/NodeRenderer.h"
-#include "UI/ContextMenuRenderer.h"
-#include "UI/FileDialogManager.h"
+#include "Editor/Commands/CommandHistory.h"
+#include "Editor/State/ClipboardManager.h"
+#include "Editor/State/SelectionManager.h"
+#include "UI/Canvas/CanvasController.h"
+#include "UI/Canvas/ConnectionManager.h"
+#include "UI/Canvas/InputHandler.h"
+#include "UI/Rendering/NodeRenderer.h"
+#include "UI/Widgets/ContextMenuRenderer.h"
+#include "UI/Widgets/FileDialogManager.h"
+#include "UI/Widgets/NodeEditorTypes.h"
 #include "Layer.h"
-#include "NodeEditor.h"
+#include "Nodes/Core/NodeEditor.h"
+#include "Nodes/Factory/NodeFactory.h"
 
 #include <memory>
 #include <unordered_map>
@@ -20,18 +20,19 @@
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Layers
 {
     /**
-     * @brief Node editor layer with canvas, rendering, and interactions.
+     * @brief Nodes::Node editor layer with canvas, rendering, and interactions.
      */
     class NodeEditorLayer : public Kappa::Layer
     {
     public:
         /**
-         * @brief Default constructor.
+         * @brief Constructor that initializes the node editor layer.
+         * @param nodeEditor Reference to the shared node editor instance
          */
-        NodeEditorLayer();
+        explicit NodeEditorLayer(Nodes::NodeEditor &nodeEditor);
 
         /**
          * @brief Virtual destructor.
@@ -63,20 +64,20 @@ namespace VisionCraft
 
         /**
          * @brief Renders single node.
-         * @param node Node to render
-         * @param nodePos Node position
+         * @param node Nodes::Node to render
+         * @param nodePos Nodes::Node position
          */
-        void RenderNode(Engine::Node *node, const NodePosition &nodePos);
+        void RenderNode(Nodes::Node *node, const Widgets::NodePosition &nodePos);
 
         /**
          * @brief Checks if mouse is over node.
          * @param mousePos Mouse position
-         * @param nodePos Node position
-         * @param nodeSize Node size
+         * @param nodePos Nodes::Node position
+         * @param nodeSize Nodes::Node size
          * @return True if over node
          */
         [[nodiscard]] bool
-            IsMouseOverNode(const ImVec2 &mousePos, const NodePosition &nodePos, const ImVec2 &nodeSize) const;
+            IsMouseOverNode(const ImVec2 &mousePos, const Widgets::NodePosition &nodePos, const ImVec2 &nodeSize) const;
 
         /**
          * @brief Handles mouse interactions.
@@ -90,11 +91,11 @@ namespace VisionCraft
 
         /**
          * @brief Returns pin interaction state.
-         * @param nodeId Node ID
+         * @param nodeId Nodes::Node ID
          * @param pinName Pin name
          * @return Pin interaction state
          */
-        [[nodiscard]] PinInteractionState GetPinInteractionState(Engine::NodeId nodeId,
+        [[nodiscard]] Rendering::PinInteractionState GetPinInteractionState(Nodes::NodeId nodeId,
             const std::string &pinName) const;
 
         /**
@@ -106,12 +107,12 @@ namespace VisionCraft
          * @param zoomLevel Zoom level
          * @param state Interaction state
          */
-        void RenderPinWithLabel(const NodePin &pin,
+        void RenderPinWithLabel(const Widgets::NodePin &pin,
             const ImVec2 &pinPos,
             const ImVec2 &labelPos,
             float pinRadius,
             float zoomLevel,
-            const PinInteractionState &state) const;
+            const Rendering::PinInteractionState &state) const;
 
         /**
          * @brief Renders context menu.
@@ -120,30 +121,30 @@ namespace VisionCraft
 
         /**
          * @brief Creates node at position.
-         * @param nodeType Node type
+         * @param nodeType Nodes::Node type
          * @param position Position to place node
          */
         void CreateNodeAtPosition(const std::string &nodeType, const ImVec2 &position);
 
         /**
          * @brief Deletes a node.
-         * @param nodeId Node ID to delete
+         * @param nodeId Nodes::Node ID to delete
          */
-        void DeleteNode(Engine::NodeId nodeId);
+        void DeleteNode(Nodes::NodeId nodeId);
 
         /**
          * @brief Returns data type color.
          * @param dataType Data type
          * @return Color
          */
-        [[nodiscard]] ImU32 GetDataTypeColor(PinDataType dataType) const;
+        [[nodiscard]] ImU32 GetDataTypeColor(Widgets::PinDataType dataType) const;
 
         /**
          * @brief Finds node at position.
          * @param mousePos Mouse position
-         * @return Node ID or -1
+         * @return Nodes::Node ID or -1
          */
-        [[nodiscard]] Engine::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
+        [[nodiscard]] Nodes::NodeId FindNodeAtPosition(const ImVec2 &mousePos) const;
 
         /**
          * @brief Renders box selection rectangle.
@@ -157,22 +158,11 @@ namespace VisionCraft
 
         /**
          * @brief Checks if node is selected.
-         * @param nodeId Node ID to check
+         * @param nodeId Nodes::Node ID to check
          * @return True if selected
          */
-        [[nodiscard]] bool IsNodeSelected(Engine::NodeId nodeId) const;
+        [[nodiscard]] bool IsNodeSelected(Nodes::NodeId nodeId) const;
 
-        /**
-         * @brief Returns shared node editor.
-         * @return Node editor
-         */
-        [[nodiscard]] Engine::NodeEditor &GetNodeEditor();
-
-        /**
-         * @brief Returns shared node editor.
-         * @return Node editor
-         */
-        [[nodiscard]] const Engine::NodeEditor &GetNodeEditor() const;
 
         /**
          * @brief Handles save graph event.
@@ -207,32 +197,32 @@ namespace VisionCraft
 
         /**
          * @brief Converts node class type to factory registration key.
-         * @param nodeType Node class type (e.g., "GrayscaleNode")
+         * @param nodeType Nodes::Node class type (e.g., "GrayscaleNode")
          * @return Factory key (e.g., "Grayscale")
          */
         [[nodiscard]] std::string NodeTypeToFactoryKey(const std::string &nodeType) const;
 
         // Core components
-        CanvasController canvas;                                        ///< Canvas management component
-        ConnectionManager connectionManager;                            ///< Connection management component
-        NodeRenderer nodeRenderer;                                      ///< Node rendering component
-        NodeFactory nodeFactory;                                        ///< Factory for creating nodes
-        SelectionManager selectionManager;                              ///< Manages node selection and dragging
-        ContextMenuRenderer contextMenuRenderer;                        ///< Renders context menu
-        FileDialogManager fileDialogManager;                            ///< Manages file dialogs
-        InputHandler inputHandler;                                      ///< Handles input processing
-        ClipboardManager clipboardManager;                              ///< Manages copy/cut/paste operations
-        CommandHistory commandHistory;                                  ///< Manages undo/redo history
-        std::unordered_map<Engine::NodeId, NodePosition> nodePositions; ///< Visual positions of nodes
-        Engine::NodeId nextNodeId = 1;                                  ///< Next available node ID
+        Nodes::NodeEditor &nodeEditor;                    ///< Reference to the shared node editor instance
+        Canvas::CanvasController canvas;                  ///< Canvas management component
+        Canvas::ConnectionManager connectionManager;      ///< Connection management component
+        Rendering::NodeRenderer nodeRenderer;             ///< Nodes::Node rendering component
+        Editor::State::SelectionManager selectionManager; ///< Manages node selection and dragging
+        Widgets::ContextMenuRenderer contextMenuRenderer; ///< Renders context menu
+        Widgets::FileDialogManager fileDialogManager;     ///< Manages file dialogs
+        Canvas::InputHandler inputHandler;                ///< Handles input processing
+        Editor::State::ClipboardManager clipboardManager; ///< Manages copy/cut/paste operations
+        Editor::Commands::CommandHistory commandHistory;  ///< Manages undo/redo history
+        std::unordered_map<Nodes::NodeId, Widgets::NodePosition> nodePositions; ///< Visual positions of nodes
+        Nodes::NodeId nextNodeId = 1;                                           ///< Next available node ID
 
         // Pin interaction state
-        PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin
+        Widgets::PinId hoveredPin = { Constants::Special::kInvalidNodeId, "" }; ///< Currently hovered pin
 
         // Connection interaction state
-        std::optional<NodeConnection> hoveredConnection = std::nullopt; ///< Currently hovered connection
+        std::optional<Widgets::NodeConnection> hoveredConnection = std::nullopt; ///< Currently hovered connection
 
         // File management state
         std::string currentFilePath; ///< Current file path
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Layers

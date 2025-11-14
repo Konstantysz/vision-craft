@@ -1,9 +1,9 @@
-#include "UI/ContextMenuRenderer.h"
+#include "UI/Widgets/ContextMenuRenderer.h"
 
 #include <algorithm>
 #include <unordered_map>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     ContextMenuResult ContextMenuRenderer::Render(bool hasSelection, bool hasClipboardData)
     {
@@ -43,7 +43,7 @@ namespace VisionCraft
 
             ImGui::Separator();
 
-            // Nested "Add Node" submenu
+            // Nested "Add Nodes::Node" submenu
             const auto selectedNodeType = RenderAddNodeSubmenu();
             if (!selectedNodeType.empty())
             {
@@ -72,7 +72,7 @@ namespace VisionCraft
     {
         std::string selectedType;
 
-        if (ImGui::BeginMenu("Add Node"))
+        if (ImGui::BeginMenu("Add Nodes::Node"))
         {
             // Group nodes by category
             std::unordered_map<std::string, std::vector<const NodeTypeInfo *>> categorizedNodes;
@@ -105,4 +105,4 @@ namespace VisionCraft
 
         return selectedType;
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

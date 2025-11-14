@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 
-namespace VisionCraft
+namespace VisionCraft::UI::Widgets
 {
     /**
      * @brief Result of file dialog operations.
@@ -83,4 +83,4 @@ namespace VisionCraft
          */
         void ClearBuffer();
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Widgets

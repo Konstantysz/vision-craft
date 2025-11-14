@@ -6,10 +6,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "Slot.h"
+#include "Nodes/Core/Slot.h"
 
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
     /**
      * @brief Alias for a Node ID.
@@ -191,4 +191,4 @@ namespace VisionCraft::Engine
     extern template Slot &Node::CreateInputSlot<std::string>(const std::string &, std::string);
     extern template Slot &Node::CreateInputSlot<std::filesystem::path>(const std::string &, std::filesystem::path);
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

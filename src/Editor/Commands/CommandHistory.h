@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     /**
      * @brief Manages command history for undo/redo functionality.
@@ -105,4 +105,4 @@ namespace VisionCraft
         void TrimHistory();
     };
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

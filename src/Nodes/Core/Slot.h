@@ -1,10 +1,10 @@
 #pragma once
 
-#include "NodeData.h"
+#include "Nodes/Core/NodeData.h"
 #include <optional>
 #include <string>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
     /**
      * @brief Type-safe data slot with optional default values.
@@ -126,4 +126,4 @@ namespace VisionCraft::Engine
         std::optional<NodeData> defaultValue; ///< UI-editable default value
     };
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

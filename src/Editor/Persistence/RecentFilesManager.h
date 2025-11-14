@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Persistence
 {
     /**
      * @brief Manager for tracking recently opened files.
@@ -59,4 +59,4 @@ namespace VisionCraft
         mutable std::vector<std::string> recentFiles; ///< Cached recent files
         mutable bool filesCached = false;             ///< Whether files have been cached
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Persistence

@@ -1,10 +1,10 @@
-#include "ImageOutputNode.h"
+#include "Vision/IO/ImageOutputNode.h"
 #include "Logger.h"
 #include <filesystem>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::IO
 {
-    ImageOutputNode::ImageOutputNode(NodeId id, const std::string &name) : Node(id, name)
+    ImageOutputNode::ImageOutputNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("Input");
         CreateInputSlot("SavePath", std::filesystem::path{});
@@ -118,4 +118,4 @@ namespace VisionCraft::Engine
             return false;
         }
     }
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::IO

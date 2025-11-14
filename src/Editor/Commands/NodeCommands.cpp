@@ -1,6 +1,6 @@
 #include "NodeCommands.h"
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Commands
 {
     // CreateNodeCommand
 
@@ -8,7 +8,7 @@ namespace VisionCraft
         NodeAdder adder,
         NodeRemover remover,
         PositionSetter positionSetter,
-        const NodePosition &position,
+        const UI::Widgets::NodePosition &position,
         const std::string &nodeType)
         : nodeCreator(std::move(creator)), nodeAdder(std::move(adder)), nodeRemover(std::move(remover)),
           positionSetter(std::move(positionSetter)), position(position), nodeType(nodeType)
@@ -38,7 +38,7 @@ namespace VisionCraft
 
     // DeleteNodeCommand
 
-    DeleteNodeCommand::DeleteNodeCommand(Engine::NodeId nodeId,
+    DeleteNodeCommand::DeleteNodeCommand(Nodes::NodeId nodeId,
         NodeGetter nodeGetter,
         NodeRemover nodeRemover,
         NodeAdder nodeAdder,
@@ -85,13 +85,13 @@ namespace VisionCraft
 
     std::string DeleteNodeCommand::GetDescription() const
     {
-        return "Delete Node";
+        return "Delete Nodes::Node";
     }
 
     // MoveNodesCommand
 
-    MoveNodesCommand::MoveNodesCommand(const std::unordered_map<Engine::NodeId, NodePosition> &oldPositions,
-        const std::unordered_map<Engine::NodeId, NodePosition> &newPositions,
+    MoveNodesCommand::MoveNodesCommand(const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &oldPositions,
+        const std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition> &newPositions,
         PositionSetter positionSetter)
         : oldPositions(oldPositions), newPositions(newPositions), positionSetter(std::move(positionSetter))
     {
@@ -117,9 +117,9 @@ namespace VisionCraft
     {
         if (newPositions.size() == 1)
         {
-            return "Move Node";
+            return "Move Nodes::Node";
         }
         return "Move " + std::to_string(newPositions.size()) + " Nodes";
     }
 
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Commands

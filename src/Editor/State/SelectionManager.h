@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Editor/NodeEditorTypes.h"
+#include "UI/Widgets/NodeEditorTypes.h"
 
 #include <unordered_set>
 
 #include <imgui.h>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::State
 {
     /**
      * @brief Manages node selection state and operations.
@@ -19,10 +19,10 @@ namespace VisionCraft
     public:
         /**
          * @brief Checks if a node is selected.
-         * @param nodeId Node ID to check
+         * @param nodeId Nodes::Node ID to check
          * @return True if node is selected
          */
-        [[nodiscard]] bool IsNodeSelected(Engine::NodeId nodeId) const;
+        [[nodiscard]] bool IsNodeSelected(Nodes::NodeId nodeId) const;
 
         /**
          * @brief Checks if any nodes are selected.
@@ -40,31 +40,31 @@ namespace VisionCraft
          * @brief Returns all selected node IDs.
          * @return Reference to set of selected node IDs
          */
-        [[nodiscard]] const std::unordered_set<Engine::NodeId> &GetSelectedNodes() const;
+        [[nodiscard]] const std::unordered_set<Nodes::NodeId> &GetSelectedNodes() const;
 
         /**
          * @brief Selects a single node (clears previous selection).
-         * @param nodeId Node ID to select
+         * @param nodeId Nodes::Node ID to select
          */
-        void SelectNode(Engine::NodeId nodeId);
+        void SelectNode(Nodes::NodeId nodeId);
 
         /**
          * @brief Toggles node selection (for Shift+click).
-         * @param nodeId Node ID to toggle
+         * @param nodeId Nodes::Node ID to toggle
          */
-        void ToggleNodeSelection(Engine::NodeId nodeId);
+        void ToggleNodeSelection(Nodes::NodeId nodeId);
 
         /**
          * @brief Adds node to selection without clearing.
-         * @param nodeId Node ID to add
+         * @param nodeId Nodes::Node ID to add
          */
-        void AddToSelection(Engine::NodeId nodeId);
+        void AddToSelection(Nodes::NodeId nodeId);
 
         /**
          * @brief Removes node from selection.
-         * @param nodeId Node ID to remove
+         * @param nodeId Nodes::Node ID to remove
          */
-        void RemoveFromSelection(Engine::NodeId nodeId);
+        void RemoveFromSelection(Nodes::NodeId nodeId);
 
         /**
          * @brief Clears all selection.
@@ -73,9 +73,9 @@ namespace VisionCraft
 
         /**
          * @brief Returns the primary selected node (for backward compatibility).
-         * @return Node ID or kInvalidNodeId
+         * @return Nodes::Node ID or kInvalidNodeId
          */
-        [[nodiscard]] Engine::NodeId GetPrimarySelection() const;
+        [[nodiscard]] Nodes::NodeId GetPrimarySelection() const;
 
         /**
          * @brief Starts box selection.
@@ -111,7 +111,7 @@ namespace VisionCraft
          * @param mousePos Current mouse position
          * @param nodePositions Map of node positions
          */
-        void StartDrag(const ImVec2 &mousePos, const std::unordered_map<Engine::NodeId, ImVec2> &nodePositions);
+        void StartDrag(const ImVec2 &mousePos, const std::unordered_map<Nodes::NodeId, ImVec2> &nodePositions);
 
         /**
          * @brief Stops dragging.
@@ -126,21 +126,21 @@ namespace VisionCraft
 
         /**
          * @brief Gets drag offset for a node.
-         * @param nodeId Node ID
+         * @param nodeId Nodes::Node ID
          * @return Drag offset, or zero if not found
          */
-        [[nodiscard]] ImVec2 GetDragOffset(Engine::NodeId nodeId) const;
+        [[nodiscard]] ImVec2 GetDragOffset(Nodes::NodeId nodeId) const;
 
         /**
          * @brief Gets all drag offsets.
          * @return Reference to drag offsets map
          */
-        [[nodiscard]] const std::unordered_map<Engine::NodeId, ImVec2> &GetDragOffsets() const;
+        [[nodiscard]] const std::unordered_map<Nodes::NodeId, ImVec2> &GetDragOffsets() const;
 
     private:
         // Selection state
-        std::unordered_set<Engine::NodeId> selectedNodes;
-        Engine::NodeId primarySelection = -1; ///< Primary selected node (for backward compatibility)
+        std::unordered_set<Nodes::NodeId> selectedNodes;
+        Nodes::NodeId primarySelection = -1; ///< Primary selected node (for backward compatibility)
 
         // Box selection state
         bool isBoxSelecting = false;
@@ -149,6 +149,6 @@ namespace VisionCraft
 
         // Drag state
         bool isDragging = false;
-        std::unordered_map<Engine::NodeId, ImVec2> dragOffsets;
+        std::unordered_map<Nodes::NodeId, ImVec2> dragOffsets;
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::State

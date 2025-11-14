@@ -2,7 +2,7 @@
 
 #include "Event.h"
 
-namespace VisionCraft
+namespace VisionCraft::UI::Events
 {
     /**
      * @brief Event for creating new graph (clearing current).
@@ -20,4 +20,4 @@ namespace VisionCraft
          */
         virtual ~NewGraphEvent() = default;
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::UI::Events

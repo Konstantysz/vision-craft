@@ -1,6 +1,6 @@
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
     Node::Node(NodeId id, std::string name) : id(id), name(std::move(name))
     {
@@ -94,4 +94,4 @@ namespace VisionCraft::Engine
     template Slot &Node::CreateInputSlot<std::string>(const std::string &, std::string);
     template Slot &Node::CreateInputSlot<std::filesystem::path>(const std::string &, std::filesystem::path);
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

@@ -1,4 +1,4 @@
-#include "Main/VisionCraftApplication.h"
+#include "App/VisionCraftApplication.h"
 
 // clang-format off
 #include <glad/glad.h>
@@ -8,14 +8,14 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "Layers/DockSpaceLayer.h"
-#include "Layers/GraphExecutionLayer.h"
-#include "Layers/NodeEditorLayer.h"
-#include "Layers/PropertyPanelLayer.h"
+#include "UI/Layers/DockSpaceLayer.h"
+#include "UI/Layers/GraphExecutionLayer.h"
+#include "UI/Layers/NodeEditorLayer.h"
+#include "UI/Layers/PropertyPanelLayer.h"
 #include "Logger.h"
 #include "WindowStatePersistence.h"
 
-namespace VisionCraft
+namespace VisionCraft::App
 {
     VisionCraftApplication::VisionCraftApplication(const Kappa::ApplicationSpecification &specification)
         : Kappa::Application(specification)
@@ -25,13 +25,13 @@ namespace VisionCraft
         Kappa::WindowStatePersistence::LoadAndApply(GetWindow(), "window_state.json");
 
         LOG_INFO("VisionCraftApplication: Pushing DockSpaceLayer");
-        PushLayer<DockSpaceLayer>();
+        PushLayer<UI::Layers::DockSpaceLayer>();
         LOG_INFO("VisionCraftApplication: Pushing NodeEditorLayer");
-        PushLayer<NodeEditorLayer>();
+        PushLayer<UI::Layers::NodeEditorLayer>(nodeEditor);
         LOG_INFO("VisionCraftApplication: Pushing PropertyPanelLayer");
-        PushLayer<PropertyPanelLayer>();
+        PushLayer<UI::Layers::PropertyPanelLayer>();
         LOG_INFO("VisionCraftApplication: Pushing GraphExecutionLayer");
-        PushLayer<GraphExecutionLayer>();
+        PushLayer<UI::Layers::GraphExecutionLayer>(nodeEditor);
         LOG_INFO("VisionCraftApplication: Initialization complete");
     }
 
@@ -45,12 +45,12 @@ namespace VisionCraft
         }
     }
 
-    Engine::NodeEditor &VisionCraftApplication::GetNodeEditor()
+    Nodes::NodeEditor &VisionCraftApplication::GetNodeEditor()
     {
         return nodeEditor;
     }
 
-    const Engine::NodeEditor &VisionCraftApplication::GetNodeEditor() const
+    const Nodes::NodeEditor &VisionCraftApplication::GetNodeEditor() const
     {
         return nodeEditor;
     }
@@ -134,4 +134,4 @@ namespace VisionCraft
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::App

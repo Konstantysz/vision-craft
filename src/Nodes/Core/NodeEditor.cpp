@@ -1,13 +1,13 @@
-#include "NodeEditor.h"
+#include "Nodes/Core/NodeEditor.h"
 #include "Logger.h"
-#include "NodeFactory.h"
+#include "Nodes/Factory/NodeFactory.h"
 
 #include <algorithm>
 #include <fstream>
 #include <queue>
 #include <unordered_map>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Nodes
 {
 
     NodeEditor::NodeEditor() : nextId(1)
@@ -378,4 +378,4 @@ namespace VisionCraft::Engine
         }
     }
 
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Nodes

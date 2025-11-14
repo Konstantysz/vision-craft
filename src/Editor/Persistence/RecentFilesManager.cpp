@@ -1,11 +1,11 @@
-#include "Persistence/RecentFilesManager.h"
+#include "Editor/Persistence/RecentFilesManager.h"
 #include "Logger.h"
 
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
 
-namespace VisionCraft
+namespace VisionCraft::Editor::Persistence
 {
     RecentFilesManager::RecentFilesManager(const std::string &stateFilePath) : stateFilePath(stateFilePath)
     {
@@ -103,4 +103,4 @@ namespace VisionCraft
         filesCached = true;
         Save(recentFiles);
     }
-} // namespace VisionCraft
+} // namespace VisionCraft::Editor::Persistence

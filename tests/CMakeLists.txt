@@ -8,6 +8,9 @@ add_executable(TestVisionCraftNodes
     TestNodeData.cpp
     TestNodeFactory.cpp
     TestImageNodes.cpp
+    TestCommandHistory.cpp
+    TestNodeCommands.cpp
+    TestConnectionCommands.cpp
 )
 
 target_compile_features(TestVisionCraftNodes PRIVATE cxx_std_20)

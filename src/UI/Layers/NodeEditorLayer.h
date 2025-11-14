@@ -12,7 +12,7 @@
 #include "UI/Widgets/NodeEditorTypes.h"
 #include "Layer.h"
 #include "Nodes/Core/NodeEditor.h"
-#include "Nodes/Factory/NodeFactory.h"
+#include "Vision/Factory/NodeFactory.h"
 
 #include <memory>
 #include <unordered_map>

@@ -367,7 +367,16 @@ namespace VisionCraft::Nodes
                 {
                     NodeId from = connJson["from"];
                     NodeId to = connJson["to"];
-                    AddConnection(from, to);
+
+                    // Validate that both nodes exist before adding connection
+                    if (nodes.find(from) != nodes.end() && nodes.find(to) != nodes.end())
+                    {
+                        AddConnection(from, to);
+                    }
+                    else
+                    {
+                        LOG_WARN("Skipping connection from {} to {} - node(s) not found", from, to);
+                    }
                 }
             }
 

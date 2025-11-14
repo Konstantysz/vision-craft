@@ -202,6 +202,12 @@ namespace VisionCraft::UI::Layers
          */
         [[nodiscard]] std::string NodeTypeToFactoryKey(const std::string &nodeType) const;
 
+        /**
+         * @brief Allocates next available node ID with overflow checking.
+         * @return Next available node ID, or 0 on overflow
+         */
+        [[nodiscard]] Nodes::NodeId AllocateNodeId();
+
         // Core components
         Nodes::NodeEditor &nodeEditor;                    ///< Reference to the shared node editor instance
         Canvas::CanvasController canvas;                  ///< Canvas management component

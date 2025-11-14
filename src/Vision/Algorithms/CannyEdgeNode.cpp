@@ -32,13 +32,13 @@ namespace VisionCraft::Vision::Algorithms
         {
             const auto lowThreshold = GetInputValue<double>("LowThreshold").value_or(50.0);
             const auto highThreshold = GetInputValue<double>("HighThreshold").value_or(150.0);
-            const auto apertureSize = GetInputValue<int>("ApertureSize").value_or(3);
+            auto apertureSize = GetInputValue<int>("ApertureSize").value_or(3);
             const auto l2Gradient = GetInputValue<bool>("L2Gradient").value_or(false);
 
             if (apertureSize != 3 && apertureSize != 5 && apertureSize != 7) [[unlikely]]
             {
                 LOG_WARN("CannyEdgeNode {}: Invalid aperture size ({}), using 3", GetName(), apertureSize);
-                const_cast<int &>(apertureSize) = 3;
+                apertureSize = 3;
             }
 
             if (lowThreshold >= highThreshold)
@@ -56,7 +56,7 @@ namespace VisionCraft::Vision::Algorithms
             }
             else
             {
-                grayImage = inputImage.clone();
+                grayImage = inputImage; // Shallow copy - cv::Mat uses reference counting
             }
 
             cv::Canny(grayImage, outputImage, lowThreshold, highThreshold, apertureSize, l2Gradient);

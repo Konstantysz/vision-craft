@@ -7,8 +7,9 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
-namespace VisionCraft::Nodes
+namespace VisionCraft::Vision
 {
     /**
      * @brief Factory for creating nodes using the registry pattern.
@@ -25,7 +26,7 @@ namespace VisionCraft::Nodes
          * @param name Node display name
          * @return Unique pointer to created node
          */
-        using NodeCreator = std::function<std::unique_ptr<Node>(NodeId id, std::string_view name)>;
+        using NodeCreator = std::function<std::unique_ptr<Nodes::Node>(Nodes::NodeId id, std::string_view name)>;
 
         /**
          * @brief Registers a node type with the factory.
@@ -41,7 +42,8 @@ namespace VisionCraft::Nodes
          * @param name Node display name
          * @return Unique pointer to created node, or nullptr if type not found
          */
-        [[nodiscard]] static std::unique_ptr<Node> CreateNode(std::string_view type, NodeId id, std::string_view name);
+        [[nodiscard]] static std::unique_ptr<Nodes::Node>
+            CreateNode(std::string_view type, Nodes::NodeId id, std::string_view name);
 
         /**
          * @brief Checks if a node type is registered.
@@ -65,4 +67,4 @@ namespace VisionCraft::Nodes
     private:
         static std::unordered_map<std::string, NodeCreator> &GetRegistry();
     };
-} // namespace VisionCraft::Nodes
+} // namespace VisionCraft::Vision

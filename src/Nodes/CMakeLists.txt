@@ -6,7 +6,6 @@ add_library(Nodes STATIC
     Core/NodeEditor.cpp
     Core/Slot.cpp
     Core/NodeData.h
-    Factory/NodeFactory.cpp
 )
 
 target_include_directories(Nodes PUBLIC
@@ -17,7 +16,6 @@ target_link_libraries(Nodes PUBLIC
     Kappa
     opencv_core
     nlohmann_json::nlohmann_json
-    Vision
 )
 
 set_target_properties(Nodes PROPERTIES

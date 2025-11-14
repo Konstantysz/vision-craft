@@ -1,4 +1,4 @@
-#include "Nodes/Factory/NodeFactory.h"
+#include "Vision/Factory/NodeFactory.h"
 
 #include "Vision/Algorithms/CannyEdgeNode.h"
 #include "Vision/Algorithms/GrayscaleNode.h"
@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <ranges>
 
-namespace VisionCraft::Nodes
+namespace VisionCraft::Vision
 {
     std::unordered_map<std::string, NodeFactory::NodeCreator> &NodeFactory::GetRegistry()
     {
@@ -23,7 +23,7 @@ namespace VisionCraft::Nodes
         GetRegistry()[std::string(type)] = std::move(creator);
     }
 
-    std::unique_ptr<Node> NodeFactory::CreateNode(std::string_view type, NodeId id, std::string_view name)
+    std::unique_ptr<Nodes::Node> NodeFactory::CreateNode(std::string_view type, Nodes::NodeId id, std::string_view name)
     {
         auto &registry = GetRegistry();
         if (const auto it = registry.find(std::string(type)); it != registry.end())
@@ -56,28 +56,28 @@ namespace VisionCraft::Nodes
     void NodeFactory::RegisterAllNodes()
     {
         // Register all available node types with the factory
-        Register("ImageInput", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::IO::ImageInputNode>(id, std::string(name));
+        Register("ImageInput", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<IO::ImageInputNode>(id, std::string(name));
         });
 
-        Register("ImageOutput", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::IO::ImageOutputNode>(id, std::string(name));
+        Register("ImageOutput", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<IO::ImageOutputNode>(id, std::string(name));
         });
 
-        Register("Preview", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::IO::PreviewNode>(id, std::string(name));
+        Register("Preview", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<IO::PreviewNode>(id, std::string(name));
         });
 
-        Register("Grayscale", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::Algorithms::GrayscaleNode>(id, std::string(name));
+        Register("Grayscale", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::GrayscaleNode>(id, std::string(name));
         });
 
-        Register("CannyEdge", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::Algorithms::CannyEdgeNode>(id, std::string(name));
+        Register("CannyEdge", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::CannyEdgeNode>(id, std::string(name));
         });
 
-        Register("Threshold", [](NodeId id, std::string_view name) {
-            return std::make_unique<Vision::Algorithms::ThresholdNode>(id, std::string(name));
+        Register("Threshold", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::ThresholdNode>(id, std::string(name));
         });
     }
-} // namespace VisionCraft::Nodes
+} // namespace VisionCraft::Vision

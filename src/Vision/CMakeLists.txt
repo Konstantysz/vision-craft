@@ -7,6 +7,7 @@ add_library(Vision STATIC
     IO/ImageInputNode.cpp
     IO/ImageOutputNode.cpp
     IO/PreviewNode.cpp
+    Factory/NodeFactory.cpp
 )
 
 target_include_directories(Vision PUBLIC

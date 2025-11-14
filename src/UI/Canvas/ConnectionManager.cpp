@@ -141,16 +141,23 @@ namespace VisionCraft::UI::Canvas
             return false;
         }
 
-        RemoveConnectionToInput(inputPin);
         const Widgets::NodeConnection newConnection{ outputPin, inputPin };
-        connections.push_back(newConnection);
-        nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
 
-        // Notify callback if set and enabled
+        // If callback is enabled, let the command handle the actual connection creation
         if (notifyCallback && onConnectionCreated)
         {
+            // Remove existing connection to input first
+            RemoveConnectionToInput(inputPin);
+            // Notify callback BEFORE adding connection
+            // The callback will create a command which will call this method again with notifyCallback=false
             onConnectionCreated(newConnection);
+            return true;
         }
+
+        // Direct connection creation (from command execution or when callback is disabled)
+        RemoveConnectionToInput(inputPin);
+        connections.push_back(newConnection);
+        nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
 
         return true;
     }
@@ -548,6 +555,16 @@ namespace VisionCraft::UI::Canvas
     void ConnectionManager::RemoveConnection(const Widgets::NodeConnection &connection)
     {
         connections.erase(std::remove(connections.begin(), connections.end(), connection), connections.end());
+    }
+
+    void ConnectionManager::RemoveConnectionsForNode(Nodes::NodeId nodeId)
+    {
+        connections.erase(std::remove_if(connections.begin(),
+                              connections.end(),
+                              [nodeId](const Widgets::NodeConnection &conn) {
+                                  return conn.outputPin.nodeId == nodeId || conn.inputPin.nodeId == nodeId;
+                              }),
+            connections.end());
     }
 
     void ConnectionManager::SetConnectionCreatedCallback(ConnectionCreatedCallback callback)

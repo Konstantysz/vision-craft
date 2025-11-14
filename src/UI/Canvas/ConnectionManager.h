@@ -186,6 +186,12 @@ namespace VisionCraft::UI::Canvas
         void RemoveConnection(const UI::Widgets::NodeConnection &connection);
 
         /**
+         * @brief Removes all connections associated with a node.
+         * @param nodeId ID of the node whose connections should be removed
+         */
+        void RemoveConnectionsForNode(Nodes::NodeId nodeId);
+
+        /**
          * @brief Sets callback for connection creation.
          * @param callback Callback to invoke when connection is created
          */

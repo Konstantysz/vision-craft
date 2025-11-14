@@ -184,6 +184,7 @@ namespace VisionCraft::Vision::IO
         if (!texture.Create())
         {
             LOG_ERROR("ImageInputNode {}: Failed to create OpenGL texture", GetName());
+            texture.Reset();
             return;
         }
 
@@ -191,6 +192,7 @@ namespace VisionCraft::Vision::IO
         if (textureId == 0)
         {
             LOG_ERROR("ImageInputNode {}: Invalid texture ID", GetName());
+            texture.Reset();
             return;
         }
 
@@ -206,6 +208,9 @@ namespace VisionCraft::Vision::IO
         if (error != GL_NO_ERROR)
         {
             LOG_ERROR("ImageInputNode {}: OpenGL error after texture upload: 0x{:x}", GetName(), error);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            texture.Reset();
+            return;
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);

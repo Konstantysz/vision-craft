@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 
 #include <functional>
 #include <memory>
@@ -8,7 +8,7 @@
 #include <string_view>
 #include <unordered_map>
 
-namespace VisionCraft
+namespace VisionCraft::Nodes
 {
     /**
      * @brief Factory for creating nodes using the registry pattern.
@@ -25,14 +25,14 @@ namespace VisionCraft
          * @param name Node display name
          * @return Unique pointer to created node
          */
-        using NodeCreator = std::function<std::unique_ptr<Engine::Node>(Engine::NodeId id, std::string_view name)>;
+        using NodeCreator = std::function<std::unique_ptr<Node>(NodeId id, std::string_view name)>;
 
         /**
          * @brief Registers a node type with the factory.
          * @param type Node type identifier
          * @param creator Function that creates the node
          */
-        void Register(std::string_view type, NodeCreator creator);
+        static void Register(std::string_view type, NodeCreator creator);
 
         /**
          * @brief Creates a node of the specified type.
@@ -41,23 +41,28 @@ namespace VisionCraft
          * @param name Node display name
          * @return Unique pointer to created node, or nullptr if type not found
          */
-        [[nodiscard]] std::unique_ptr<Engine::Node>
-            Create(std::string_view type, Engine::NodeId id, std::string_view name) const;
+        [[nodiscard]] static std::unique_ptr<Node> CreateNode(std::string_view type, NodeId id, std::string_view name);
 
         /**
          * @brief Checks if a node type is registered.
          * @param type Node type identifier
          * @return True if type is registered
          */
-        [[nodiscard]] bool IsRegistered(std::string_view type) const;
+        [[nodiscard]] static bool IsRegistered(std::string_view type);
 
         /**
          * @brief Returns all registered node types.
          * @return Vector of registered type names
          */
-        [[nodiscard]] std::vector<std::string> GetRegisteredTypes() const;
+        [[nodiscard]] static std::vector<std::string> GetRegisteredTypes();
+
+        /**
+         * @brief Registers all available node types.
+         * @note This must be called before using the factory.
+         */
+        static void RegisterAllNodes();
 
     private:
-        std::unordered_map<std::string, NodeCreator> registry;
+        static std::unordered_map<std::string, NodeCreator> &GetRegistry();
     };
-} // namespace VisionCraft
+} // namespace VisionCraft::Nodes

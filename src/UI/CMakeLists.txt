@@ -1,3 +1,5 @@
+find_package(imgui CONFIG REQUIRED)
+
 add_library(UI STATIC
     Layers/DockSpaceLayer.cpp
     Layers/NodeEditorLayer.cpp
@@ -11,23 +13,23 @@ add_library(UI STATIC
     Canvas/CanvasController.cpp
     Canvas/ConnectionManager.cpp
     Canvas/InputHandler.cpp
-    Widgets/NodeFactory.cpp
     Widgets/DockingLayoutHelper.cpp
     Widgets/ContextMenuRenderer.cpp
     Widgets/FileDialogManager.cpp
+    ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
 
 target_include_directories(UI PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog
 )
 
 target_link_libraries(UI PUBLIC
     Editor
     Vision
     Nodes
-    kappa-core
+    Kappa
     imgui::imgui
-    ImGuiFileDialog
 )
 
 set_target_properties(UI PROPERTIES

@@ -1,10 +1,10 @@
-#include "ThresholdNode.h"
+#include "Vision/Algorithms/ThresholdNode.h"
 #include "Logger.h"
 #include <stdexcept>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
-    ThresholdNode::ThresholdNode(NodeId id, const std::string &name) : Node(id, name)
+    ThresholdNode::ThresholdNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("Input");
         CreateInputSlot("Threshold", 127.0);
@@ -89,4 +89,4 @@ namespace VisionCraft::Engine
         LOG_WARN("ThresholdNode {}: Unknown threshold type '{}', using THRESH_BINARY", GetName(), typeStr);
         return cv::THRESH_BINARY;
     }
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

@@ -1,9 +1,9 @@
-#include "GrayscaleNode.h"
+#include "Vision/Algorithms/GrayscaleNode.h"
 #include "Logger.h"
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
-    GrayscaleNode::GrayscaleNode(NodeId id, const std::string &name) : Node(id, name)
+    GrayscaleNode::GrayscaleNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("Input");
         CreateInputSlot("Method", std::string{ "BGR2GRAY" });
@@ -94,4 +94,4 @@ namespace VisionCraft::Engine
         LOG_WARN("GrayscaleNode {}: Unknown conversion method '{}', using BGR2GRAY", GetName(), methodStr);
         return cv::COLOR_BGR2GRAY;
     }
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

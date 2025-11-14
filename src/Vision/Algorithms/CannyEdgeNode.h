@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <opencv2/opencv.hpp>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
     /**
      * @brief Node for Canny edge detection.
      */
-    class CannyEdgeNode : public Node
+    class CannyEdgeNode : public Nodes::Node
     {
     public:
         /**
@@ -16,7 +16,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        CannyEdgeNode(NodeId id, const std::string &name = "Canny Edge Detection");
+        CannyEdgeNode(Nodes::NodeId id, const std::string &name = "Canny Edge Detection");
 
         /**
          * @brief Virtual destructor.
@@ -68,4 +68,4 @@ namespace VisionCraft::Engine
         cv::Mat inputImage;  ///< Input image for edge detection
         cv::Mat outputImage; ///< Resulting edge-detected image
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

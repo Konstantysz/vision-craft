@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <opencv2/opencv.hpp>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
     /**
      * @brief Node for converting images to grayscale.
      */
-    class GrayscaleNode : public Node
+    class GrayscaleNode : public Nodes::Node
     {
     public:
         /**
@@ -16,7 +16,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        GrayscaleNode(NodeId id, const std::string &name = "Grayscale");
+        GrayscaleNode(Nodes::NodeId id, const std::string &name = "Grayscale");
 
         /**
          * @brief Virtual destructor.
@@ -45,4 +45,4 @@ namespace VisionCraft::Engine
          */
         int GetConversionMethod(const std::string &methodStr) const;
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

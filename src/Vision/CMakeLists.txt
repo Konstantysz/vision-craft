@@ -1,11 +1,12 @@
+find_package(OpenCV CONFIG REQUIRED)
+
 add_library(Vision STATIC
-    Nodes/GrayscaleNode.cpp
-    Nodes/ThresholdNode.cpp
-    Nodes/CannyEdgeNode.cpp
+    Algorithms/GrayscaleNode.cpp
+    Algorithms/ThresholdNode.cpp
+    Algorithms/CannyEdgeNode.cpp
     IO/ImageInputNode.cpp
     IO/ImageOutputNode.cpp
     IO/PreviewNode.cpp
-    IO/Texture.cpp
 )
 
 target_include_directories(Vision PUBLIC
@@ -14,9 +15,8 @@ target_include_directories(Vision PUBLIC
 
 target_link_libraries(Vision PUBLIC
     Nodes
+    Kappa
     opencv_core opencv_imgproc opencv_imgcodecs
-    glad::glad
-    glfw
 )
 
 set_target_properties(Vision PROPERTIES

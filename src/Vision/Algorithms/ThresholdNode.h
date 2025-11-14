@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Node.h"
+#include "Nodes/Core/Node.h"
 #include <opencv2/opencv.hpp>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
     /**
      * @brief Node for image thresholding operations.
      */
-    class ThresholdNode : public Node
+    class ThresholdNode : public Nodes::Node
     {
     public:
         /**
@@ -16,7 +16,7 @@ namespace VisionCraft::Engine
          * @param id Node ID
          * @param name Node name
          */
-        ThresholdNode(NodeId id, const std::string &name = "Threshold");
+        ThresholdNode(Nodes::NodeId id, const std::string &name = "Threshold");
 
         /**
          * @brief Virtual destructor.
@@ -75,4 +75,4 @@ namespace VisionCraft::Engine
          */
         int GetThresholdType(const std::string &typeStr) const;
     };
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

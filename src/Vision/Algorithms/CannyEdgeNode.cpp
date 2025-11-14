@@ -1,10 +1,10 @@
-#include "CannyEdgeNode.h"
+#include "Vision/Algorithms/CannyEdgeNode.h"
 #include "Logger.h"
 #include <stdexcept>
 
-namespace VisionCraft::Engine
+namespace VisionCraft::Vision::Algorithms
 {
-    CannyEdgeNode::CannyEdgeNode(NodeId id, const std::string &name) : Node(id, name)
+    CannyEdgeNode::CannyEdgeNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
         CreateInputSlot("Input");
         CreateInputSlot("LowThreshold", 50.0);
@@ -82,4 +82,4 @@ namespace VisionCraft::Engine
             ClearOutputSlot("Output");
         }
     }
-} // namespace VisionCraft::Engine
+} // namespace VisionCraft::Vision::Algorithms

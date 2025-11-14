@@ -28,6 +28,7 @@ jobs:
             automake \
             libtool \
             m4 \
+            gettext \
             llvm \
             clang \
             libgl1-mesa-dev \

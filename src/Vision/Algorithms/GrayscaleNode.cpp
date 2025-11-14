@@ -32,7 +32,7 @@ namespace VisionCraft::Vision::Algorithms
 
             if (inputImage.channels() == 1)
             {
-                outputImage = inputImage.clone();
+                outputImage = inputImage; // Shallow copy - cv::Mat uses reference counting
                 LOG_INFO("GrayscaleNode {}: Input already grayscale, passing through", GetName());
             }
             else

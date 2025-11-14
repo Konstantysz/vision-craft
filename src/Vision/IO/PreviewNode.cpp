@@ -23,7 +23,7 @@ namespace VisionCraft::Vision::IO
         }
 
         inputImage = *inputData;
-        outputImage = inputImage.clone();
+        outputImage = inputImage; // Shallow copy - cv::Mat uses reference counting
         UpdateTexture();
         SetOutputSlotData("Output", outputImage);
 

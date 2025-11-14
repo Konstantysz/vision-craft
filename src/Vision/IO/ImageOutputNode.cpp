@@ -27,7 +27,7 @@ namespace VisionCraft::Vision::IO
 
         try
         {
-            displayImage = inputImage.clone();
+            displayImage = inputImage; // Shallow copy - cv::Mat uses reference counting
 
             const auto autoSave = GetInputValue<bool>("AutoSave").value_or(false);
             const auto savePath = GetInputValue<std::filesystem::path>("SavePath").value_or(std::filesystem::path{});

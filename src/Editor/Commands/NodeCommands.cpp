@@ -85,7 +85,11 @@ namespace VisionCraft::Editor::Commands
 
     std::string DeleteNodeCommand::GetDescription() const
     {
-        return "Delete Nodes::Node";
+        if (!nodeName.empty())
+        {
+            return "Delete " + nodeName;
+        }
+        return "Delete Node";
     }
 
     // MoveNodesCommand
@@ -117,7 +121,7 @@ namespace VisionCraft::Editor::Commands
     {
         if (newPositions.size() == 1)
         {
-            return "Move Nodes::Node";
+            return "Move Node";
         }
         return "Move " + std::to_string(newPositions.size()) + " Nodes";
     }

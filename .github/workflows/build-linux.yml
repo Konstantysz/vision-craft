@@ -27,8 +27,10 @@ jobs:
             autoconf \
             automake \
             libtool \
+            libtool-bin \
             m4 \
             gettext \
+            pkg-config \
             llvm \
             clang \
             libgl1-mesa-dev \

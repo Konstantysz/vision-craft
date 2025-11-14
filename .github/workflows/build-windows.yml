@@ -48,7 +48,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          cd build/Release-vcpkg
+          cd build/Release
           ctest --output-on-failure -C Release
         shell: bash
 
@@ -63,17 +63,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-windows
-          path: build/Release-vcpkg/coverage-report/
+          path: build/Release/coverage-report/
           retention-days: 30
 
       - name: Display Coverage Summary in PR
         if: always()
         run: |
-          if [ -f build/Release-vcpkg/coverage-summary.txt ]; then
+          if [ -f build/Release/coverage-summary.txt ]; then
             echo "## 📊 Test Coverage Report (Windows)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            cat build/Release-vcpkg/coverage-summary.txt >> $GITHUB_STEP_SUMMARY
+            cat build/Release/coverage-summary.txt >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "📁 Full HTML report available in artifacts" >> $GITHUB_STEP_SUMMARY

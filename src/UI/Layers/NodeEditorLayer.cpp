@@ -353,6 +353,13 @@ namespace VisionCraft::UI::Layers
                 // Recreate connections using new IDs
                 for (const auto &copiedConnection : clipboardManager.GetCopiedConnections())
                 {
+                    // Validate that both node IDs exist in the mapping
+                    if (idMapping.find(copiedConnection.fromNodeId) == idMapping.end()
+                        || idMapping.find(copiedConnection.toNodeId) == idMapping.end())
+                    {
+                        continue; // Skip this connection if nodes weren't created
+                    }
+
                     const auto newFromId = idMapping[copiedConnection.fromNodeId];
                     const auto newToId = idMapping[copiedConnection.toNodeId];
 
@@ -587,6 +594,13 @@ namespace VisionCraft::UI::Layers
             // Recreate connections using new IDs
             for (const auto &copiedConnection : clipboardManager.GetCopiedConnections())
             {
+                // Validate that both node IDs exist in the mapping
+                if (idMapping.find(copiedConnection.fromNodeId) == idMapping.end()
+                    || idMapping.find(copiedConnection.toNodeId) == idMapping.end())
+                {
+                    continue; // Skip this connection if nodes weren't created
+                }
+
                 const auto newFromId = idMapping[copiedConnection.fromNodeId];
                 const auto newToId = idMapping[copiedConnection.toNodeId];
 

@@ -1,12 +1,12 @@
-#include "VisionCraftEngine/Nodes/CannyEdgeNode.h"
-#include "VisionCraftEngine/Nodes/GrayscaleNode.h"
-#include "VisionCraftEngine/Nodes/ThresholdNode.h"
+#include "Vision/Algorithms/CannyEdgeNode.h"
+#include "Vision/Algorithms/GrayscaleNode.h"
+#include "Vision/Algorithms/ThresholdNode.h"
 
-#include <gtest/gtest.h>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
+#include <gtest/gtest.h>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 class NodeImplementationTest : public ::testing::Test
 {
@@ -27,12 +27,12 @@ protected:
 };
 
 // ============================================================================
-// ThresholdNode Tests
+// Vision::Algorithms::ThresholdNode Tests
 // ============================================================================
 
 TEST_F(NodeImplementationTest, ThresholdNodeBasicProcessing)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -62,7 +62,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeBasicProcessing)
 
 TEST_F(NodeImplementationTest, ThresholdNodeWithDefaults)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -77,7 +77,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeWithDefaults)
 
 TEST_F(NodeImplementationTest, ThresholdNodeColorImageConversion)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat colorImage = CreateTestImage();
 
     node.SetInputSlotData("Input", colorImage);
@@ -92,7 +92,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeColorImageConversion)
 
 TEST_F(NodeImplementationTest, ThresholdNodeNoInput)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
 
     node.Process();
 
@@ -103,7 +103,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeNoInput)
 
 TEST_F(NodeImplementationTest, ThresholdNodeEmptyImage)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat emptyImage;
 
     node.SetInputSlotData("Input", emptyImage);
@@ -116,7 +116,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeEmptyImage)
 
 TEST_F(NodeImplementationTest, ThresholdNodeDifferentTypes)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     const std::vector<std::string> types = {
@@ -138,7 +138,7 @@ TEST_F(NodeImplementationTest, ThresholdNodeDifferentTypes)
 
 TEST_F(NodeImplementationTest, ThresholdNodeInvalidType)
 {
-    ThresholdNode node(1, "Threshold");
+    Vision::Algorithms::ThresholdNode node(1, "Threshold");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -153,12 +153,12 @@ TEST_F(NodeImplementationTest, ThresholdNodeInvalidType)
 }
 
 // ============================================================================
-// CannyEdgeNode Tests
+// Vision::Algorithms::CannyEdgeNode Tests
 // ============================================================================
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeBasicProcessing)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -179,7 +179,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeBasicProcessing)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeWithDefaults)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -194,7 +194,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeWithDefaults)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeColorImageConversion)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat colorImage = CreateTestImage();
 
     node.SetInputSlotData("Input", colorImage);
@@ -208,7 +208,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeColorImageConversion)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeNoInput)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
 
     node.Process();
 
@@ -218,7 +218,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeNoInput)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeDifferentApertures)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     const std::vector<int> apertures = { 3, 5, 7 };
@@ -238,7 +238,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeDifferentApertures)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeInvalidAperture)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -254,7 +254,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeInvalidAperture)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeThresholdWarning)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -271,7 +271,7 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeThresholdWarning)
 
 TEST_F(NodeImplementationTest, CannyEdgeNodeL2Gradient)
 {
-    CannyEdgeNode node(1, "Canny");
+    Vision::Algorithms::CannyEdgeNode node(1, "Canny");
     cv::Mat inputImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", inputImage);
@@ -285,12 +285,12 @@ TEST_F(NodeImplementationTest, CannyEdgeNodeL2Gradient)
 }
 
 // ============================================================================
-// GrayscaleNode Tests
+// Vision::Algorithms::GrayscaleNode Tests
 // ============================================================================
 
 TEST_F(NodeImplementationTest, GrayscaleNodeColorToGray)
 {
-    GrayscaleNode node(1, "Grayscale");
+    Vision::Algorithms::GrayscaleNode node(1, "Grayscale");
     cv::Mat colorImage = CreateTestImage();
 
     node.SetInputSlotData("Input", colorImage);
@@ -308,7 +308,7 @@ TEST_F(NodeImplementationTest, GrayscaleNodeColorToGray)
 
 TEST_F(NodeImplementationTest, GrayscaleNodeAlreadyGray)
 {
-    GrayscaleNode node(1, "Grayscale");
+    Vision::Algorithms::GrayscaleNode node(1, "Grayscale");
     cv::Mat grayImage = CreateGrayscaleTestImage();
 
     node.SetInputSlotData("Input", grayImage);
@@ -323,7 +323,7 @@ TEST_F(NodeImplementationTest, GrayscaleNodeAlreadyGray)
 
 TEST_F(NodeImplementationTest, GrayscaleNodeNoInput)
 {
-    GrayscaleNode node(1, "Grayscale");
+    Vision::Algorithms::GrayscaleNode node(1, "Grayscale");
 
     node.Process();
 
@@ -333,7 +333,7 @@ TEST_F(NodeImplementationTest, GrayscaleNodeNoInput)
 
 TEST_F(NodeImplementationTest, GrayscaleNodeEmptyImage)
 {
-    GrayscaleNode node(1, "Grayscale");
+    Vision::Algorithms::GrayscaleNode node(1, "Grayscale");
     cv::Mat emptyImage;
 
     node.SetInputSlotData("Input", emptyImage);

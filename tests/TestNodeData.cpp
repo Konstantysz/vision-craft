@@ -1,16 +1,16 @@
-#include "VisionCraftEngine/NodeData.h"
+#include "Nodes/Core/NodeData.h"
 
 #include <opencv2/opencv.hpp>
 #include <gtest/gtest.h>
 #include <filesystem>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 class NodeDataTest : public ::testing::Test
 {
 protected:
     // Helper functions for testing
-    template<typename T> bool HoldsType(const NodeData &data)
+    template<typename T> bool HoldsType(const Nodes::NodeData &data)
     {
         return std::holds_alternative<T>(data);
     }
@@ -22,35 +22,35 @@ protected:
 
 TEST_F(NodeDataTest, DefaultConstruction)
 {
-    NodeData data;
+    Nodes::NodeData data;
     EXPECT_TRUE(HoldsType<std::monostate>(data));
 }
 
 TEST_F(NodeDataTest, ConstructWithInt)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
     EXPECT_TRUE(HoldsType<int>(data));
     EXPECT_EQ(std::get<int>(data), 42);
 }
 
 TEST_F(NodeDataTest, ConstructWithDouble)
 {
-    NodeData data = 3.14159;
+    Nodes::NodeData data = 3.14159;
     EXPECT_TRUE(HoldsType<double>(data));
     EXPECT_DOUBLE_EQ(std::get<double>(data), 3.14159);
 }
 
 TEST_F(NodeDataTest, ConstructWithFloat)
 {
-    NodeData data = 2.71828f;
+    Nodes::NodeData data = 2.71828f;
     EXPECT_TRUE(HoldsType<float>(data));
     EXPECT_FLOAT_EQ(std::get<float>(data), 2.71828f);
 }
 
 TEST_F(NodeDataTest, ConstructWithBool)
 {
-    NodeData dataTrue = true;
-    NodeData dataFalse = false;
+    Nodes::NodeData dataTrue = true;
+    Nodes::NodeData dataFalse = false;
     EXPECT_TRUE(HoldsType<bool>(dataTrue));
     EXPECT_TRUE(HoldsType<bool>(dataFalse));
     EXPECT_TRUE(std::get<bool>(dataTrue));
@@ -59,7 +59,7 @@ TEST_F(NodeDataTest, ConstructWithBool)
 
 TEST_F(NodeDataTest, ConstructWithString)
 {
-    NodeData data = std::string("test_string");
+    Nodes::NodeData data = std::string("test_string");
     EXPECT_TRUE(HoldsType<std::string>(data));
     EXPECT_EQ(std::get<std::string>(data), "test_string");
 }
@@ -67,7 +67,7 @@ TEST_F(NodeDataTest, ConstructWithString)
 TEST_F(NodeDataTest, ConstructWithPath)
 {
     std::filesystem::path testPath("/test/path.txt");
-    NodeData data = testPath;
+    Nodes::NodeData data = testPath;
     EXPECT_TRUE(HoldsType<std::filesystem::path>(data));
     EXPECT_EQ(std::get<std::filesystem::path>(data), testPath);
 }
@@ -75,7 +75,7 @@ TEST_F(NodeDataTest, ConstructWithPath)
 TEST_F(NodeDataTest, ConstructWithMat)
 {
     cv::Mat testMat = cv::Mat::zeros(100, 100, CV_8UC3);
-    NodeData data = testMat;
+    Nodes::NodeData data = testMat;
     EXPECT_TRUE(HoldsType<cv::Mat>(data));
 
     const auto &mat = std::get<cv::Mat>(data);
@@ -87,7 +87,7 @@ TEST_F(NodeDataTest, ConstructWithMat)
 TEST_F(NodeDataTest, ConstructWithVectorPoints)
 {
     std::vector<cv::Point> points = { { 0, 0 }, { 10, 10 }, { 20, 20 } };
-    NodeData data = points;
+    Nodes::NodeData data = points;
     EXPECT_TRUE(HoldsType<std::vector<cv::Point>>(data));
 
     const auto &retrievedPoints = std::get<std::vector<cv::Point>>(data);
@@ -103,37 +103,37 @@ TEST_F(NodeDataTest, ConstructWithVectorPoints)
 
 TEST_F(NodeDataTest, TypeIndex)
 {
-    NodeData emptyData;
+    Nodes::NodeData emptyData;
     EXPECT_EQ(emptyData.index(), 0); // monostate
 
-    NodeData matData = cv::Mat();
+    Nodes::NodeData matData = cv::Mat();
     EXPECT_EQ(matData.index(), 1); // cv::Mat
 
-    NodeData doubleData = 3.14;
+    Nodes::NodeData doubleData = 3.14;
     EXPECT_EQ(doubleData.index(), 2); // double
 
-    NodeData floatData = 2.71f;
+    Nodes::NodeData floatData = 2.71f;
     EXPECT_EQ(floatData.index(), 3); // float
 
-    NodeData intData = 42;
+    Nodes::NodeData intData = 42;
     EXPECT_EQ(intData.index(), 4); // int
 
-    NodeData boolData = true;
+    Nodes::NodeData boolData = true;
     EXPECT_EQ(boolData.index(), 5); // bool
 
-    NodeData stringData = std::string("test");
+    Nodes::NodeData stringData = std::string("test");
     EXPECT_EQ(stringData.index(), 6); // string
 
-    NodeData pathData = std::filesystem::path("/test");
+    Nodes::NodeData pathData = std::filesystem::path("/test");
     EXPECT_EQ(pathData.index(), 7); // path
 
-    NodeData pointsData = std::vector<cv::Point>{};
+    Nodes::NodeData pointsData = std::vector<cv::Point>{};
     EXPECT_EQ(pointsData.index(), 8); // vector<Point>
 }
 
 TEST_F(NodeDataTest, HoldsAlternative)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
 
     EXPECT_TRUE(std::holds_alternative<int>(data));
     EXPECT_FALSE(std::holds_alternative<double>(data));
@@ -151,8 +151,8 @@ TEST_F(NodeDataTest, HoldsAlternative)
 
 TEST_F(NodeDataTest, CopyConstruction)
 {
-    NodeData original = 42;
-    NodeData copy = original;
+    Nodes::NodeData original = 42;
+    Nodes::NodeData copy = original;
 
     EXPECT_TRUE(HoldsType<int>(copy));
     EXPECT_EQ(std::get<int>(copy), 42);
@@ -165,8 +165,8 @@ TEST_F(NodeDataTest, CopyConstruction)
 
 TEST_F(NodeDataTest, CopyAssignment)
 {
-    NodeData original = std::string("hello");
-    NodeData copy;
+    Nodes::NodeData original = std::string("hello");
+    Nodes::NodeData copy;
 
     copy = original;
 
@@ -181,8 +181,8 @@ TEST_F(NodeDataTest, CopyAssignment)
 
 TEST_F(NodeDataTest, MoveConstruction)
 {
-    NodeData original = std::string("temporary");
-    NodeData moved = std::move(original);
+    Nodes::NodeData original = std::string("temporary");
+    Nodes::NodeData moved = std::move(original);
 
     EXPECT_TRUE(HoldsType<std::string>(moved));
     EXPECT_EQ(std::get<std::string>(moved), "temporary");
@@ -190,8 +190,8 @@ TEST_F(NodeDataTest, MoveConstruction)
 
 TEST_F(NodeDataTest, MoveAssignment)
 {
-    NodeData original = std::string("temporary");
-    NodeData moved;
+    Nodes::NodeData original = std::string("temporary");
+    Nodes::NodeData moved;
 
     moved = std::move(original);
 
@@ -201,7 +201,7 @@ TEST_F(NodeDataTest, MoveAssignment)
 
 TEST_F(NodeDataTest, ReassignDifferentTypes)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
     EXPECT_TRUE(HoldsType<int>(data));
     EXPECT_EQ(std::get<int>(data), 42);
 
@@ -220,42 +220,42 @@ TEST_F(NodeDataTest, ReassignDifferentTypes)
 
 TEST_F(NodeDataTest, EmptyString)
 {
-    NodeData data = std::string("");
+    Nodes::NodeData data = std::string("");
     EXPECT_TRUE(HoldsType<std::string>(data));
     EXPECT_EQ(std::get<std::string>(data), "");
 }
 
 TEST_F(NodeDataTest, ZeroValues)
 {
-    NodeData intData = 0;
+    Nodes::NodeData intData = 0;
     EXPECT_EQ(std::get<int>(intData), 0);
 
-    NodeData doubleData = 0.0;
+    Nodes::NodeData doubleData = 0.0;
     EXPECT_EQ(std::get<double>(doubleData), 0.0);
 
-    NodeData floatData = 0.0f;
+    Nodes::NodeData floatData = 0.0f;
     EXPECT_EQ(std::get<float>(floatData), 0.0f);
 
-    NodeData boolData = false;
+    Nodes::NodeData boolData = false;
     EXPECT_FALSE(std::get<bool>(boolData));
 }
 
 TEST_F(NodeDataTest, NegativeValues)
 {
-    NodeData intData = -42;
+    Nodes::NodeData intData = -42;
     EXPECT_EQ(std::get<int>(intData), -42);
 
-    NodeData doubleData = -3.14;
+    Nodes::NodeData doubleData = -3.14;
     EXPECT_DOUBLE_EQ(std::get<double>(doubleData), -3.14);
 
-    NodeData floatData = -2.71f;
+    Nodes::NodeData floatData = -2.71f;
     EXPECT_FLOAT_EQ(std::get<float>(floatData), -2.71f);
 }
 
 TEST_F(NodeDataTest, EmptyMat)
 {
     cv::Mat emptyMat;
-    NodeData data = emptyMat;
+    Nodes::NodeData data = emptyMat;
 
     EXPECT_TRUE(HoldsType<cv::Mat>(data));
     const auto &mat = std::get<cv::Mat>(data);
@@ -265,7 +265,7 @@ TEST_F(NodeDataTest, EmptyMat)
 TEST_F(NodeDataTest, EmptyVectorPoints)
 {
     std::vector<cv::Point> emptyPoints;
-    NodeData data = emptyPoints;
+    Nodes::NodeData data = emptyPoints;
 
     EXPECT_TRUE(HoldsType<std::vector<cv::Point>>(data));
     const auto &points = std::get<std::vector<cv::Point>>(data);
@@ -275,7 +275,7 @@ TEST_F(NodeDataTest, EmptyVectorPoints)
 TEST_F(NodeDataTest, LargeString)
 {
     std::string largeString(10000, 'a');
-    NodeData data = largeString;
+    Nodes::NodeData data = largeString;
 
     EXPECT_TRUE(HoldsType<std::string>(data));
     EXPECT_EQ(std::get<std::string>(data).size(), 10000);
@@ -284,7 +284,7 @@ TEST_F(NodeDataTest, LargeString)
 TEST_F(NodeDataTest, ComplexPath)
 {
     std::filesystem::path complexPath = std::filesystem::path("C:") / "Users" / "Test User" / "Documents" / "file.txt";
-    NodeData data = complexPath;
+    Nodes::NodeData data = complexPath;
 
     EXPECT_TRUE(HoldsType<std::filesystem::path>(data));
     EXPECT_EQ(std::get<std::filesystem::path>(data), complexPath);
@@ -297,12 +297,12 @@ TEST_F(NodeDataTest, ComplexPath)
 TEST_F(NodeDataTest, MatDeepCopy)
 {
     cv::Mat original = cv::Mat::ones(10, 10, CV_8UC1) * 100;
-    NodeData data = original;
+    Nodes::NodeData data = original;
 
     // OpenCV Mat uses reference counting by default, so this will affect both
     // To test deep copy, we need to explicitly clone
     cv::Mat originalClone = original.clone();
-    NodeData dataFromClone = originalClone;
+    Nodes::NodeData dataFromClone = originalClone;
 
     // Modify original
     original.at<uchar>(5, 5) = 200;
@@ -319,7 +319,7 @@ TEST_F(NodeDataTest, MatDeepCopy)
 
 TEST_F(NodeDataTest, VisitVariant)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
 
     std::string result = std::visit(
         [](auto &&arg) -> std::string {
@@ -352,7 +352,7 @@ TEST_F(NodeDataTest, VisitVariant)
 
 TEST_F(NodeDataTest, VisitMultipleTypes)
 {
-    std::vector<NodeData> dataList = { 42, 3.14, std::string("test"), cv::Mat::zeros(10, 10, CV_8UC1) };
+    std::vector<Nodes::NodeData> dataList = { 42, 3.14, std::string("test"), cv::Mat::zeros(10, 10, CV_8UC1) };
 
     std::vector<std::string> types;
     for (const auto &data : dataList)
@@ -387,7 +387,7 @@ TEST_F(NodeDataTest, VisitMultipleTypes)
 
 TEST_F(NodeDataTest, GetWrongTypeThrows)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
 
     EXPECT_THROW(std::get<double>(data), std::bad_variant_access);
     EXPECT_THROW(std::get<std::string>(data), std::bad_variant_access);
@@ -400,7 +400,7 @@ TEST_F(NodeDataTest, GetWrongTypeThrows)
 
 TEST_F(NodeDataTest, GetIfCorrectType)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
 
     int *ptr = std::get_if<int>(&data);
     ASSERT_NE(ptr, nullptr);
@@ -409,7 +409,7 @@ TEST_F(NodeDataTest, GetIfCorrectType)
 
 TEST_F(NodeDataTest, GetIfWrongType)
 {
-    NodeData data = 42;
+    Nodes::NodeData data = 42;
 
     double *ptr = std::get_if<double>(&data);
     EXPECT_EQ(ptr, nullptr);

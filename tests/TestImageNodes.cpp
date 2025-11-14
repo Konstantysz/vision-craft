@@ -1,13 +1,13 @@
-#include "VisionCraftEngine/Nodes/ImageInputNode.h"
-#include "VisionCraftEngine/Nodes/ImageOutputNode.h"
-#include "VisionCraftEngine/Nodes/PreviewNode.h"
+#include "Vision/IO/ImageInputNode.h"
+#include "Vision/IO/ImageOutputNode.h"
+#include "Vision/IO/PreviewNode.h"
 
 #include <opencv2/opencv.hpp>
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <fstream>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 class ImageNodesTest : public ::testing::Test
 {
@@ -56,12 +56,12 @@ protected:
 };
 
 // ============================================================================
-// ImageInputNode Tests
+// Vision::IO::ImageInputNode Tests
 // ============================================================================
 
 TEST_F(ImageNodesTest, ImageInputNodeConstruction)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     EXPECT_EQ(node.GetId(), 1);
     EXPECT_EQ(node.GetName(), "Input");
@@ -72,7 +72,7 @@ TEST_F(ImageNodesTest, ImageInputNodeConstruction)
 
 TEST_F(ImageNodesTest, ImageInputNodeInitialState)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     EXPECT_TRUE(node.GetOutputImage().empty());
     EXPECT_FALSE(node.HasError());
@@ -81,7 +81,7 @@ TEST_F(ImageNodesTest, ImageInputNodeInitialState)
 
 TEST_F(ImageNodesTest, ImageInputNodeProcessWithoutPath)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     node.Process();
 
@@ -91,7 +91,7 @@ TEST_F(ImageNodesTest, ImageInputNodeProcessWithoutPath)
 
 TEST_F(ImageNodesTest, ImageInputNodeProcessWithEmptyPath)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     node.SetInputSlotData("FilePath", std::filesystem::path(""));
 
@@ -102,7 +102,7 @@ TEST_F(ImageNodesTest, ImageInputNodeProcessWithEmptyPath)
 
 TEST_F(ImageNodesTest, ImageInputNodeLoadValidImage)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     node.SetInputSlotData("FilePath", testImagePath);
     // Note: Cannot call Process() in test environment as it requires OpenGL context
@@ -120,7 +120,7 @@ TEST_F(ImageNodesTest, ImageInputNodeLoadValidImage)
 
 TEST_F(ImageNodesTest, ImageInputNodeLoadNonexistentFile)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     std::filesystem::path nonexistent = testDir / "nonexistent.png";
     node.SetInputSlotData("FilePath", nonexistent);
@@ -133,7 +133,7 @@ TEST_F(ImageNodesTest, ImageInputNodeLoadNonexistentFile)
 
 TEST_F(ImageNodesTest, ImageInputNodeLoadInvalidFile)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     // Create a text file, not an image
     std::filesystem::path invalidFile = testDir / "invalid.png";
@@ -148,7 +148,7 @@ TEST_F(ImageNodesTest, ImageInputNodeLoadInvalidFile)
 
 TEST_F(ImageNodesTest, ImageInputNodeOutputSlotData)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     node.SetInputSlotData("FilePath", testImagePath);
     // Cannot call Process() without OpenGL context
@@ -164,7 +164,7 @@ TEST_F(ImageNodesTest, ImageInputNodeOutputSlotData)
 
 TEST_F(ImageNodesTest, ImageInputNodeCalculatePreviewDimensionsNoImage)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     auto [width, height] = node.CalculatePreviewDimensions(200.0f, 150.0f);
 
@@ -174,7 +174,7 @@ TEST_F(ImageNodesTest, ImageInputNodeCalculatePreviewDimensionsNoImage)
 
 TEST_F(ImageNodesTest, ImageInputNodeCalculateExtraHeightNoImage)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     float extraHeight = node.CalculateExtraHeight(200.0f, 1.0f);
 
@@ -183,7 +183,7 @@ TEST_F(ImageNodesTest, ImageInputNodeCalculateExtraHeightNoImage)
 
 TEST_F(ImageNodesTest, ImageInputNodeReloadDifferentImage)
 {
-    ImageInputNode node(1, "Input");
+    Vision::IO::ImageInputNode node(1, "Input");
 
     // Create a second test image
     std::filesystem::path testImage2 = testDir / "test_image2.png";
@@ -207,12 +207,12 @@ TEST_F(ImageNodesTest, ImageInputNodeReloadDifferentImage)
 }
 
 // ============================================================================
-// ImageOutputNode Tests
+// Vision::IO::ImageOutputNode Tests
 // ============================================================================
 
 TEST_F(ImageNodesTest, ImageOutputNodeConstruction)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     EXPECT_EQ(node.GetId(), 1);
     EXPECT_EQ(node.GetName(), "Output");
@@ -222,7 +222,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeConstruction)
 
 TEST_F(ImageNodesTest, ImageOutputNodeInitialState)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     EXPECT_FALSE(node.HasValidImage());
     EXPECT_TRUE(node.GetDisplayImage().empty());
@@ -230,7 +230,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeInitialState)
 
 TEST_F(ImageNodesTest, ImageOutputNodeProcessWithInput)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     cv::Mat testImage = CreateColorTestImage();
     node.SetInputSlotData("Input", testImage);
@@ -245,7 +245,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeProcessWithInput)
 
 TEST_F(ImageNodesTest, ImageOutputNodeProcessWithoutInput)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     node.Process();
 
@@ -254,7 +254,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeProcessWithoutInput)
 
 TEST_F(ImageNodesTest, ImageOutputNodeProcessEmptyImage)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     cv::Mat emptyImage;
     node.SetInputSlotData("Input", emptyImage);
@@ -266,7 +266,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeProcessEmptyImage)
 
 TEST_F(ImageNodesTest, ImageOutputNodeSetInputImage)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     cv::Mat testImage = CreateColorTestImage();
     node.SetInputImage(testImage);
@@ -280,7 +280,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeSetInputImage)
 
 TEST_F(ImageNodesTest, ImageOutputNodeLastSaveStatus)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     // Initial state
     EXPECT_FALSE(node.GetLastSaveStatus());
@@ -288,7 +288,7 @@ TEST_F(ImageNodesTest, ImageOutputNodeLastSaveStatus)
 
 TEST_F(ImageNodesTest, ImageOutputNodeProcessMultipleTimes)
 {
-    ImageOutputNode node(1, "Output");
+    Vision::IO::ImageOutputNode node(1, "Output");
 
     cv::Mat testImage1 = CreateColorTestImage();
     node.SetInputSlotData("Input", testImage1);
@@ -303,12 +303,12 @@ TEST_F(ImageNodesTest, ImageOutputNodeProcessMultipleTimes)
 }
 
 // ============================================================================
-// PreviewNode Tests
+// Vision::IO::PreviewNode Tests
 // ============================================================================
 
 TEST_F(ImageNodesTest, PreviewNodeConstruction)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     EXPECT_EQ(node.GetId(), 1);
     EXPECT_EQ(node.GetName(), "Preview");
@@ -319,19 +319,19 @@ TEST_F(ImageNodesTest, PreviewNodeConstruction)
 
 TEST_F(ImageNodesTest, PreviewNodeInitialState)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     EXPECT_TRUE(node.GetOutputImage().empty());
 }
 
 TEST_F(ImageNodesTest, PreviewNodeProcessPassthrough)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat testImage = CreateColorTestImage();
     node.SetInputSlotData("Input", testImage);
 
-    // PreviewNode calls OpenGL texture functions in Process(), which requires OpenGL context
+    // Vision::IO::PreviewNode calls OpenGL texture functions in Process(), which requires OpenGL context
     // We'll skip calling Process() and just verify the slot setup
     EXPECT_TRUE(node.HasInputSlot("Input"));
     EXPECT_TRUE(node.HasOutputSlot("Output"));
@@ -344,12 +344,12 @@ TEST_F(ImageNodesTest, PreviewNodeProcessPassthrough)
 
 TEST_F(ImageNodesTest, PreviewNodePassthroughData)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat testImage = CreateColorTestImage();
     node.SetInputSlotData("Input", testImage);
 
-    // PreviewNode calls OpenGL in Process(), skip that
+    // Vision::IO::PreviewNode calls OpenGL in Process(), skip that
     // Just verify slots are correctly configured
     EXPECT_TRUE(node.HasOutputSlot("Output"));
 
@@ -361,7 +361,7 @@ TEST_F(ImageNodesTest, PreviewNodePassthroughData)
 
 TEST_F(ImageNodesTest, PreviewNodeProcessWithoutInput)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     node.Process();
 
@@ -370,7 +370,7 @@ TEST_F(ImageNodesTest, PreviewNodeProcessWithoutInput)
 
 TEST_F(ImageNodesTest, PreviewNodeProcessEmptyImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat emptyImage;
     node.SetInputSlotData("Input", emptyImage);
@@ -382,7 +382,7 @@ TEST_F(ImageNodesTest, PreviewNodeProcessEmptyImage)
 
 TEST_F(ImageNodesTest, PreviewNodeSetInputImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat testImage = CreateColorTestImage();
     node.SetInputImage(testImage);
@@ -395,7 +395,7 @@ TEST_F(ImageNodesTest, PreviewNodeSetInputImage)
 
 TEST_F(ImageNodesTest, PreviewNodeCalculatePreviewDimensionsNoImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     auto [width, height] = node.CalculatePreviewDimensions(200.0f, 150.0f);
 
@@ -405,7 +405,7 @@ TEST_F(ImageNodesTest, PreviewNodeCalculatePreviewDimensionsNoImage)
 
 TEST_F(ImageNodesTest, PreviewNodeCalculateExtraHeightNoImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     float extraHeight = node.CalculateExtraHeight(200.0f, 1.0f);
 
@@ -414,7 +414,7 @@ TEST_F(ImageNodesTest, PreviewNodeCalculateExtraHeightNoImage)
 
 TEST_F(ImageNodesTest, PreviewNodeGrayscaleImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat grayImage = CreateGrayscaleTestImage();
     node.SetInputSlotData("Input", grayImage);
@@ -428,7 +428,7 @@ TEST_F(ImageNodesTest, PreviewNodeGrayscaleImage)
 
 TEST_F(ImageNodesTest, PreviewNodeColorImage)
 {
-    PreviewNode node(1, "Preview");
+    Vision::IO::PreviewNode node(1, "Preview");
 
     cv::Mat colorImage = CreateColorTestImage();
     node.SetInputSlotData("Input", colorImage);
@@ -446,8 +446,8 @@ TEST_F(ImageNodesTest, PreviewNodeColorImage)
 
 TEST_F(ImageNodesTest, ImageInputToPreviewChain)
 {
-    ImageInputNode inputNode(1, "Input");
-    PreviewNode previewNode(2, "Preview");
+    Vision::IO::ImageInputNode inputNode(1, "Input");
+    Vision::IO::PreviewNode previewNode(2, "Preview");
 
     // Load image in input node (requires OpenGL, skip)
     inputNode.SetInputSlotData("FilePath", testImagePath);
@@ -460,8 +460,8 @@ TEST_F(ImageNodesTest, ImageInputToPreviewChain)
 
 TEST_F(ImageNodesTest, PreviewToOutputChain)
 {
-    PreviewNode previewNode(1, "Preview");
-    ImageOutputNode outputNode(2, "Output");
+    Vision::IO::PreviewNode previewNode(1, "Preview");
+    Vision::IO::ImageOutputNode outputNode(2, "Output");
 
     cv::Mat testImage = CreateColorTestImage();
 
@@ -477,9 +477,9 @@ TEST_F(ImageNodesTest, PreviewToOutputChain)
 
 TEST_F(ImageNodesTest, FullPipelineInputPreviewOutput)
 {
-    ImageInputNode inputNode(1, "Input");
-    PreviewNode previewNode(2, "Preview");
-    ImageOutputNode outputNode(3, "Output");
+    Vision::IO::ImageInputNode inputNode(1, "Input");
+    Vision::IO::PreviewNode previewNode(2, "Preview");
+    Vision::IO::ImageOutputNode outputNode(3, "Output");
 
     // Verify all nodes have correct slots for a pipeline
     EXPECT_TRUE(inputNode.HasOutputSlot("Output"));

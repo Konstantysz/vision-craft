@@ -1,16 +1,16 @@
-#include "VisionCraftEngine/NodeData.h"
-#include "VisionCraftEngine/Slot.h"
+#include "Nodes/Core/NodeData.h"
+#include "Nodes/Core/Slot.h"
 
-#include <filesystem>
-#include <gtest/gtest.h>
 #include <opencv2/opencv.hpp>
+#include <gtest/gtest.h>
+#include <filesystem>
 
-using namespace VisionCraft::Engine;
+using namespace VisionCraft;
 
 class SlotTest : public ::testing::Test
 {
 protected:
-    Slot slot;
+    Nodes::Slot slot;
 };
 
 // ============================================================================
@@ -19,7 +19,7 @@ protected:
 
 TEST_F(SlotTest, DefaultConstruction)
 {
-    Slot emptySlot;
+    Nodes::Slot emptySlot;
     EXPECT_FALSE(emptySlot.HasData());
     EXPECT_FALSE(emptySlot.HasDefaultValue());
     EXPECT_FALSE(emptySlot.IsConnected());
@@ -28,7 +28,7 @@ TEST_F(SlotTest, DefaultConstruction)
 
 TEST_F(SlotTest, ConstructionWithDefault)
 {
-    Slot slotWithDefault(NodeData(42));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(42));
     EXPECT_FALSE(slotWithDefault.HasData());
     EXPECT_TRUE(slotWithDefault.HasDefaultValue());
     EXPECT_FALSE(slotWithDefault.IsConnected());
@@ -132,7 +132,7 @@ TEST_F(SlotTest, HoldsType)
 
 TEST_F(SlotTest, TypeIndex)
 {
-    Slot emptySlot;
+    Nodes::Slot emptySlot;
     EXPECT_EQ(emptySlot.GetTypeIndex(), 0); // monostate
 
     emptySlot.SetData(cv::Mat());
@@ -159,7 +159,7 @@ TEST_F(SlotTest, ClearData)
 
 TEST_F(SlotTest, ClearDoesNotRemoveDefault)
 {
-    Slot slotWithDefault(NodeData(100));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(100));
     slotWithDefault.SetData(200);
 
     EXPECT_TRUE(slotWithDefault.HasData());
@@ -183,7 +183,7 @@ TEST_F(SlotTest, SetDefaultValue)
 {
     EXPECT_FALSE(slot.HasDefaultValue());
 
-    slot.SetDefaultValue(NodeData(42));
+    slot.SetDefaultValue(Nodes::NodeData(42));
     EXPECT_TRUE(slot.HasDefaultValue());
 
     auto defaultVal = slot.GetDefaultValue<int>();
@@ -193,7 +193,7 @@ TEST_F(SlotTest, SetDefaultValue)
 
 TEST_F(SlotTest, GetDefaultWrongType)
 {
-    slot.SetDefaultValue(NodeData(42));
+    slot.SetDefaultValue(Nodes::NodeData(42));
 
     EXPECT_FALSE(slot.GetDefaultValue<double>().has_value());
     EXPECT_FALSE(slot.GetDefaultValue<std::string>().has_value());
@@ -202,10 +202,10 @@ TEST_F(SlotTest, GetDefaultWrongType)
 
 TEST_F(SlotTest, OverwriteDefaultValue)
 {
-    slot.SetDefaultValue(NodeData(100));
+    slot.SetDefaultValue(Nodes::NodeData(100));
     EXPECT_EQ(slot.GetDefaultValue<int>().value(), 100);
 
-    slot.SetDefaultValue(NodeData(200));
+    slot.SetDefaultValue(Nodes::NodeData(200));
     EXPECT_EQ(slot.GetDefaultValue<int>().value(), 200);
 }
 
@@ -215,7 +215,7 @@ TEST_F(SlotTest, OverwriteDefaultValue)
 
 TEST_F(SlotTest, GetValueOrDefaultPrefersConnected)
 {
-    Slot slotWithDefault(NodeData(100));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(100));
     slotWithDefault.SetData(200);
 
     auto value = slotWithDefault.GetValueOrDefault<int>();
@@ -225,7 +225,7 @@ TEST_F(SlotTest, GetValueOrDefaultPrefersConnected)
 
 TEST_F(SlotTest, GetValueOrDefaultFallsBackToDefault)
 {
-    Slot slotWithDefault(NodeData(100));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(100));
 
     auto value = slotWithDefault.GetValueOrDefault<int>();
     ASSERT_TRUE(value.has_value());
@@ -240,7 +240,7 @@ TEST_F(SlotTest, GetValueOrDefaultNoDataNoDefault)
 
 TEST_F(SlotTest, GetValueOrDefaultWrongType)
 {
-    Slot slotWithDefault(NodeData(42));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(42));
     slotWithDefault.SetData(3.14);
 
     // Try to get int when slot has double
@@ -267,7 +267,7 @@ TEST_F(SlotTest, IsConnected)
 
 TEST_F(SlotTest, IsConnectedIndependentOfDefault)
 {
-    Slot slotWithDefault(NodeData(100));
+    Nodes::Slot slotWithDefault(Nodes::NodeData(100));
 
     EXPECT_FALSE(slotWithDefault.IsConnected());
     EXPECT_TRUE(slotWithDefault.HasDefaultValue());
@@ -309,7 +309,7 @@ TEST_F(SlotTest, OverwriteWithDifferentType)
 
 TEST_F(SlotTest, EmptyStringDefault)
 {
-    Slot slotWithEmpty(NodeData(std::string("")));
+    Nodes::Slot slotWithEmpty(Nodes::NodeData(std::string("")));
     EXPECT_TRUE(slotWithEmpty.HasDefaultValue());
 
     auto value = slotWithEmpty.GetDefaultValue<std::string>();
@@ -319,13 +319,13 @@ TEST_F(SlotTest, EmptyStringDefault)
 
 TEST_F(SlotTest, ZeroValues)
 {
-    Slot intSlot(NodeData(0));
+    Nodes::Slot intSlot(Nodes::NodeData(0));
     EXPECT_EQ(intSlot.GetDefaultValue<int>().value(), 0);
 
-    Slot doubleSlot(NodeData(0.0));
+    Nodes::Slot doubleSlot(Nodes::NodeData(0.0));
     EXPECT_EQ(doubleSlot.GetDefaultValue<double>().value(), 0.0);
 
-    Slot boolSlot(NodeData(false));
+    Nodes::Slot boolSlot(Nodes::NodeData(false));
     EXPECT_FALSE(boolSlot.GetDefaultValue<bool>().value());
 }
 

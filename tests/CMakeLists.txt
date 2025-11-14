@@ -22,7 +22,9 @@ target_link_libraries(TestVisionCraftNodes
     PRIVATE
     GTest::gtest
     GTest::gtest_main
-    VisionCraftEngine
+    Nodes
+    Vision
+    Editor
 )
 
 add_test(NAME TestVisionCraftNodes COMMAND TestVisionCraftNodes)

@@ -2,9 +2,9 @@ name: Build and Test (Windows)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   build-and-test:
@@ -29,17 +29,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: 'a62ce77d56ee07513b4b67de1ec2daeaebfae51a'
+          vcpkgGitCommitId: "a62ce77d56ee07513b4b67de1ec2daeaebfae51a"
 
       - name: Configure CMake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build/vcpkg/scripts/buildsystems/vcpkg.cmake"
-        shell: bash
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"        shell: bash
 
       - name: Build
         run: cmake --build build --config Release -j 4

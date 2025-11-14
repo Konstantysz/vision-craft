@@ -56,7 +56,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          cd build/Release
+          cd build
           ctest --output-on-failure -C Release
         shell: bash
 
@@ -71,19 +71,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-windows
-          path: build/Release/coverage-report/
+          path: build/coverage/html/
           retention-days: 30
 
       - name: Display Coverage Summary in PR
         if: always()
         run: |
-          if [ -f build/Release/coverage-summary.txt ]; then
-            echo "## 📊 Test Coverage Report (Windows)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            cat build/Release/coverage-summary.txt >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Test Coverage Report (Windows)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d build/coverage/html ]; then
+            echo "✅ Coverage report generated successfully" >> $GITHUB_STEP_SUMMARY
             echo "📁 Full HTML report available in artifacts" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Coverage report not generated" >> $GITHUB_STEP_SUMMARY

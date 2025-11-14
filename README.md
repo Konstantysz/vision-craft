@@ -14,11 +14,14 @@ A modern C++20 computer vision node editor with an intuitive visual programming 
 
 ## 🏛️ Architecture
 
-VisionCraft is built using a layered architecture:
+VisionCraft is built using a domain-driven architecture with clear separation of concerns:
 
 - **kappa-core**: Foundation framework (as git submodule) providing Application, Window, and Layer abstractions
-- **VisionCraftEngine**: Node system and computer vision processing logic
-- **VisionCraftApp**: GUI application with ImGui-based interface
+- **Nodes**: Core node system abstractions (Node, NodeEditor, Slot, NodeData)
+- **Vision**: Computer vision domain (algorithms, I/O nodes, node factory)
+- **Editor**: Editor domain (commands, state management, persistence)
+- **UI**: Presentation layer (rendering, canvas, widgets, application layers)
+- **App**: Application composition and entry point
 
 ## 📋 Prerequisites
 
@@ -54,7 +57,7 @@ VisionCraft is built using a layered architecture:
 
 3. **Run VisionCraft**
    ```cmd
-   .\build\src\VisionCraftApp\Release\VisionCraftApp.exe
+   .\build\src\App\Release\VisionCraft.exe
    ```
 
 ### 🐧 Linux
@@ -79,7 +82,7 @@ VisionCraft is built using a layered architecture:
 
 3. **Run VisionCraft**
    ```bash
-   ./build/src/VisionCraftApp/VisionCraftApp
+   ./build/src/App/VisionCraft
    ```
 
 ## 🔧 Development Build
@@ -115,21 +118,24 @@ vision-craft/
 │   ├── kappa-core/           # Core GUI application framework (git submodule)
 │   └── ImGuiFileDialog/      # File dialog library
 ├── src/
-│   ├── VisionCraftEngine/    # Node system and CV logic
-│   │   ├── Node.h            # Abstract node base
-│   │   ├── NodeEditor.h      # Node graph management
-│   │   └── Nodes/            # Computer vision nodes
-│   └── VisionCraftApp/       # GUI application (organized by feature)
-│       ├── Main/             # Application entry point
-│       ├── Editor/           # Node editor layer and factory
-│       ├── Rendering/        # Node rendering system
-│       │   └── Strategies/   # Rendering strategy pattern
-│       ├── Canvas/           # Canvas controller
-│       ├── Connections/      # Connection management
-│       ├── Input/            # Input handling and selection
-│       ├── UI/               # UI components (menus, dialogs)
-│       ├── Layers/           # Application layers
-│       └── Events/           # Application events
+│   ├── Nodes/                # Core node system abstractions
+│   │   └── Core/             # Node, NodeEditor, Slot, NodeData
+│   ├── Vision/               # Computer vision domain
+│   │   ├── Algorithms/       # CV processing nodes (Grayscale, Threshold, CannyEdge)
+│   │   ├── IO/               # Image I/O nodes (ImageInput, ImageOutput, Preview)
+│   │   └── Factory/          # Node factory for registration
+│   ├── Editor/               # Editor domain
+│   │   ├── Commands/         # Command pattern for undo/redo
+│   │   ├── State/            # Selection and clipboard managers
+│   │   └── Persistence/      # Recent files, serialization
+│   ├── UI/                   # Presentation layer
+│   │   ├── Layers/           # Application layers (NodeEditor, DockSpace, etc.)
+│   │   ├── Rendering/        # Node rendering and strategies
+│   │   ├── Canvas/           # Canvas controller, connections, input handling
+│   │   ├── Widgets/          # UI components, dialogs, constants
+│   │   └── Events/           # Application events
+│   └── App/                  # Application entry point
+│       └── VisionCraftApplication  # Main executable
 ├── tests/                    # Unit tests
 ├── cmake/                    # Build system extensions
 │   └── CodeQuality.cmake     # Code quality integration

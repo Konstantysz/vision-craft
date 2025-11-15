@@ -108,10 +108,11 @@ jobs:
           sudo apt-get install -y cppcheck
 
       - name: Run cppcheck
+        id: cppcheck
+        continue-on-error: true
         run: |
           cppcheck \
             --enable=all \
-            --error-exitcode=1 \
             --suppress=missingIncludeSystem \
             --suppress=missingInclude \
             --suppress=unusedFunction \
@@ -121,7 +122,16 @@ jobs:
             -I src \
             -I external/kappa-core/include \
             src/ 2>&1 | tee cppcheck-report.txt
-        continue-on-error: true
+
+      - name: Check for cppcheck errors
+        if: always()
+        run: |
+          if grep -E "(error|warning):" cppcheck-report.txt | grep -v "information:"; then
+            echo "::error::Cppcheck found errors or warnings in the code"
+            grep -E "(error|warning):" cppcheck-report.txt | grep -v "information:" | head -20
+            exit 1
+          fi
+          echo "No cppcheck errors or warnings found"
 
       - name: Upload cppcheck results
         if: always()

@@ -1,4 +1,4 @@
-name: Build and Test (Windows)
+name: Build and Test
 
 on:
   push:
@@ -12,8 +12,19 @@ permissions:
 
 jobs:
   build:
-    name: Build (Windows MSVC)
-    runs-on: windows-latest
+    name: Build (${{ matrix.config.name }})
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Windows MSVC"
+            os: windows-latest
+            artifact: windows-build-release
+
+          - name: "Linux GCC"
+            os: ubuntu-latest
+            artifact: linux-build-release
 
     steps:
       - name: Checkout repository
@@ -22,15 +33,34 @@ jobs:
           submodules: recursive
 
       - name: Set up MSVC
+        if: runner.os == 'Windows'
         uses: microsoft/setup-msbuild@v1.1
 
       # LLVM 20.1.8 is pinned for stability and coverage tool compatibility
       # This version is verified to work with our LLVM-based coverage workflow
       - name: Install LLVM (for coverage)
+        if: runner.os == 'Windows'
         run: |
           choco install llvm --version=20.1.8 -y
           echo "C:\Program Files\LLVM\bin" >> $GITHUB_PATH
         shell: bash
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxtst-dev
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -76,16 +106,29 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build-release
+          name: ${{ matrix.config.artifact }}
           path: |
             build/bin/Release/
             build/tests/Release/
+            build/bin/
+            build/tests/
           retention-days: 1
 
   test:
-    name: Test (Windows MSVC)
-    runs-on: windows-latest
+    name: Test (${{ matrix.config.name }})
+    runs-on: ${{ matrix.config.os }}
     needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Windows MSVC"
+            os: windows-latest
+            artifact: windows-build-release
+
+          - name: "Linux GCC"
+            os: ubuntu-latest
+            artifact: linux-build-release
 
     steps:
       - name: Checkout repository
@@ -94,8 +137,12 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-build-release
+          name: ${{ matrix.config.artifact }}
           path: build/
+
+      - name: Make executables executable (Linux)
+        if: runner.os == 'Linux'
+        run: chmod +x build/tests/* build/bin/* || true
 
       - name: Run Tests
         run: |

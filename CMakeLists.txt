@@ -110,6 +110,11 @@ add_code_quality_targets()
 # Setup IDE integration
 setup_ide_integration()
 
+# Disable kappa-core examples and tests when using as submodule
+# kappa-core's own CI/CD validates these - we only need the library
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+
 # Add kappa-core submodule
 add_subdirectory(external/kappa-core)
 

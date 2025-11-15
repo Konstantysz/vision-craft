@@ -67,7 +67,10 @@ jobs:
         run: |
           clang-tidy-14 -p build \
             --header-filter='.*vision-craft/src/.*' \
-            $(find src -type f -name '*.cpp' 2>/dev/null || true)
+            --system-headers=false \
+            $(find src -type f -name '*.cpp' 2>/dev/null || true) \
+            -- -isystem build/vcpkg_installed/x64-linux/include \
+               -isystem external/kappa-core/include
 
   cppcheck:
     name: Cppcheck Analysis

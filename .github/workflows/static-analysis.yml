@@ -63,6 +63,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug
 
       - name: Run clang-tidy
+        id: clang-tidy
         continue-on-error: true
         run: |
           clang-tidy-14 -p build \
@@ -70,7 +71,26 @@ jobs:
             --system-headers=false \
             $(find src -type f -name '*.cpp' 2>/dev/null || true) \
             -- -isystem build/vcpkg_installed/x64-linux/include \
-               -isystem external/kappa-core/include
+               -isystem external/kappa-core/include \
+            2>&1 | tee clang-tidy-output.txt
+
+      - name: Check for clang-tidy errors
+        if: always()
+        run: |
+          if grep -q "error:" clang-tidy-output.txt; then
+            echo "::error::Clang-tidy found errors in the code"
+            grep "error:" clang-tidy-output.txt | head -20
+            exit 1
+          fi
+          echo "No clang-tidy errors found"
+
+      - name: Upload clang-tidy results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-report
+          path: clang-tidy-output.txt
+          retention-days: 7
 
   cppcheck:
     name: Cppcheck Analysis

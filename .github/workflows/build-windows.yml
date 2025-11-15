@@ -141,6 +141,8 @@ jobs:
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
         shell: bash
 

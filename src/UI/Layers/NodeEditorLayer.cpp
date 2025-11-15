@@ -879,7 +879,11 @@ namespace VisionCraft::UI::Layers
         connectionManager.RemoveConnectionsForNode(nodeId);
 
         // Remove node (also removes connections from core layer)
-        nodeEditor.RemoveNode(nodeId);
+        const bool removed = nodeEditor.RemoveNode(nodeId);
+        if (!removed)
+        {
+            Kappa::Logger::Warn("Failed to remove node {} from editor", nodeId);
+        }
 
         // Remove node position
         nodePositions.erase(nodeId);

@@ -20,6 +20,8 @@ jobs:
       - name: Set up MSVC
         uses: microsoft/setup-msbuild@v1.1
 
+      # LLVM 20.1.8 is pinned for stability and coverage tool compatibility
+      # This version is verified to work with our LLVM-based coverage workflow
       - name: Install LLVM (for coverage)
         run: |
           choco install llvm --version=20.1.8 -y
@@ -31,6 +33,7 @@ jobs:
         with:
           python-version: "3.12"
 
+      # vcpkg binary cache speeds up dependency builds by caching compiled packages
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -39,6 +42,7 @@ jobs:
           restore-keys: |
             vcpkg-bincache-${{ runner.os }}-
 
+      # Cache installed packages to avoid rebuilding dependencies on every run
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
@@ -47,6 +51,7 @@ jobs:
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
 
+      # vcpkg commit is pinned to ensure reproducible builds across environments
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -60,8 +65,10 @@ jobs:
         shell: bash
 
       - name: Build
-        run: cmake --build build --config Release -j 4
+        run: cmake --build build --config Release --parallel
 
+      # Artifacts retained for 1 day to minimize storage costs
+      # Build artifacts only needed for test job dependency
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -92,6 +99,10 @@ jobs:
           ctest --output-on-failure -C Release
         shell: bash
 
+  # Coverage runs on Windows with Clang because:
+  # - LLVM coverage tools (llvm-profdata, llvm-cov) provide better instrumentation
+  # - Clang's source-based coverage is more reliable than MSVC alternatives
+  # - Linux coverage was removed to reduce CI time and focus on primary platform
   coverage:
     name: Coverage (Windows Clang)
     runs-on: windows-latest
@@ -138,6 +149,8 @@ jobs:
         with:
           vcpkgGitCommitId: "a62ce77d56ee07513b4b67de1ec2daeaebfae51a"
 
+      # RelWithDebInfo provides debug symbols for coverage while maintaining performance
+      # Ninja generator is required for proper LLVM coverage flag handling with Clang
       - name: Configure CMake (RelWithDebInfo)
         run: |
           cmake -B build \
@@ -150,7 +163,7 @@ jobs:
         shell: bash
 
       - name: Build with Coverage
-        run: cmake --build build -j 4
+        run: cmake --build build --parallel
 
       - name: Generate Test Coverage Report
         run: |
@@ -158,6 +171,7 @@ jobs:
         shell: bash
         continue-on-error: true
 
+      # Coverage reports retained for 30 days for historical analysis and tracking
       - name: Upload Coverage HTML Report
         if: always()
         uses: actions/upload-artifact@v4

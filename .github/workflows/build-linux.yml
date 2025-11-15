@@ -48,9 +48,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Jinja2 required for code generation scripts
       - name: Install Python dependencies
         run: pip install jinja2
 
+      # vcpkg binary cache speeds up dependency builds by caching compiled packages
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -59,6 +61,7 @@ jobs:
           restore-keys: |
             vcpkg-bincache-${{ runner.os }}-
 
+      # Cache installed packages to avoid rebuilding dependencies on every run
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
@@ -67,6 +70,7 @@ jobs:
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
 
+      # vcpkg commit is pinned to ensure reproducible builds across environments
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -80,8 +84,10 @@ jobs:
             -G Ninja
 
       - name: Build
-        run: cmake --build build --config Release -j $(nproc)
+        run: cmake --build build --config Release --parallel
 
+      # Artifacts retained for 1 day to minimize storage costs
+      # Build artifacts only needed for test job dependency
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

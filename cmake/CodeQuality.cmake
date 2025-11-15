@@ -183,8 +183,7 @@ function(add_coverage_targets)
     # Target: coverage-run - Run tests to generate coverage data
     add_custom_target(coverage-run
         COMMAND ${CMAKE_COMMAND} -E make_directory "${COVERAGE_RAW_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE=${COVERAGE_RAW_DIR}/coverage-%p.profraw
-                "${TEST_EXECUTABLE}"
+        COMMAND ${CMAKE_COMMAND} -E env "LLVM_PROFILE_FILE=${COVERAGE_RAW_DIR}/coverage-%p.profraw" "${TEST_EXECUTABLE}"
         DEPENDS TestVisionCraftNodes
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running tests to generate coverage data"

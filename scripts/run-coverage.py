@@ -54,9 +54,33 @@ class Colors:
         Colors.NC = ""
 
 
+class Symbols:
+    """Unicode symbols with ASCII fallbacks for Windows console."""
+
+    ARROW = "->"
+    WARNING = "!"
+    ERROR = "X"
+    SUCCESS = "+"
+
+    @staticmethod
+    def enable_unicode():
+        """Enable Unicode symbols if terminal supports it."""
+        Symbols.ARROW = "→"
+        Symbols.WARNING = "⚠"
+        Symbols.ERROR = "✗"
+        Symbols.SUCCESS = "✓"
+
+
 # Disable colors on Windows by default (unless ANSI is enabled)
 if platform.system() == "Windows" and not os.environ.get("ANSICON"):
     Colors.disable()
+
+# Enable Unicode symbols on non-Windows or if UTF-8 encoding is available
+try:
+    if platform.system() != "Windows" or sys.stdout.encoding.lower() in ['utf-8', 'utf8']:
+        Symbols.enable_unicode()
+except Exception:
+    pass  # Keep ASCII symbols on error
 
 
 def print_header(text: str):
@@ -70,22 +94,22 @@ def print_header(text: str):
 
 def print_step(text: str):
     """Print a step message."""
-    print(f"{Colors.GREEN}→{Colors.NC} {text}")
+    print(f"{Colors.GREEN}{Symbols.ARROW}{Colors.NC} {text}")
 
 
 def print_warning(text: str):
     """Print a warning message."""
-    print(f"{Colors.YELLOW}⚠{Colors.NC} {text}")
+    print(f"{Colors.YELLOW}{Symbols.WARNING}{Colors.NC} {text}")
 
 
 def print_error(text: str):
     """Print an error message."""
-    print(f"{Colors.RED}✗{Colors.NC} {text}")
+    print(f"{Colors.RED}{Symbols.ERROR}{Colors.NC} {text}")
 
 
 def print_success(text: str):
     """Print a success message."""
-    print(f"{Colors.GREEN}✓{Colors.NC} {text}")
+    print(f"{Colors.GREEN}{Symbols.SUCCESS}{Colors.NC} {text}")
 
 
 def check_command(command: str) -> bool:

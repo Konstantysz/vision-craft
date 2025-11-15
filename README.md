@@ -1,6 +1,7 @@
 # 🎨 VisionCraft
 
-[![Pre-commit](https://github.com/Konstantysz/vision-craft/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/Konstantysz/vision-craft/actions/workflows/pre-commit.yml)
+[![Windows Build](https://github.com/Konstantysz/vision-craft/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/build-windows.yml)
+[![Linux Build](https://github.com/Konstantysz/vision-craft/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/build-linux.yml)
 
 A modern C++20 computer vision node editor with an intuitive visual programming interface. VisionCraft allows users to create complex computer vision pipelines through a drag-and-drop node-based editor. 🚀
 

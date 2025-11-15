@@ -62,6 +62,9 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_BUILD_TYPE=Debug
 
+      - name: Build project
+        run: cmake --build build --config Debug --parallel
+
       - name: Run clang-tidy
         id: clang-tidy
         continue-on-error: true

@@ -198,6 +198,37 @@ jobs:
         shell: bash
         continue-on-error: true
 
+      - name: Extract Coverage Statistics
+        if: always()
+        id: coverage-stats
+        run: |
+          if [ -f build/coverage/coverage.profdata ]; then
+            # Generate coverage report and extract statistics
+            TEST_EXE="build/tests/TestVisionCraftNodes.exe"
+            PROFDATA="build/coverage/coverage.profdata"
+
+            # Get coverage summary
+            llvm-cov report "$TEST_EXE" -instr-profile="$PROFDATA" > coverage-summary.txt
+
+            # Extract overall coverage percentage (last line of summary)
+            TOTAL_LINE=$(tail -n 1 coverage-summary.txt)
+
+            # Parse the coverage percentage from the TOTAL line
+            # Format: "TOTAL  X  Y  Z%  A  B  C%  D  E  F%"
+            REGIONS_COV=$(echo "$TOTAL_LINE" | awk '{print $4}' | tr -d '%')
+            FUNCTIONS_COV=$(echo "$TOTAL_LINE" | awk '{print $7}' | tr -d '%')
+            LINES_COV=$(echo "$TOTAL_LINE" | awk '{print $10}' | tr -d '%')
+
+            echo "regions_coverage=$REGIONS_COV" >> $GITHUB_OUTPUT
+            echo "functions_coverage=$FUNCTIONS_COV" >> $GITHUB_OUTPUT
+            echo "lines_coverage=$LINES_COV" >> $GITHUB_OUTPUT
+            echo "coverage_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "coverage_available=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+        continue-on-error: true
+
       - name: Post Coverage Comment to PR
         if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -207,9 +238,25 @@ jobs:
             const coverageDir = 'build/coverage/html';
             const coverageExists = fs.existsSync(coverageDir);
 
-            const body = coverageExists
-              ? `## 📊 Test Coverage Report (Windows)\n\n✅ Coverage report generated successfully\n📁 Full HTML report available in [artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`
-              : `## 📊 Test Coverage Report (Windows)\n\n⚠️ Coverage report not generated`;
+            let body = '## 📊 Test Coverage Report (Windows)\n\n';
+
+            if (coverageExists && '${{ steps.coverage-stats.outputs.coverage_available }}' === 'true') {
+              const regionsCov = '${{ steps.coverage-stats.outputs.regions_coverage }}';
+              const functionsCov = '${{ steps.coverage-stats.outputs.functions_coverage }}';
+              const linesCov = '${{ steps.coverage-stats.outputs.lines_coverage }}';
+
+              body += '✅ Coverage report generated successfully\n\n';
+              body += '### Coverage Statistics\n\n';
+              body += '| Metric | Coverage |\n';
+              body += '|--------|----------|\n';
+              body += `| **Lines** | ${linesCov}% |\n`;
+              body += `| **Functions** | ${functionsCov}% |\n`;
+              body += `| **Regions** | ${regionsCov}% |\n`;
+              body += '\n';
+              body += `📁 [Full HTML Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            } else {
+              body += '⚠️ Coverage report not generated';
+            }
 
             // Find existing comment
             const comments = await github.rest.issues.listComments({
@@ -224,7 +271,6 @@ jobs:
             );
 
             if (botComment) {
-              // Update existing comment
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -232,7 +278,6 @@ jobs:
                 body: body
               });
             } else {
-              // Create new comment
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,

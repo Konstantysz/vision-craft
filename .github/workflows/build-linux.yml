@@ -188,7 +188,7 @@ jobs:
             -G Ninja
 
       - name: Build with Coverage
-        run: cmake --build build --config RelWithDebInfo -j $(nproc)
+        run: cmake --build build -j $(nproc)
 
       - name: Generate Test Coverage Report
         run: |

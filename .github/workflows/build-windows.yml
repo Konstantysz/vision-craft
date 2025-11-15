@@ -150,7 +150,7 @@ jobs:
         shell: bash
 
       - name: Build with Coverage
-        run: cmake --build build --config RelWithDebInfo -j 4
+        run: cmake --build build -j 4
 
       - name: Generate Test Coverage Report
         run: |

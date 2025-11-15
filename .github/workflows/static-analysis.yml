@@ -70,7 +70,8 @@ jobs:
             --header-filter='.*vision-craft/src/.*' \
             --system-headers=false \
             $(find src -type f -name '*.cpp' 2>/dev/null || true) \
-            -- -I${{ github.workspace }}/src \
+            -- -std=c++20 \
+               -I${{ github.workspace }}/src \
                -isystem build/vcpkg_installed/x64-linux/include \
                -isystem external/kappa-core/include \
             2>&1 | tee clang-tidy-output.txt

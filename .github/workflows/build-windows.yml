@@ -7,8 +7,8 @@ on:
     branches: [main, develop]
 
 jobs:
-  build-and-test:
-    name: Windows MSVC Build and Test
+  build:
+    name: Build (Windows MSVC)
     runs-on: windows-latest
 
     steps:
@@ -62,11 +62,90 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j 4
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build-release
+          path: |
+            build/bin/Release/
+            build/tests/Release/
+          retention-days: 1
+
+  test:
+    name: Test (Windows MSVC)
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build-release
+          path: build/
+
       - name: Run Tests
         run: |
           cd build
           ctest --output-on-failure -C Release
         shell: bash
+
+  coverage:
+    name: Coverage (Windows Clang)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Install LLVM
+        run: |
+          choco install llvm --version=20.1.8 -y
+          echo "C:\Program Files\LLVM\bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg/archives
+          key: vcpkg-bincache-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-bincache-${{ runner.os }}-
+
+      - name: Cache vcpkg installed packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/build/vcpkg_installed
+          key: vcpkg-installed-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
+          restore-keys: |
+            vcpkg-installed-${{ runner.os }}-
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: "a62ce77d56ee07513b4b67de1ec2daeaebfae51a"
+
+      - name: Configure CMake (RelWithDebInfo)
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        shell: bash
+
+      - name: Build with Coverage
+        run: cmake --build build --config RelWithDebInfo -j 4
 
       - name: Generate Test Coverage Report
         run: |

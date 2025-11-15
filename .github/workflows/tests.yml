@@ -1,15 +1,16 @@
 name: Tests
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
 
 jobs:
   test:
     name: Run Tests on ${{ matrix.config.os }}
     runs-on: ${{ matrix.config.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +30,8 @@ jobs:
         with:
           name: ${{ matrix.config.artifact }}
           path: build/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
       - name: Make executables executable (Linux)
         if: runner.os == 'Linux'
@@ -39,3 +42,10 @@ jobs:
           cd build
           ctest --output-on-failure -C Release
         shell: bash
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.config.os }}
+          path: build/Testing/Temporary/

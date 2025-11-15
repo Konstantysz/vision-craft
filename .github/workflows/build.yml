@@ -33,7 +33,6 @@ jobs:
         uses: microsoft/setup-msbuild@v1.1
 
       # LLVM 20.1.8 is pinned for stability and coverage tool compatibility
-      # This version is verified to work with our LLVM-based coverage workflow
       - name: Install LLVM
         if: runner.os == 'Windows'
         run: |
@@ -63,7 +62,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      # vcpkg binary cache speeds up dependency builds by caching compiled packages
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -72,7 +70,6 @@ jobs:
           restore-keys: |
             vcpkg-bincache-${{ runner.os }}-
 
-      # Cache installed packages to avoid rebuilding dependencies on every run
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
@@ -81,7 +78,6 @@ jobs:
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
 
-      # vcpkg commit is pinned to ensure reproducible builds across environments
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -97,8 +93,7 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # Artifacts retained for 1 day to minimize storage costs
-      # Build artifacts only needed for test job dependency
+      # Upload artifacts for downstream workflows
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Run Tests on ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: windows-latest
+            artifact: windows-build-release
+
+          - os: ubuntu-latest
+            artifact: linux-build-release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.config.artifact }}
+          path: build/
+
+      - name: Make executables executable (Linux)
+        if: runner.os == 'Linux'
+        run: chmod +x build/tests/* build/bin/* || true
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure -C Release
+        shell: bash

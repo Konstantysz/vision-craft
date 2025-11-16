@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <fstream>
 #include <queue>
+#include <ranges>
 #include <unordered_map>
 
 namespace VisionCraft::Nodes
@@ -58,19 +59,15 @@ namespace VisionCraft::Nodes
 
     std::vector<NodeId> NodeEditor::GetNodeIds() const
     {
-        std::vector<NodeId> ids;
-        ids.reserve(nodes.size());
-        for (const auto &[id, _] : nodes)
-        {
-            ids.push_back(id);
-        }
-
-        return ids;
+        // C++20 ranges: Extract keys from map using views::keys
+        auto keys = nodes | std::views::keys;
+        return std::vector<NodeId>(keys.begin(), keys.end());
     }
 
     void NodeEditor::AddConnection(NodeId from, NodeId to)
     {
-        connections.push_back({ from, to });
+        // C++20 designated initializers for clarity
+        connections.push_back({ .from = from, .to = to });
     }
 
     bool NodeEditor::RemoveConnection(NodeId from, NodeId to)

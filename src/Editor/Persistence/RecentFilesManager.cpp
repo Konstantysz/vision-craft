@@ -75,7 +75,8 @@ namespace VisionCraft::Editor::Persistence
             filesCached = true;
         }
 
-        recentFiles.erase(std::remove(recentFiles.begin(), recentFiles.end(), filePath), recentFiles.end());
+        // C++20: std::erase replaces the erase-remove idiom
+        std::erase(recentFiles, filePath);
 
         recentFiles.insert(recentFiles.begin(), filePath);
 

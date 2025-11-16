@@ -1,4 +1,15 @@
 ---
+# clang-tidy configuration for VisionCraft (C++20)
+#
+# C++20 Feature Coverage:
+# - Concepts: Enabled via modernize-* checks
+# - Ranges: Enabled via modernize-use-ranges-* checks
+# - constexpr/consteval: Enabled via modernize-use-constexpr
+# - [[nodiscard]]: Enabled via modernize-use-nodiscard
+# - Structured bindings: Enabled via modernize-*
+#
+# The wildcard "*" enables all checks by default, including C++20-aware checks.
+# We explicitly disable vendor-specific and opinionated check groups below.
 Checks: "*,
         -abseil-*,
         -altera-*,

@@ -73,6 +73,9 @@ jobs:
       - name: Build with Coverage
         run: cmake --build build --parallel
 
+      - name: Build Tests
+        run: cmake --build build --target TestVisionCraftNodes --parallel
+
       - name: Generate Test Coverage Report
         run: python scripts/run-coverage.py --no-build
         shell: bash

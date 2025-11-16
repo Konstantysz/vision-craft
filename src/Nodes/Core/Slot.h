@@ -19,12 +19,9 @@ namespace VisionCraft::Nodes
      * Example valid types: cv::Mat, double, float, int, bool, std::string, std::filesystem::path
      * Example invalid types: char*, void*, custom classes not in NodeData variant
      */
-    // cppcheck-suppress internalAstError ; Known cppcheck limitation with C++20 concept syntax
     template<typename T>
-    concept ValidNodeDataType = requires {
-        // T must be constructible from a NodeData variant alternative
-        requires std::constructible_from<NodeData, T>;
-    } || std::same_as<T, std::monostate>;
+    concept ValidNodeDataType = requires { requires std::constructible_from<NodeData, T>; }
+                                || std::same_as<T, std::monostate>; // cppcheck-suppress internalAstError ;
 
     /**
      * @brief Type-safe data slot with optional default values.

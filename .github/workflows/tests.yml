@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  test:
+    name: Run Tests on ${{ matrix.config.os }}
+    runs-on: ${{ matrix.config.os }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - os: windows-latest
+            artifact: windows-build-release
+
+          - os: ubuntu-latest
+            artifact: linux-build-release
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: ${{ matrix.config.artifact }}
+          path: build/
+
+      - name: Make executables executable (Linux)
+        if: runner.os == 'Linux'
+        run: chmod +x build/tests/* build/bin/* || true
+
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure -C Release
+        shell: bash
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.config.os }}
+          path: build/Testing/Temporary/

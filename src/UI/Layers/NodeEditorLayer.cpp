@@ -660,7 +660,7 @@ namespace VisionCraft::UI::Layers
                 return Vision::NodeFactory::CreateNode(nodeType, nodeId, displayName);
             },
             [this](std::unique_ptr<Nodes::Node> node) { nodeEditor.AddNode(std::move(node)); },
-            [this](Nodes::NodeId id) { nodeEditor.RemoveNode(id); },
+            [this](Nodes::NodeId id) { [[maybe_unused]] bool removed = nodeEditor.RemoveNode(id); },
             [this](Nodes::NodeId id, const Widgets::NodePosition &pos) { nodePositions[id] = pos; },
             Widgets::NodePosition{ worldX, worldY },
             nodeType);
@@ -879,7 +879,11 @@ namespace VisionCraft::UI::Layers
         connectionManager.RemoveConnectionsForNode(nodeId);
 
         // Remove node (also removes connections from core layer)
-        nodeEditor.RemoveNode(nodeId);
+        const bool removed = nodeEditor.RemoveNode(nodeId);
+        if (!removed)
+        {
+            LOG_WARN("Failed to remove node {} from editor", nodeId);
+        }
 
         // Remove node position
         nodePositions.erase(nodeId);

@@ -1,4 +1,4 @@
-name: Build and Test (Linux)
+name: Build
 
 on:
   push:
@@ -8,8 +8,19 @@ on:
 
 jobs:
   build:
-    name: Build (Linux GCC)
-    runs-on: ubuntu-latest
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: "Windows MSVC"
+            os: windows-latest
+            artifact: windows-build-release
+
+          - name: "Linux GCC"
+            os: ubuntu-latest
+            artifact: linux-build-release
 
     steps:
       - name: Checkout repository
@@ -17,23 +28,26 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v1.1
+
+      # LLVM 20.1.8 is pinned for stability and coverage tool compatibility
+      - name: Install LLVM
+        if: runner.os == 'Windows'
+        run: |
+          choco install llvm --version=20.1.8 -y
+          echo "C:\Program Files\LLVM\bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
             cmake \
             ninja-build \
-            autoconf \
-            automake \
-            libtool \
-            libtool-bin \
-            libltdl-dev \
-            m4 \
-            gettext \
-            pkg-config \
-            llvm \
-            clang \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
             libx11-dev \
@@ -48,11 +62,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Jinja2 required for code generation scripts
-      - name: Install Python dependencies
-        run: pip install jinja2
-
-      # vcpkg binary cache speeds up dependency builds by caching compiled packages
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -61,7 +70,6 @@ jobs:
           restore-keys: |
             vcpkg-bincache-${{ runner.os }}-
 
-      # Cache installed packages to avoid rebuilding dependencies on every run
       - name: Cache vcpkg installed packages
         uses: actions/cache@v4
         with:
@@ -70,7 +78,6 @@ jobs:
           restore-keys: |
             vcpkg-installed-${{ runner.os }}-
 
-      # vcpkg commit is pinned to ensure reproducible builds across environments
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
@@ -80,40 +87,20 @@ jobs:
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -G Ninja
+            -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        shell: bash
 
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # Artifacts retained for 1 day to minimize storage costs
-      # Build artifacts only needed for test job dependency
+      # Upload artifacts for downstream workflows
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build-release
+          name: ${{ matrix.config.artifact }}
           path: |
+            build/bin/Release/
+            build/tests/Release/
             build/bin/
             build/tests/
           retention-days: 1
-
-  test:
-    name: Test (Linux GCC)
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-build-release
-          path: build/
-
-      - name: Run Tests
-        run: |
-          chmod +x build/tests/*
-          cd build
-          ctest --output-on-failure -C Release

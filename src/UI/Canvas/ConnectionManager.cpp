@@ -11,7 +11,7 @@
 
 namespace VisionCraft::UI::Canvas
 {
-    ConnectionManager::ConnectionManager()
+    ConnectionManager::ConnectionManager() : connectionState{}
     {
     }
 

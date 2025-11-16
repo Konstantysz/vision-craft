@@ -4,6 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <unordered_map>
 #include <vector>
 
@@ -80,10 +81,15 @@ namespace VisionCraft::Nodes
         [[nodiscard]] bool RemoveConnection(NodeId from, NodeId to);
 
         /**
-         * @brief Returns all connections.
-         * @return Vector of connections
+         * @brief Returns all connections as a read-only view.
+         *
+         * Uses C++20 std::span for a lightweight, non-owning view of the connections.
+         * This is more flexible than returning a const reference as it works with any
+         * contiguous sequence.
+         *
+         * @return Span of connections
          */
-        [[nodiscard]] const std::vector<Connection> &GetConnections() const;
+        [[nodiscard]] std::span<const Connection> GetConnections() const;
 
         /**
          * @brief Removes all nodes and connections.

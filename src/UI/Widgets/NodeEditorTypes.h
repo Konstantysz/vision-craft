@@ -51,27 +51,24 @@ namespace VisionCraft::UI::Widgets
 
     /**
      * @brief Unique identifier for a pin on a node.
+     *
+     * Uses C++20 three-way comparison (spaceship operator) to automatically generate
+     * all six comparison operators (==, !=, <, <=, >, >=) with correct semantics.
      */
     struct PinId
     {
         Nodes::NodeId nodeId;
         std::string pinName;
 
-        bool operator==(const PinId &other) const
-        {
-            return nodeId == other.nodeId && pinName == other.pinName;
-        }
-
-        bool operator<(const PinId &other) const
-        {
-            if (nodeId != other.nodeId)
-                return nodeId < other.nodeId;
-            return pinName < other.pinName;
-        }
+        // C++20 spaceship operator - automatically generates all comparison operators
+        auto operator<=>(const PinId &other) const = default;
     };
 
     /**
      * @brief Connection between two pins.
+     *
+     * Uses C++20 three-way comparison for automatic operator generation.
+     *
      * @note Each input pin can only have ONE connection, but output pins can have multiple.
      */
     struct NodeConnection
@@ -79,10 +76,8 @@ namespace VisionCraft::UI::Widgets
         PinId outputPin; // Source pin (must be output)
         PinId inputPin;  // Target pin (must be input, can only have one connection)
 
-        bool operator==(const NodeConnection &other) const
-        {
-            return outputPin == other.outputPin && inputPin == other.inputPin;
-        }
+        // C++20 spaceship operator - automatically generates all comparison operators
+        auto operator<=>(const NodeConnection &other) const = default;
     };
 
     /**

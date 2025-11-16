@@ -34,48 +34,31 @@ namespace VisionCraft::Editor::State
         copiedConnections.clear();
         pasteCount = 0;
 
-        // Copy node data
+        // Copy node data - using C++20 designated initializers for clarity
         for (const auto nodeId : selectedNodes)
         {
-            CopiedNode copiedNode;
-            copiedNode.originalId = nodeId;
-
-            // Get node type
-            if (nodeTypes.find(nodeId) != nodeTypes.end())
-            {
-                copiedNode.type = nodeTypes.at(nodeId);
-            }
-
-            // Get node name
-            if (nodeNames.find(nodeId) != nodeNames.end())
-            {
-                copiedNode.name = nodeNames.at(nodeId);
-            }
-
-            // Get node position
-            if (nodePositions.find(nodeId) != nodePositions.end())
-            {
-                copiedNode.position = nodePositions.at(nodeId);
-            }
-
-            copiedNodes.push_back(copiedNode);
+            // Use designated initializers for better readability and explicit field assignment
+            copiedNodes.push_back(CopiedNode{ .type = nodeTypes.contains(nodeId) ? nodeTypes.at(nodeId) : "",
+                .name = nodeNames.contains(nodeId) ? nodeNames.at(nodeId) : "",
+                .position = nodePositions.contains(nodeId) ? nodePositions.at(nodeId) : UI::Widgets::NodePosition{},
+                .originalId = nodeId });
         }
 
         // Copy connections (only internal connections between copied nodes)
         for (const auto &connection : connections)
         {
-            const bool fromNodeCopied = selectedNodes.count(connection.outputPin.nodeId) > 0;
-            const bool toNodeCopied = selectedNodes.count(connection.inputPin.nodeId) > 0;
+            // C++20: Use contains() instead of count() for clearer intent
+            const bool fromNodeCopied = selectedNodes.contains(connection.outputPin.nodeId);
+            const bool toNodeCopied = selectedNodes.contains(connection.inputPin.nodeId);
 
             // Only copy connections where both nodes are in the selection
             if (fromNodeCopied && toNodeCopied)
             {
-                CopiedConnection copiedConnection;
-                copiedConnection.fromNodeId = connection.outputPin.nodeId;
-                copiedConnection.toNodeId = connection.inputPin.nodeId;
-                copiedConnection.fromSlot = connection.outputPin.pinName;
-                copiedConnection.toSlot = connection.inputPin.pinName;
-                copiedConnections.push_back(copiedConnection);
+                // C++20 designated initializers for explicit field assignment
+                copiedConnections.push_back(CopiedConnection{ .fromNodeId = connection.outputPin.nodeId,
+                    .toNodeId = connection.inputPin.nodeId,
+                    .fromSlot = connection.outputPin.pinName,
+                    .toSlot = connection.inputPin.pinName });
             }
         }
     }
@@ -90,12 +73,12 @@ namespace VisionCraft::Editor::State
         return operation;
     }
 
-    const std::vector<CopiedNode> &ClipboardManager::GetCopiedNodes() const
+    std::span<const CopiedNode> ClipboardManager::GetCopiedNodes() const
     {
         return copiedNodes;
     }
 
-    const std::vector<CopiedConnection> &ClipboardManager::GetCopiedConnections() const
+    std::span<const CopiedConnection> ClipboardManager::GetCopiedConnections() const
     {
         return copiedConnections;
     }

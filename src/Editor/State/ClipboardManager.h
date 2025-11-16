@@ -2,6 +2,7 @@
 
 #include "UI/Widgets/NodeEditorTypes.h"
 
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -93,16 +94,22 @@ namespace VisionCraft::Editor::State
         [[nodiscard]] ClipboardOperation GetOperation() const;
 
         /**
-         * @brief Gets copied nodes.
-         * @return Vector of copied node data
+         * @brief Gets copied nodes as a read-only view.
+         *
+         * Uses C++20 std::span for a lightweight, non-owning view.
+         *
+         * @return Span of copied node data
          */
-        [[nodiscard]] const std::vector<CopiedNode> &GetCopiedNodes() const;
+        [[nodiscard]] std::span<const CopiedNode> GetCopiedNodes() const;
 
         /**
-         * @brief Gets copied connections (only internal to copied nodes).
-         * @return Vector of copied connection data
+         * @brief Gets copied connections (only internal to copied nodes) as a read-only view.
+         *
+         * Uses C++20 std::span for a lightweight, non-owning view.
+         *
+         * @return Span of copied connection data
          */
-        [[nodiscard]] const std::vector<CopiedConnection> &GetCopiedConnections() const;
+        [[nodiscard]] std::span<const CopiedConnection> GetCopiedConnections() const;
 
         /**
          * @brief Gets node IDs to delete (for Cut operation).

@@ -16,6 +16,7 @@ add_library(UI STATIC
     Widgets/DockingLayoutHelper.cpp
     Widgets/ContextMenuRenderer.cpp
     Widgets/FileDialogManager.cpp
+    Widgets/NodeSearchPalette.cpp
     ${CMAKE_SOURCE_DIR}/external/ImGuiFileDialog/ImGuiFileDialog.cpp
 )
 

@@ -11,6 +11,7 @@ add_executable(TestVisionCraftNodes
     TestCommandHistory.cpp
     TestNodeCommands.cpp
     TestConnectionCommands.cpp
+    TestNodeSearchPalette.cpp
 )
 
 target_compile_features(TestVisionCraftNodes PRIVATE cxx_std_20)
@@ -28,6 +29,7 @@ target_link_libraries(TestVisionCraftNodes
     Nodes
     Vision
     Editor
+    UI
 )
 
 add_test(NAME TestVisionCraftNodes COMMAND TestVisionCraftNodes)

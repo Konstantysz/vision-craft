@@ -34,6 +34,7 @@ namespace VisionCraft::UI::Canvas
         DeleteNodes,
         DeleteConnection,
         OpenContextMenu,
+        OpenSearchPalette,
         UpdateNodePositions,
         UpdateHoveredConnection,
         CopyNodes,
@@ -53,6 +54,7 @@ namespace VisionCraft::UI::Canvas
         std::vector<Nodes::NodeId> nodeIds;                    ///< For DeleteNodes
         std::optional<UI::Widgets::NodeConnection> connection; ///< For DeleteConnection
         ImVec2 contextMenuPos{ 0.0f, 0.0f };                   ///< For OpenContextMenu
+        ImVec2 searchPalettePos{ 0.0f, 0.0f };                 ///< For OpenSearchPalette
         std::unordered_map<Nodes::NodeId, UI::Widgets::NodePosition>
             nodePositions;                                            ///< For UpdateUI::Widgets::NodePositions
         std::optional<UI::Widgets::NodeConnection> hoveredConnection; ///< For UpdateHoveredConnection

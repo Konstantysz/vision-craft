@@ -41,6 +41,16 @@ namespace VisionCraft::UI::Layers
             { "Threshold", "Threshold", "Processing" },
         });
 
+        // Register node types for search palette
+        searchPalette.SetAvailableNodeTypes({
+            { "ImageInput", "Image Input", "Input/Output" },
+            { "ImageOutput", "Image Output", "Input/Output" },
+            { "Preview", "Preview", "Input/Output" },
+            { "Grayscale", "Grayscale", "Processing" },
+            { "CannyEdge", "Canny Edge Detection", "Processing" },
+            { "Threshold", "Threshold", "Processing" },
+        });
+
         // Set connection creation callback for undo/redo
         connectionManager.SetConnectionCreatedCallback([this](const Widgets::NodeConnection &connection) {
             auto command = std::make_unique<Editor::Commands::CreateConnectionCommand>(
@@ -116,6 +126,7 @@ namespace VisionCraft::UI::Layers
         RenderBoxSelection();
 
         RenderContextMenu();
+        RenderSearchPalette();
 
         canvas.EndCanvas();
 
@@ -239,6 +250,11 @@ namespace VisionCraft::UI::Layers
 
             case Canvas::InputActionType::OpenContextMenu:
                 // Context menu is already opened by InputHandler
+                break;
+
+            case Canvas::InputActionType::OpenSearchPalette:
+                searchPalette.Open(action.searchPalettePos.x, action.searchPalettePos.y);
+                ImGui::OpenPopup("##NodeSearchPalette");
                 break;
 
             case Canvas::InputActionType::CopyNodes: {
@@ -669,6 +685,23 @@ namespace VisionCraft::UI::Layers
         selectionManager.ClearSelection();
     }
 
+    void NodeEditorLayer::RenderSearchPalette()
+    {
+        if (!searchPalette.IsOpen())
+            return;
+
+        // Render the search palette and get selected node type
+        std::string selectedNodeType = searchPalette.Render();
+
+        // If a node was selected, create it at the palette position
+        if (!selectedNodeType.empty())
+        {
+            float posX, posY;
+            searchPalette.GetOpenPosition(posX, posY);
+            CreateNodeAtPosition(selectedNodeType, ImVec2(posX, posY));
+            searchPalette.RecordNodeUsage(selectedNodeType);
+        }
+    }
 
     ImU32 NodeEditorLayer::GetDataTypeColor(Widgets::PinDataType dataType) const
     {

@@ -10,6 +10,7 @@
 #include "UI/Widgets/ContextMenuRenderer.h"
 #include "UI/Widgets/FileDialogManager.h"
 #include "UI/Widgets/NodeEditorTypes.h"
+#include "UI/Widgets/NodeSearchPalette.h"
 #include "Layer.h"
 #include "Nodes/Core/NodeEditor.h"
 #include "Vision/Factory/NodeFactory.h"
@@ -120,6 +121,11 @@ namespace VisionCraft::UI::Layers
         void RenderContextMenu();
 
         /**
+         * @brief Renders search palette.
+         */
+        void RenderSearchPalette();
+
+        /**
          * @brief Creates node at position.
          * @param nodeType Nodes::Node type
          * @param position Position to place node
@@ -216,6 +222,7 @@ namespace VisionCraft::UI::Layers
         Editor::State::SelectionManager selectionManager; ///< Manages node selection and dragging
         Widgets::ContextMenuRenderer contextMenuRenderer; ///< Renders context menu
         Widgets::FileDialogManager fileDialogManager;     ///< Manages file dialogs
+        Widgets::NodeSearchPalette searchPalette;         ///< Search palette for quick node creation
         Canvas::InputHandler inputHandler;                ///< Handles input processing
         Editor::State::ClipboardManager clipboardManager; ///< Manages copy/cut/paste operations
         Editor::Commands::CommandHistory commandHistory;  ///< Manages undo/redo history

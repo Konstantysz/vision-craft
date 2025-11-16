@@ -1,11 +1,30 @@
 #pragma once
 
 #include "Nodes/Core/NodeData.h"
+#include <concepts>
 #include <optional>
 #include <string>
 
 namespace VisionCraft::Nodes
 {
+    /**
+     * @brief Concept to ensure a type is valid for NodeData operations.
+     *
+     * This C++20 concept enforces compile-time type safety by restricting template parameters
+     * to only those types that are part of the NodeData variant. Attempting to call GetData<T>()
+     * with an invalid type will result in a clear compile-time error instead of runtime failure.
+     *
+     * @tparam T Type to check
+     *
+     * Example valid types: cv::Mat, double, float, int, bool, std::string, std::filesystem::path
+     * Example invalid types: char*, void*, custom classes not in NodeData variant
+     */
+    template<typename T>
+    concept ValidNodeDataType = requires {
+        // T must be constructible from a NodeData variant alternative
+        requires std::constructible_from<NodeData, T>;
+    } || std::same_as<T, std::monostate>;
+
     /**
      * @brief Type-safe data slot with optional default values.
      */
@@ -31,9 +50,10 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Returns typed data from slot.
+         * @tparam T Type to retrieve (must be a valid NodeData type)
          * @return Data if type matches, std::nullopt otherwise
          */
-        template<typename T> [[nodiscard]] std::optional<T> GetData() const
+        template<ValidNodeDataType T> [[nodiscard]] std::optional<T> GetData() const
         {
             if (std::holds_alternative<T>(data))
             {
@@ -61,9 +81,10 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Checks if slot contains specific type.
+         * @tparam T Type to check (must be a valid NodeData type)
          * @return True if slot contains type T
          */
-        template<typename T> [[nodiscard]] bool HoldsType() const
+        template<ValidNodeDataType T> [[nodiscard]] bool HoldsType() const
         {
             return std::holds_alternative<T>(data);
         }
@@ -76,9 +97,10 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Returns default value for slot.
+         * @tparam T Type to retrieve (must be a valid NodeData type)
          * @return Default value if type matches
          */
-        template<typename T> [[nodiscard]] std::optional<T> GetDefaultValue() const
+        template<ValidNodeDataType T> [[nodiscard]] std::optional<T> GetDefaultValue() const
         {
             if (defaultValue && std::holds_alternative<T>(*defaultValue))
             {
@@ -95,9 +117,10 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Returns value with automatic fallback to default.
+         * @tparam T Type to retrieve (must be a valid NodeData type)
          * @return Connected data if available, otherwise default value
          */
-        template<typename T> [[nodiscard]] std::optional<T> GetValueOrDefault() const
+        template<ValidNodeDataType T> [[nodiscard]] std::optional<T> GetValueOrDefault() const
         {
             if (HasData())
             {

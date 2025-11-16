@@ -1,7 +1,10 @@
 # 🎨 VisionCraft
 
-[![Windows Build](https://github.com/Konstantysz/vision-craft/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/build-windows.yml)
-[![Linux Build](https://github.com/Konstantysz/vision-craft/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/build-linux.yml)
+[![Build](https://github.com/Konstantysz/vision-craft/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/build.yml)
+[![Tests](https://github.com/Konstantysz/vision-craft/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/tests.yml)
+[![Coverage](https://github.com/Konstantysz/vision-craft/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/coverage.yml)
+[![Format](https://github.com/Konstantysz/vision-craft/actions/workflows/format.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/format.yml)
+[![Static Analysis](https://github.com/Konstantysz/vision-craft/actions/workflows/static-analysis.yml/badge.svg?branch=main)](https://github.com/Konstantysz/vision-craft/actions/workflows/static-analysis.yml)
 
 A modern C++20 computer vision node editor with an intuitive visual programming interface. VisionCraft allows users to create complex computer vision pipelines through a drag-and-drop node-based editor. 🚀
 

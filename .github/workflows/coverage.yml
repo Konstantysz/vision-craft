@@ -71,11 +71,8 @@ jobs:
             -G Ninja
         shell: bash
 
-      - name: Build with Coverage
-        run: cmake --build build --parallel
-
       - name: Generate Test Coverage Report
-        run: python scripts/run-coverage.py --no-build
+        run: python scripts/run-coverage.py
         shell: bash
         continue-on-error: true
 

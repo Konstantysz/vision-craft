@@ -113,10 +113,12 @@ setup_ide_integration()
 # Disable kappa-core examples and tests when using as submodule
 # kappa-core's own CI/CD validates these - we only need the library
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
-# Add kappa-core submodule
+# Temporarily disable BUILD_TESTS for kappa-core subdirectory only
+set(VISION_CRAFT_BUILD_TESTS ${BUILD_TESTS})
+set(BUILD_TESTS OFF)
 add_subdirectory(external/kappa-core)
+set(BUILD_TESTS ${VISION_CRAFT_BUILD_TESTS})
 
 add_subdirectory(src)
 

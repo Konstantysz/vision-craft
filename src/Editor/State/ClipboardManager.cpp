@@ -73,12 +73,12 @@ namespace VisionCraft::Editor::State
         return operation;
     }
 
-    const std::vector<CopiedNode> &ClipboardManager::GetCopiedNodes() const
+    std::span<const CopiedNode> ClipboardManager::GetCopiedNodes() const
     {
         return copiedNodes;
     }
 
-    const std::vector<CopiedConnection> &ClipboardManager::GetCopiedConnections() const
+    std::span<const CopiedConnection> ClipboardManager::GetCopiedConnections() const
     {
         return copiedConnections;
     }

@@ -86,7 +86,7 @@ namespace VisionCraft::Nodes
         return true;
     }
 
-    const std::vector<Connection> &NodeEditor::GetConnections() const
+    std::span<const Connection> NodeEditor::GetConnections() const
     {
         return connections;
     }

@@ -7,16 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-11-16
+
 ### Added
 
+- **C++20 Modern Features** (PR #10) - Comprehensive adoption of C++20 language features
+  - C++20 Concepts for compile-time type safety (`ValidNodeDataType`, `NodeType`)
+  - Spaceship operator (`operator<=>`) replacing 16 lines of comparison boilerplate
+  - Designated initializers for explicit struct initialization
+  - Ranges library (`std::views::keys`, `std::erase()`)
+  - `std::span` for modern non-owning view APIs
+  - Modern `contains()` method replacing `count() > 0` idiom
 - **Editor Library Test Suite** (PR #3) - 91 comprehensive tests for command system
   - `TestCommandHistory.cpp` - 41 tests for undo/redo system validation
   - `TestNodeCommands.cpp` - 30 tests for node manipulation commands (Create, Delete, Move)
   - `TestConnectionCommands.cpp` - 20 tests for connection management commands
-- **GitHub Actions CI/CD Workflows**
-  - `build-windows.yml` - Multi-job pipeline (Build MSVC → Test MSVC → Coverage Clang/Ninja)
-  - `build-linux.yml` - Multi-job pipeline (Build GCC → Test GCC)
+- **GitHub Actions CI/CD Workflows** - Elegant kappa-core-inspired separation of concerns
+  - `build.yml` - Multi-platform build matrix (Windows MSVC, Linux GCC) with artifact upload
+  - `tests.yml` - Automated testing triggered after successful builds (workflow_run pattern)
+  - `coverage.yml` - LLVM coverage analysis (Windows Clang, 30-day artifact retention)
+  - `static-analysis.yml` - clang-tidy-18 + cppcheck with full project build for accurate analysis
+  - `format.yml` - clang-format-14 code formatting validation
   - vcpkg binary and package caching (reduces build time from ~40min to ~2-5min)
+  - Build artifacts shared across workflows using dawidd6/action-download-artifact@v3
 - **Automated Coverage Reporting** - PR comments with detailed coverage statistics
   - Extract coverage metrics from llvm-cov (Lines, Functions, Regions percentages)
   - Post formatted table to PR comments via github-script action
@@ -37,6 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Static Analysis Configuration** - Enhanced code quality tooling
+  - Upgraded to clang-tidy-18 for better C++20 stdlib support and GCC 14 compatibility
+  - clang-tidy now uses compile_commands.json from full project build (includes OpenCV paths)
+  - cppcheck configured with proper include paths (`-I src`, `-I external/kappa-core/include`)
+  - Both tools use continue-on-error + separate validation step (analyze all files, fail on errors)
+  - System headers excluded from analysis (`--system-headers=false`, `-isystem` flags)
+- **Build Optimization** - kappa-core submodule configured with BUILD_EXAMPLES=OFF, BUILD_TESTS=OFF (~30% faster builds)
 - **BREAKING**: Restructured entire codebase to domain-driven architecture
   - Split monolithic VisionCraftEngine/VisionCraftApp into 4 focused libraries:
     - `Nodes` - Core node graph system (Node, NodeEditor, Slot, NodeData, NodeFactory)
@@ -59,6 +79,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Coverage Workflow** (PR #10) - Fixed test build and coverage generation
+  - BUILD_TESTS variable was being force-disabled by kappa-core configuration
+  - CMakeLists.txt now saves/restores BUILD_TESTS around kappa-core subdirectory
+  - Added explicit `-DBUILD_TESTS=ON` flag to coverage workflow
+  - Removed `continue-on-error` flags to properly fail on coverage errors
+  - Simplified conditional logic from `if: always()` to `if: success()`
+- **Cppcheck C++20 Support** (PR #10) - Resolved concept syntax parsing error
+  - Reformatted `ValidNodeDataType` concept to single line with inline suppression
+  - Added `// cppcheck-suppress internalAstError` for C++20 requires expression
+- **Code Quality Issues** - Resolved cppcheck warnings
+  - ConnectionManager constructor now explicitly initializes `connectionState` member
+  - NodeEditorLayer::DeleteNode now handles `RemoveNode()` return value with warning log
+  - Lambda in CreateNodeCommand uses `[[maybe_unused]]` for nodiscard compliance (modern C++)
+- **CI/CD Static Analysis** - Fixed clang-tidy and cppcheck infrastructure issues
+  - Added build step before clang-tidy to ensure all dependencies (OpenCV) are available
+  - Removed manual include path overrides; clang-tidy now uses compile_commands.json exclusively
+  - Fixed clang-tidy C++ standard library compatibility (clang-tidy-14 → clang-tidy-18)
+  - Added vcpkg caching and proper dependency installation order in static analysis workflow
 - Default docking layout now correctly places Execution panel at top of window
 - Circular dependency between Nodes and UI layers (NodeFactory now in Nodes library)
 - GitHub Actions workflow permissions for PR comments (`pull-requests: write`)
@@ -82,5 +120,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/Konstantysz/vision-craft/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Konstantysz/vision-craft/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Konstantysz/vision-craft/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Konstantysz/vision-craft/releases/tag/v0.1.0

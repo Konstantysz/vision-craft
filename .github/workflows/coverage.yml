@@ -66,15 +66,13 @@ jobs:
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DENABLE_COVERAGE=ON \
+            -DBUILD_TESTS=ON \
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -G Ninja
         shell: bash
 
       - name: Build with Coverage
         run: cmake --build build --parallel
-
-      - name: Build Tests
-        run: cmake --build build --target TestVisionCraftNodes --parallel
 
       - name: Generate Test Coverage Report
         run: python scripts/run-coverage.py --no-build

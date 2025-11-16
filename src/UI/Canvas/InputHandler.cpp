@@ -77,6 +77,16 @@ namespace VisionCraft::UI::Canvas
             return actions;
         }
 
+        // Handle Ctrl+Space (Open Search Palette)
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Space))
+        {
+            InputAction action;
+            action.type = InputActionType::OpenSearchPalette;
+            action.searchPalettePos = mousePos;
+            actions.push_back(action);
+            return actions;
+        }
+
         // Early exit if not hovering window or panning
         if (!ImGui::IsWindowHovered() || ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
         {

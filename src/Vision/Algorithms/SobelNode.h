@@ -36,9 +36,5 @@ namespace VisionCraft::Vision::Algorithms
          * @brief Processes input image using Sobel operator.
          */
         void Process() override;
-
-    private:
-        cv::Mat inputImage;  ///< Input image
-        cv::Mat outputImage; ///< Resulting image
     };
 } // namespace VisionCraft::Vision::Algorithms

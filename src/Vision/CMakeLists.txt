@@ -1,8 +1,6 @@
 find_package(OpenCV CONFIG REQUIRED)
 
 add_library(Vision STATIC
-    Algorithms/GrayscaleNode.cpp
-    Algorithms/ThresholdNode.cpp
     Algorithms/CannyEdgeNode.cpp
     Algorithms/CvtColorNode.cpp
     Algorithms/GrayscaleNode.cpp
@@ -12,6 +10,7 @@ add_library(Vision STATIC
     Algorithms/ResizeNode.cpp
     Algorithms/SobelNode.cpp
     Algorithms/SplitChannelsNode.cpp
+    Algorithms/ThresholdNode.cpp
     IO/ImageInputNode.cpp
     IO/ImageOutputNode.cpp
     IO/PreviewNode.cpp

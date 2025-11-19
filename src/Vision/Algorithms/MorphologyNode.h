@@ -6,6 +6,20 @@
 namespace VisionCraft::Vision::Algorithms
 {
     /**
+     * @brief Morphological operation types.
+     */
+    enum class MorphOperation : int
+    {
+        Erode = 0,
+        Dilate = 1,
+        Open = 2,
+        Close = 3,
+        Gradient = 4,
+        TopHat = 5,
+        BlackHat = 6
+    };
+
+    /**
      * @brief Node for Morphological operations (Erode, Dilate, Open, Close, etc.).
      */
     class MorphologyNode : public Nodes::Node
@@ -36,9 +50,5 @@ namespace VisionCraft::Vision::Algorithms
          * @brief Processes input image using Morphological operations.
          */
         void Process() override;
-
-    private:
-        cv::Mat inputImage;  ///< Input image
-        cv::Mat outputImage; ///< Resulting image
     };
 } // namespace VisionCraft::Vision::Algorithms

@@ -1,6 +1,9 @@
 #include "Vision/Algorithms/ResizeNode.h"
 #include "Logger.h"
+#include <algorithm>
+#include <array>
 #include <stdexcept>
+#include <utility>
 
 namespace VisionCraft::Vision::Algorithms
 {
@@ -11,24 +14,21 @@ namespace VisionCraft::Vision::Algorithms
         CreateInputSlot("Height", 0); // 0 means use scale
         CreateInputSlot("ScaleX", 1.0);
         CreateInputSlot("ScaleY", 1.0);
-        // 0: Linear, 1: Nearest, 2: Cubic, 3: Area, 4: Lanczos4
-        CreateInputSlot("Interpolation", 0);
+        CreateInputSlot("Interpolation", static_cast<int>(InterpolationMethod::Linear));
         CreateOutputSlot("Output");
     }
 
     void ResizeNode::Process()
     {
-        auto inputData = GetInputValue<cv::Mat>("Input");
-        if (!inputData || inputData->empty())
+        const auto inputData = GetInputValue<cv::Mat>("Input");
+        if (!inputData || inputData->empty()) [[unlikely]]
         {
             LOG_WARN("ResizeNode {}: No input image provided", GetName());
-            inputImage = cv::Mat();
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
             return;
         }
 
-        inputImage = *inputData;
+        const cv::Mat &inputImage = *inputData;
 
         try
         {
@@ -36,58 +36,54 @@ namespace VisionCraft::Vision::Algorithms
             auto height = GetInputValue<int>("Height").value_or(0);
             auto scaleX = GetInputValue<double>("ScaleX").value_or(1.0);
             auto scaleY = GetInputValue<double>("ScaleY").value_or(1.0);
-            auto interp = GetInputValue<int>("Interpolation").value_or(0);
+            auto interp = GetInputValue<int>("Interpolation").value_or(static_cast<int>(InterpolationMethod::Linear));
+
+            // Map interpolation using constexpr array
+            constexpr std::array<cv::InterpolationFlags, 5> interpMapping{
+                cv::INTER_LINEAR, cv::INTER_NEAREST, cv::INTER_CUBIC, cv::INTER_AREA, cv::INTER_LANCZOS4
+            };
 
             cv::InterpolationFlags flags;
-            switch (interp)
+            if (interp >= 0 && interp < static_cast<int>(interpMapping.size()))
             {
-            case 0:
+                flags = interpMapping[interp];
+            }
+            else [[unlikely]]
+            {
                 flags = cv::INTER_LINEAR;
-                break;
-            case 1:
-                flags = cv::INTER_NEAREST;
-                break;
-            case 2:
-                flags = cv::INTER_CUBIC;
-                break;
-            case 3:
-                flags = cv::INTER_AREA;
-                break;
-            case 4:
-                flags = cv::INTER_LANCZOS4;
-                break;
-            default:
-                flags = cv::INTER_LINEAR;
-                break;
             }
 
-            cv::Size dsize(width, height);
+            cv::Size dsize{ 0, 0 };
             double fx = scaleX;
             double fy = scaleY;
 
             // If width/height are specified, they take precedence over scale
             if (width > 0 && height > 0)
             {
-                fx = 0;
-                fy = 0;
+                dsize = cv::Size{ width, height };
+                fx = fy = 0;
+            }
+            else if (width > 0 || height > 0) [[unlikely]]
+            {
+                LOG_WARN("ResizeNode {}: Both width and height must be specified or both zero, using scale", GetName());
+                fx = std::clamp(fx, 0.01, 100.0);
+                fy = std::clamp(fy, 0.01, 100.0);
             }
             else
             {
-                // Ensure scale is valid
-                if (fx <= 0)
-                    fx = 1.0;
-                if (fy <= 0)
-                    fy = 1.0;
-                dsize = cv::Size(0, 0);
+                // Use scale factors with clamping
+                fx = std::clamp(fx, 0.01, 100.0);
+                fy = std::clamp(fy, 0.01, 100.0);
             }
 
+            cv::Mat outputImage;
             cv::resize(inputImage, outputImage, dsize, fx, fy, flags);
-            SetOutputSlotData("Output", outputImage);
+            SetOutputSlotData("Output", std::move(outputImage));
 
-            LOG_INFO("ResizeNode {}: Resized (Size: {}x{}, Scale: {}x{}, Interp: {})",
+            LOG_INFO("ResizeNode {}: Resized (Size: {}x{}, Scale: {:.2f}x{:.2f}, Interp: {})",
                 GetName(),
-                width,
-                height,
+                outputImage.cols,
+                outputImage.rows,
                 fx,
                 fy,
                 interp);
@@ -95,13 +91,11 @@ namespace VisionCraft::Vision::Algorithms
         catch (const cv::Exception &e)
         {
             LOG_ERROR("ResizeNode {}: OpenCV error: {}", GetName(), e.what());
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
         }
         catch (const std::exception &e)
         {
             LOG_ERROR("ResizeNode {}: Error processing image: {}", GetName(), e.what());
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
         }
     }

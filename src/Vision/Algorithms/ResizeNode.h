@@ -6,6 +6,18 @@
 namespace VisionCraft::Vision::Algorithms
 {
     /**
+     * @brief Interpolation method types.
+     */
+    enum class InterpolationMethod : int
+    {
+        Linear = 0,
+        Nearest = 1,
+        Cubic = 2,
+        Area = 3,
+        Lanczos4 = 4
+    };
+
+    /**
      * @brief Node for Image Resizing.
      */
     class ResizeNode : public Nodes::Node
@@ -36,9 +48,5 @@ namespace VisionCraft::Vision::Algorithms
          * @brief Processes input image using Resize.
          */
         void Process() override;
-
-    private:
-        cv::Mat inputImage;  ///< Input image
-        cv::Mat outputImage; ///< Resulting image
     };
 } // namespace VisionCraft::Vision::Algorithms

@@ -38,7 +38,6 @@ namespace VisionCraft::Vision::Algorithms
         void Process() override;
 
     private:
-        std::vector<cv::Mat> inputChannels; ///< Input channels
-        cv::Mat outputImage;                ///< Resulting image
+        static constexpr std::array kChannelSlots{ "Channel 1", "Channel 2", "Channel 3", "Channel 4" };
     };
 } // namespace VisionCraft::Vision::Algorithms

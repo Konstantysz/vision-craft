@@ -6,69 +6,66 @@ namespace VisionCraft::Vision::Algorithms
 {
     MergeChannelsNode::MergeChannelsNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
-        CreateInputSlot("Channel 1");
-        CreateInputSlot("Channel 2");
-        CreateInputSlot("Channel 3");
-        CreateInputSlot("Channel 4");
+        for (const auto &slotName : kChannelSlots)
+        {
+            CreateInputSlot(slotName);
+        }
         CreateOutputSlot("Output");
     }
 
     void MergeChannelsNode::Process()
     {
-        inputChannels.clear();
+        std::vector<cv::Mat> channels;
 
-        auto c1 = GetInputValue<cv::Mat>("Channel 1");
-        auto c2 = GetInputValue<cv::Mat>("Channel 2");
-        auto c3 = GetInputValue<cv::Mat>("Channel 3");
-        auto c4 = GetInputValue<cv::Mat>("Channel 4");
+        // Get all channel inputs
+        const std::array channelInputs{ GetInputValue<cv::Mat>(kChannelSlots[0]),
+            GetInputValue<cv::Mat>(kChannelSlots[1]),
+            GetInputValue<cv::Mat>(kChannelSlots[2]),
+            GetInputValue<cv::Mat>(kChannelSlots[3]) };
 
-        // We need at least Channel 1 to determine size/type
-        if (!c1 || c1->empty())
+        // Channel 1 is required
+        if (!channelInputs[0] || channelInputs[0]->empty()) [[unlikely]]
         {
             LOG_WARN("MergeChannelsNode {}: Channel 1 is required", GetName());
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
             return;
         }
 
-        inputChannels.push_back(*c1);
+        channels.push_back(*channelInputs[0]);
 
-        // Helper to check compatibility
-        auto checkCompat = [&](const cv::Mat &m, const std::string &name) -> bool {
-            if (m.empty())
-                return false;
-            if (m.size() != inputChannels[0].size() || m.depth() != inputChannels[0].depth())
-            {
-                LOG_WARN("MergeChannelsNode {}: {} size/depth mismatch, ignoring", GetName(), name);
-                return false;
-            }
-            return true;
+        // Check compatibility and add other channels
+        auto checkCompat = [&](const cv::Mat &m) {
+            return !m.empty() && m.size() == channels[0].size() && m.depth() == channels[0].depth();
         };
 
-        if (c2 && checkCompat(*c2, "Channel 2"))
-            inputChannels.push_back(*c2);
-        if (c3 && checkCompat(*c3, "Channel 3"))
-            inputChannels.push_back(*c3);
-        if (c4 && checkCompat(*c4, "Channel 4"))
-            inputChannels.push_back(*c4);
+        for (size_t i = 1; i < channelInputs.size(); ++i)
+        {
+            if (channelInputs[i] && checkCompat(*channelInputs[i]))
+            {
+                channels.push_back(*channelInputs[i]);
+            }
+            else if (channelInputs[i] && !channelInputs[i]->empty()) [[unlikely]]
+            {
+                LOG_WARN("MergeChannelsNode {}: {} size/depth mismatch, ignoring", GetName(), kChannelSlots[i]);
+            }
+        }
 
         try
         {
-            cv::merge(inputChannels, outputImage);
-            SetOutputSlotData("Output", outputImage);
+            cv::Mat outputImage;
+            cv::merge(channels, outputImage);
+            SetOutputSlotData("Output", std::move(outputImage));
 
-            LOG_INFO("MergeChannelsNode {}: Merged {} channels", GetName(), inputChannels.size());
+            LOG_INFO("MergeChannelsNode {}: Merged {} channels", GetName(), channels.size());
         }
         catch (const cv::Exception &e)
         {
             LOG_ERROR("MergeChannelsNode {}: OpenCV error: {}", GetName(), e.what());
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
         }
         catch (const std::exception &e)
         {
             LOG_ERROR("MergeChannelsNode {}: Error processing image: {}", GetName(), e.what());
-            outputImage = cv::Mat();
             ClearOutputSlot("Output");
         }
     }

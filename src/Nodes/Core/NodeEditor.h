@@ -2,7 +2,10 @@
 #include "Nodes/Core/Node.h"
 
 #include <nlohmann/json.hpp>
+#include <atomic>
 #include <filesystem>
+#include <functional>
+#include <future>
 #include <optional>
 #include <span>
 #include <unordered_map>
@@ -10,6 +13,14 @@
 
 namespace VisionCraft::Nodes
 {
+
+    /**
+     * @brief Callback for execution progress updates.
+     * @param current Current node index (1-based)
+     * @param total Total number of nodes
+     * @param nodeName Name of the node being processed
+     */
+    using ExecutionProgressCallback = std::function<void(int current, int total, const std::string &nodeName)>;
 
     /**
      * @brief Connection between two nodes.
@@ -98,10 +109,25 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Executes node graph in dependency order.
-         * @return True if succeeded, false if cycle detected
+         * @param progressCallback Optional callback for progress updates
+         * @return True if succeeded, false if cycle detected or cancelled
          * @note Performs topological sort, passes data between nodes, and calls Process() in order.
          */
-        bool Execute();
+        bool Execute(const ExecutionProgressCallback &progressCallback = nullptr);
+
+        /**
+         * @brief Executes node graph asynchronously in background thread.
+         * @param progressCallback Optional callback for progress updates
+         * @return Future that will contain execution result
+         * @note Use this to prevent UI blocking. Check future.valid() and future.wait_for() to poll status.
+         */
+        std::future<bool> ExecuteAsync(const ExecutionProgressCallback &progressCallback = nullptr);
+
+        /**
+         * @brief Requests cancellation of current execution.
+         * @note This is thread-safe and can be called from any thread.
+         */
+        void CancelExecution();
 
         /**
          * @brief Serializes graph to JSON file.
@@ -134,9 +160,10 @@ namespace VisionCraft::Nodes
          * @param toNode Destination node
          */
         static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
-        std::unordered_map<NodeId, NodePtr> nodes; ///< Node storage
-        std::vector<Connection> connections;       ///< Connections
-        NodeId nextId;                             ///< Next available ID
+        std::unordered_map<NodeId, NodePtr> nodes;  ///< Node storage
+        std::vector<Connection> connections;        ///< Connections
+        NodeId nextId;                              ///< Next available ID
+        std::atomic<bool> cancelRequested{ false }; ///< Flag to signal cancellation
     };
 
 } // namespace VisionCraft::Nodes

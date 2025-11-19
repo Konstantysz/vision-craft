@@ -98,8 +98,9 @@ namespace VisionCraft::Nodes
         nextId = 1;
     }
 
-    bool NodeEditor::Execute()
+    bool NodeEditor::Execute(const ExecutionProgressCallback &progressCallback)
     {
+        cancelRequested = false;
         LOG_INFO("Executing graph with {} nodes", nodes.size());
 
         const auto executionOrder = TopologicalSort();
@@ -111,11 +112,26 @@ namespace VisionCraft::Nodes
 
         LOG_INFO("Execution order determined: {} nodes", executionOrder.size());
 
+        int currentNodeIndex = 0;
+        int totalNodes = static_cast<int>(executionOrder.size());
+
         for (const auto nodeId : executionOrder)
         {
+            if (cancelRequested)
+            {
+                LOG_WARN("Graph execution cancelled by user");
+                return false;
+            }
+
             auto *node = GetNode(nodeId);
             if (!node)
                 continue;
+
+            currentNodeIndex++;
+            if (progressCallback)
+            {
+                progressCallback(currentNodeIndex, totalNodes, node->GetName());
+            }
 
             try
             {
@@ -145,6 +161,16 @@ namespace VisionCraft::Nodes
 
         LOG_INFO("Graph execution completed successfully");
         return true;
+    }
+
+    std::future<bool> NodeEditor::ExecuteAsync(const ExecutionProgressCallback &progressCallback)
+    {
+        return std::async(std::launch::async, [this, progressCallback]() { return Execute(progressCallback); });
+    }
+
+    void NodeEditor::CancelExecution()
+    {
+        cancelRequested = true;
     }
 
     std::vector<NodeId> NodeEditor::TopologicalSort() const

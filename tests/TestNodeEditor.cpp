@@ -4,7 +4,10 @@
 #include "Vision/IO/ImageInputNode.h"
 
 #include <gtest/gtest.h>
+#include <atomic>
+#include <future>
 #include <memory>
+#include <thread>
 
 using namespace VisionCraft;
 
@@ -697,4 +700,105 @@ TEST_F(NodeEditorTest, ExecuteGraphWithNodeError)
 
     bool success = editor.Execute();
     EXPECT_FALSE(success); // Should fail when node throws
+}
+
+// ============================================================================
+// Async Execution and Cancellation Tests
+// ============================================================================
+
+TEST_F(NodeEditorTest, ExecuteWithProgressCallback)
+{
+    const int nodeCount = 5;
+    for (int i = 1; i <= nodeCount; ++i)
+    {
+        editor.AddNode(std::make_unique<TestNode>(i, "Node" + std::to_string(i)));
+    }
+
+    // Connect linearly
+    for (int i = 1; i < nodeCount; ++i)
+    {
+        editor.AddConnection(i, i + 1);
+    }
+
+    int callbackCount = 0;
+    int lastCurrent = 0;
+
+    bool success = editor.Execute([&](int current, int total, const std::string &name) {
+        callbackCount++;
+        EXPECT_EQ(total, nodeCount);
+        EXPECT_EQ(current, lastCurrent + 1);
+        lastCurrent = current;
+        EXPECT_FALSE(name.empty());
+    });
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(callbackCount, nodeCount);
+}
+
+TEST_F(NodeEditorTest, ExecuteCancellation)
+{
+    // Create a chain of nodes
+    const int nodeCount = 10;
+    for (int i = 1; i <= nodeCount; ++i)
+    {
+        editor.AddNode(std::make_unique<TestNode>(i, "Node" + std::to_string(i)));
+    }
+    for (int i = 1; i < nodeCount; ++i)
+    {
+        editor.AddConnection(i, i + 1);
+    }
+
+    // Execute with a callback that cancels after 3 nodes
+    bool success = editor.Execute([&](int current, int total, const std::string &name) {
+        if (current == 3)
+        {
+            editor.CancelExecution();
+        }
+    });
+
+    EXPECT_FALSE(success);
+}
+
+TEST_F(NodeEditorTest, ExecuteAsync)
+{
+    auto node = std::make_unique<TestNode>(1, "AsyncNode");
+    editor.AddNode(std::move(node));
+
+    auto future = editor.ExecuteAsync();
+
+    ASSERT_TRUE(future.valid());
+
+    // Wait for result
+    bool success = future.get();
+    EXPECT_TRUE(success);
+}
+
+TEST_F(NodeEditorTest, ExecuteAsyncCancellation)
+{
+    // Create many nodes to ensure we have time to cancel
+    const int nodeCount = 100;
+    for (int i = 1; i <= nodeCount; ++i)
+    {
+        editor.AddNode(std::make_unique<TestNode>(i, "Node" + std::to_string(i)));
+    }
+
+    // No connections needed for this test, just processing order
+
+    std::atomic<int> processedCount = 0;
+
+    auto future = editor.ExecuteAsync([&](int current, int total, const std::string &name) {
+        processedCount = current;
+        // Simulate some work
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    });
+
+    // Let it start
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    // Cancel
+    editor.CancelExecution();
+
+    bool success = future.get();
+    EXPECT_FALSE(success);
+    EXPECT_LT(processedCount, nodeCount);
 }

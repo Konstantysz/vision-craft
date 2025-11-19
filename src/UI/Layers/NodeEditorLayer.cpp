@@ -33,22 +33,36 @@ namespace VisionCraft::UI::Layers
 
         // Register node types for context menu
         contextMenuRenderer.SetAvailableNodeTypes({
-            { "ImageInput", "Image Input", "Input/Output" },
-            { "ImageOutput", "Image Output", "Input/Output" },
-            { "Preview", "Preview", "Input/Output" },
-            { "Grayscale", "Grayscale", "Processing" },
-            { "CannyEdge", "Canny Edge Detection", "Processing" },
-            { "Threshold", "Threshold", "Processing" },
+            { .typeId = "ImageInput", .displayName = "Image Input", .category = "Input/Output" },
+            { .typeId = "ImageOutput", .displayName = "Image Output", .category = "Input/Output" },
+            { .typeId = "Preview", .displayName = "Preview", .category = "Input/Output" },
+            { .typeId = "Grayscale", .displayName = "Grayscale", .category = "Processing" },
+            { .typeId = "CannyEdge", .displayName = "Canny Edge Detection", .category = "Processing" },
+            { .typeId = "Threshold", .displayName = "Threshold", .category = "Processing" },
+            { .typeId = "Sobel", .displayName = "Sobel Edge Detection", .category = "Processing" },
+            { .typeId = "MedianBlur", .displayName = "Median Blur", .category = "Processing" },
+            { .typeId = "Morphology", .displayName = "Morphology", .category = "Processing" },
+            { .typeId = "CvtColor", .displayName = "Convert Color", .category = "Processing" },
+            { .typeId = "Resize", .displayName = "Resize", .category = "Processing" },
+            { .typeId = "SplitChannels", .displayName = "Split Channels", .category = "Processing" },
+            { .typeId = "MergeChannels", .displayName = "Merge Channels", .category = "Processing" },
         });
 
         // Register node types for search palette
         searchPalette.SetAvailableNodeTypes({
-            { "ImageInput", "Image Input", "Input/Output" },
-            { "ImageOutput", "Image Output", "Input/Output" },
-            { "Preview", "Preview", "Input/Output" },
-            { "Grayscale", "Grayscale", "Processing" },
-            { "CannyEdge", "Canny Edge Detection", "Processing" },
-            { "Threshold", "Threshold", "Processing" },
+            { .typeId = "ImageInput", .displayName = "Image Input", .category = "Input/Output" },
+            { .typeId = "ImageOutput", .displayName = "Image Output", .category = "Input/Output" },
+            { .typeId = "Preview", .displayName = "Preview", .category = "Input/Output" },
+            { .typeId = "Grayscale", .displayName = "Grayscale", .category = "Processing" },
+            { .typeId = "CannyEdge", .displayName = "Canny Edge Detection", .category = "Processing" },
+            { .typeId = "Threshold", .displayName = "Threshold", .category = "Processing" },
+            { .typeId = "Sobel", .displayName = "Sobel Edge Detection", .category = "Processing" },
+            { .typeId = "MedianBlur", .displayName = "Median Blur", .category = "Processing" },
+            { .typeId = "Morphology", .displayName = "Morphology", .category = "Processing" },
+            { .typeId = "CvtColor", .displayName = "Convert Color", .category = "Processing" },
+            { .typeId = "Resize", .displayName = "Resize", .category = "Processing" },
+            { .typeId = "SplitChannels", .displayName = "Split Channels", .category = "Processing" },
+            { .typeId = "MergeChannels", .displayName = "Merge Channels", .category = "Processing" },
         });
 
         // Set connection creation callback for undo/redo
@@ -92,7 +106,7 @@ namespace VisionCraft::UI::Layers
 
     void NodeEditorLayer::OnRender()
     {
-        ImGui::Begin("Nodes::Node Editor");
+        ImGui::Begin("Node Editor");
 
         auto *drawList = ImGui::GetWindowDrawList();
         const auto canvasPos = ImGui::GetCursorScreenPos();
@@ -665,7 +679,14 @@ namespace VisionCraft::UI::Layers
             { "Grayscale", "Grayscale" },
             { "CannyEdge", "Canny Edge" },
             { "Threshold", "Threshold" },
-            { "Preview", "Preview" } };
+            { "Preview", "Preview" },
+            { "Sobel", "Sobel Edge Detection" },
+            { "MedianBlur", "Median Blur" },
+            { "Morphology", "Morphology" },
+            { "CvtColor", "Convert Color" },
+            { "Resize", "Resize" },
+            { "SplitChannels", "Split Channels" },
+            { "MergeChannels", "Merge Channels" } };
 
         // Get display name or use type as fallback
         const auto displayName = displayNames.contains(nodeType) ? displayNames.at(nodeType) : nodeType;

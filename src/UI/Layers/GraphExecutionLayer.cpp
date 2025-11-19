@@ -75,7 +75,7 @@ namespace VisionCraft::UI::Layers
             {
                 float progress = static_cast<float>(current) / static_cast<float>(total);
                 char overlay[64];
-                sprintf_s(overlay, "%d/%d: %s", current, total, name.c_str());
+                snprintf(overlay, sizeof(overlay), "%d/%d: %s", current, total, name.c_str());
                 ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), overlay);
             }
             else

@@ -45,6 +45,12 @@ namespace VisionCraft::Nodes
         NodeEditor();
 
         /**
+         * @brief Destroy the NodeEditor object.
+         * @note Ensures cancellation and wait for async execution to complete.
+         */
+        ~NodeEditor();
+
+        /**
          * @brief Adds node to editor.
          * @param node Node to add
          * @return Assigned node ID

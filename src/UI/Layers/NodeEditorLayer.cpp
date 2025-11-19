@@ -39,6 +39,13 @@ namespace VisionCraft::UI::Layers
             { "Grayscale", "Grayscale", "Processing" },
             { "CannyEdge", "Canny Edge Detection", "Processing" },
             { "Threshold", "Threshold", "Processing" },
+            { "Sobel", "Sobel Edge Detection", "Processing" },
+            { "MedianBlur", "Median Blur", "Processing" },
+            { "Morphology", "Morphology", "Processing" },
+            { "CvtColor", "Convert Color", "Processing" },
+            { "Resize", "Resize", "Processing" },
+            { "SplitChannels", "Split Channels", "Processing" },
+            { "MergeChannels", "Merge Channels", "Processing" },
         });
 
         // Register node types for search palette
@@ -49,6 +56,13 @@ namespace VisionCraft::UI::Layers
             { "Grayscale", "Grayscale", "Processing" },
             { "CannyEdge", "Canny Edge Detection", "Processing" },
             { "Threshold", "Threshold", "Processing" },
+            { "Sobel", "Sobel Edge Detection", "Processing" },
+            { "MedianBlur", "Median Blur", "Processing" },
+            { "Morphology", "Morphology", "Processing" },
+            { "CvtColor", "Convert Color", "Processing" },
+            { "Resize", "Resize", "Processing" },
+            { "SplitChannels", "Split Channels", "Processing" },
+            { "MergeChannels", "Merge Channels", "Processing" },
         });
 
         // Set connection creation callback for undo/redo
@@ -665,7 +679,14 @@ namespace VisionCraft::UI::Layers
             { "Grayscale", "Grayscale" },
             { "CannyEdge", "Canny Edge" },
             { "Threshold", "Threshold" },
-            { "Preview", "Preview" } };
+            { "Preview", "Preview" },
+            { "Sobel", "Sobel Edge Detection" },
+            { "MedianBlur", "Median Blur" },
+            { "Morphology", "Morphology" },
+            { "CvtColor", "Convert Color" },
+            { "Resize", "Resize" },
+            { "SplitChannels", "Split Channels" },
+            { "MergeChannels", "Merge Channels" } };
 
         // Get display name or use type as fallback
         const auto displayName = displayNames.contains(nodeType) ? displayNames.at(nodeType) : nodeType;

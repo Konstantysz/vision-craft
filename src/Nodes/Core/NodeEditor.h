@@ -6,8 +6,10 @@
 #include <filesystem>
 #include <functional>
 #include <future>
+#include <mutex>
 #include <optional>
 #include <span>
+#include <stop_token>
 #include <unordered_map>
 #include <vector>
 
@@ -110,10 +112,11 @@ namespace VisionCraft::Nodes
         /**
          * @brief Executes node graph in dependency order.
          * @param progressCallback Optional callback for progress updates
+         * @param stopToken Token to check for cancellation requests
          * @return True if succeeded, false if cycle detected or cancelled
          * @note Performs topological sort, passes data between nodes, and calls Process() in order.
          */
-        bool Execute(const ExecutionProgressCallback &progressCallback = nullptr);
+        bool Execute(const ExecutionProgressCallback &progressCallback = nullptr, std::stop_token stopToken = {});
 
         /**
          * @brief Executes node graph asynchronously in background thread.
@@ -121,7 +124,7 @@ namespace VisionCraft::Nodes
          * @return Future that will contain execution result
          * @note Use this to prevent UI blocking. Check future.valid() and future.wait_for() to poll status.
          */
-        std::future<bool> ExecuteAsync(const ExecutionProgressCallback &progressCallback = nullptr);
+        std::shared_future<bool> ExecuteAsync(const ExecutionProgressCallback &progressCallback = nullptr);
 
         /**
          * @brief Requests cancellation of current execution.
@@ -160,10 +163,14 @@ namespace VisionCraft::Nodes
          * @param toNode Destination node
          */
         static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
-        std::unordered_map<NodeId, NodePtr> nodes;  ///< Node storage
-        std::vector<Connection> connections;        ///< Connections
-        NodeId nextId;                              ///< Next available ID
-        std::atomic<bool> cancelRequested{ false }; ///< Flag to signal cancellation
+
+        std::unordered_map<NodeId, NodePtr> nodes; ///< Node storage
+        std::vector<Connection> connections;       ///< Connections
+        NodeId nextId;                             ///< Next available ID
+
+        mutable std::mutex graphMutex;             ///< Mutex for thread safety
+        std::stop_source stopSource;               ///< Source for cancellation requests
+        std::shared_future<bool> currentExecution; ///< Handle to current async execution
     };
 
 } // namespace VisionCraft::Nodes

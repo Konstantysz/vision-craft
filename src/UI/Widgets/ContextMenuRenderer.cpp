@@ -43,7 +43,7 @@ namespace VisionCraft::UI::Widgets
 
             ImGui::Separator();
 
-            // Nested "Add Nodes::Node" submenu
+            // Nested "Add Node" submenu
             const auto selectedNodeType = RenderAddNodeSubmenu();
             if (!selectedNodeType.empty())
             {
@@ -72,7 +72,7 @@ namespace VisionCraft::UI::Widgets
     {
         std::string selectedType;
 
-        if (ImGui::BeginMenu("Add Nodes::Node"))
+        if (ImGui::BeginMenu("Add Node"))
         {
             // Group nodes by category
             std::unordered_map<std::string, std::vector<const NodeTypeInfo *>> categorizedNodes;

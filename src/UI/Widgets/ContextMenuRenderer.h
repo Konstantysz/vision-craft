@@ -69,7 +69,7 @@ namespace VisionCraft::UI::Widgets
         std::vector<NodeTypeInfo> availableNodeTypes;
 
         /**
-         * @brief Renders the "Add Nodes::Node" submenu.
+         * @brief Renders the "Add Node" submenu.
          * @return Nodes::Node type ID if selected, empty string otherwise
          */
         [[nodiscard]] std::string RenderAddNodeSubmenu();

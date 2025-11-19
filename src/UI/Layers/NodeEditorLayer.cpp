@@ -106,7 +106,7 @@ namespace VisionCraft::UI::Layers
 
     void NodeEditorLayer::OnRender()
     {
-        ImGui::Begin("Nodes::Node Editor");
+        ImGui::Begin("Node Editor");
 
         auto *drawList = ImGui::GetWindowDrawList();
         const auto canvasPos = ImGui::GetCursorScreenPos();

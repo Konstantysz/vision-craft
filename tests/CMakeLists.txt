@@ -12,6 +12,8 @@ add_executable(TestVisionCraftNodes
     TestNodeCommands.cpp
     TestConnectionCommands.cpp
     TestNodeSearchPalette.cpp
+    TestFilterNodes.cpp
+    TestConversionNodes.cpp
 )
 
 target_compile_features(TestVisionCraftNodes PRIVATE cxx_std_20)

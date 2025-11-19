@@ -1,7 +1,14 @@
 #include "Vision/Factory/NodeFactory.h"
 
 #include "Vision/Algorithms/CannyEdgeNode.h"
+#include "Vision/Algorithms/CvtColorNode.h"
 #include "Vision/Algorithms/GrayscaleNode.h"
+#include "Vision/Algorithms/MedianBlurNode.h"
+#include "Vision/Algorithms/MergeChannelsNode.h"
+#include "Vision/Algorithms/MorphologyNode.h"
+#include "Vision/Algorithms/ResizeNode.h"
+#include "Vision/Algorithms/SobelNode.h"
+#include "Vision/Algorithms/SplitChannelsNode.h"
 #include "Vision/Algorithms/ThresholdNode.h"
 #include "Vision/IO/ImageInputNode.h"
 #include "Vision/IO/ImageOutputNode.h"
@@ -78,6 +85,34 @@ namespace VisionCraft::Vision
 
         Register("Threshold", [](Nodes::NodeId id, std::string_view name) {
             return std::make_unique<Algorithms::ThresholdNode>(id, std::string(name));
+        });
+
+        Register("Sobel", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::SobelNode>(id, std::string(name));
+        });
+
+        Register("MedianBlur", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::MedianBlurNode>(id, std::string(name));
+        });
+
+        Register("Morphology", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::MorphologyNode>(id, std::string(name));
+        });
+
+        Register("CvtColor", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::CvtColorNode>(id, std::string(name));
+        });
+
+        Register("Resize", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::ResizeNode>(id, std::string(name));
+        });
+
+        Register("SplitChannels", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::SplitChannelsNode>(id, std::string(name));
+        });
+
+        Register("MergeChannels", [](Nodes::NodeId id, std::string_view name) {
+            return std::make_unique<Algorithms::MergeChannelsNode>(id, std::string(name));
         });
     }
 } // namespace VisionCraft::Vision

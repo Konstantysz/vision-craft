@@ -157,7 +157,7 @@ namespace VisionCraft::UI::Canvas
         // Direct connection creation (from command execution or when callback is disabled)
         RemoveConnectionToInput(inputPin);
         connections.push_back(newConnection);
-        nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
+        nodeEditor.AddConnection(outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName);
 
         return true;
     }

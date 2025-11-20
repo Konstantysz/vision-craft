@@ -78,18 +78,18 @@ namespace VisionCraft::Nodes
         return std::vector<NodeId>(keys.begin(), keys.end());
     }
 
-    void NodeEditor::AddConnection(NodeId from, NodeId to)
+    void NodeEditor::AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)
     {
         std::scoped_lock lock(graphMutex);
         // C++20 designated initializers for clarity
-        connections.push_back({ .from = from, .to = to });
+        connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot });
     }
 
-    bool NodeEditor::RemoveConnection(NodeId from, NodeId to)
+    bool NodeEditor::RemoveConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)
     {
         std::scoped_lock lock(graphMutex);
-        auto it = std::remove_if(connections.begin(), connections.end(), [from, to](const Connection &c) {
-            return c.from == from && c.to == to;
+        auto it = std::remove_if(connections.begin(), connections.end(), [&](const Connection &c) {
+            return c.from == from && c.fromSlot == fromSlot && c.to == to && c.toSlot == toSlot;
         });
 
         if (it == connections.end())
@@ -102,23 +102,10 @@ namespace VisionCraft::Nodes
         return true;
     }
 
-    std::span<const Connection> NodeEditor::GetConnections() const
+    std::vector<Connection> NodeEditor::GetConnections() const
     {
-        // Note: This returns a view into the vector. The caller must ensure
-        // the lock is held if they want to iterate safely in a multi-threaded context.
-        // However, since we can't return a lock, this API is inherently unsafe for
-        // concurrent modification. For now, we just lock to return the span safely.
-        // A better design would be to return a copy or use a callback.
-        // Given the constraints, we'll assume single-threaded access for this specific method's usage pattern
-        // or that the caller handles external synchronization if needed.
-        // But strictly speaking for the assignment, let's lock.
-        // std::scoped_lock lock(graphMutex); // Cannot return span to local vector if we lock here?
-        // Actually, span is just a pointer + size. If vector reallocates, span is invalid.
-        // So returning span is dangerous with concurrent modifications.
-        // We will leave it as is but document the risk, or better, return a copy.
-        // But the interface returns span. We will assume the caller knows what they are doing
-        // or that this is only called when graph is stable.
-        return connections;
+        std::scoped_lock lock(graphMutex);
+        return connections; // Returns a copy for thread safety
     }
 
     void NodeEditor::Clear()
@@ -197,7 +184,7 @@ namespace VisionCraft::Nodes
                         auto fromIt = nodes.find(conn.from);
                         if (fromIt != nodes.end())
                         {
-                            PassDataBetweenNodes(fromIt->second.get(), node);
+                            PassDataBetweenNodes(fromIt->second.get(), node, conn.fromSlot, conn.toSlot);
                         }
                     }
                 }
@@ -296,32 +283,36 @@ namespace VisionCraft::Nodes
         return executionOrder;
     }
 
-    void NodeEditor::PassDataBetweenNodes(Node *fromNode, Node *toNode)
+    void NodeEditor::PassDataBetweenNodes(Node *fromNode,
+        Node *toNode,
+        const std::string &fromSlotName,
+        const std::string &toSlotName)
     {
         if (!fromNode || !toNode)
             return;
 
-        if (!fromNode->HasOutputSlot("Output"))
+        if (!fromNode->HasOutputSlot(fromSlotName))
         {
-            LOG_WARN("Node {} has no output slot", fromNode->GetName());
+            LOG_WARN("Node {} has no output slot '{}'", fromNode->GetName(), fromSlotName);
             return;
         }
 
-        const auto &outputSlot = fromNode->GetOutputSlot("Output");
+        const auto &outputSlot = fromNode->GetOutputSlot(fromSlotName);
         if (!outputSlot.HasData())
         {
-            LOG_WARN("Node {} output slot has no data", fromNode->GetName());
+            LOG_WARN("Node {} output slot '{}' has no data", fromNode->GetName(), fromSlotName);
             return;
         }
 
-        if (!toNode->HasInputSlot("Input"))
+        if (!toNode->HasInputSlot(toSlotName))
         {
-            LOG_WARN("Node {} has no input slot", toNode->GetName());
+            LOG_WARN("Node {} has no input slot '{}'", toNode->GetName(), toSlotName);
             return;
         }
 
-        toNode->SetInputSlotData("Input", outputSlot.GetVariantData());
-        LOG_INFO("Passed data from {} to {}", fromNode->GetName(), toNode->GetName());
+        toNode->SetInputSlotData(toSlotName, outputSlot.GetVariantData());
+        LOG_INFO(
+            "Passed data from {} ({}) to {} ({})", fromNode->GetName(), fromSlotName, toNode->GetName(), toSlotName);
     }
 
     bool NodeEditor::SaveToFile(const std::filesystem::path &filepath,
@@ -356,7 +347,9 @@ namespace VisionCraft::Nodes
             {
                 nlohmann::json connJson;
                 connJson["from"] = conn.from;
+                connJson["fromSlot"] = conn.fromSlot;
                 connJson["to"] = conn.to;
+                connJson["toSlot"] = conn.toSlot;
                 connectionsArray.push_back(connJson);
             }
             j["connections"] = connectionsArray;
@@ -417,7 +410,19 @@ namespace VisionCraft::Nodes
             // Deserialize nodes
             if (j.contains("nodes"))
             {
-                for (const auto &nodeJson : j["nodes"])
+                const auto &nodesArray = j["nodes"];
+
+                // Impose limit on number of nodes to prevent DoS via memory exhaustion
+                constexpr size_t kMaxNodes = 10000;
+                if (nodesArray.size() > kMaxNodes)
+                {
+                    LOG_ERROR("Graph contains {} nodes, exceeding maximum of {}. File may be corrupted or malicious.",
+                        nodesArray.size(),
+                        kMaxNodes);
+                    return false;
+                }
+
+                for (const auto &nodeJson : nodesArray)
                 {
                     NodeId id = nodeJson["id"];
                     std::string type = nodeJson["type"];
@@ -438,6 +443,14 @@ namespace VisionCraft::Nodes
                         continue;
                     }
 
+                    // Validate name length to prevent excessive memory usage
+                    constexpr size_t kMaxNameLength = 256;
+                    if (name.length() > kMaxNameLength)
+                    {
+                        LOG_ERROR("Node name too long ({} chars), max is {} - skipping", name.length(), kMaxNameLength);
+                        continue;
+                    }
+
                     auto node = Vision::NodeFactory::CreateNode(type, id, name);
                     if (node)
                     {
@@ -453,15 +466,41 @@ namespace VisionCraft::Nodes
             // Deserialize connections
             if (j.contains("connections"))
             {
-                for (const auto &connJson : j["connections"])
+                const auto &connectionsArray = j["connections"];
+
+                // Impose limit on number of connections to prevent DoS
+                constexpr size_t kMaxConnections = 50000;
+                if (connectionsArray.size() > kMaxConnections)
+                {
+                    LOG_ERROR(
+                        "Graph contains {} connections, exceeding maximum of {}. File may be corrupted or malicious.",
+                        connectionsArray.size(),
+                        kMaxConnections);
+                    return false;
+                }
+
+                for (const auto &connJson : connectionsArray)
                 {
                     NodeId from = connJson["from"];
                     NodeId to = connJson["to"];
 
+                    // Support both old and new formats
+                    std::string fromSlot =
+                        connJson.contains("fromSlot") ? connJson["fromSlot"].get<std::string>() : "Output";
+                    std::string toSlot = connJson.contains("toSlot") ? connJson["toSlot"].get<std::string>() : "Input";
+
+                    // Validate slot name lengths
+                    constexpr size_t kMaxSlotNameLength = 128;
+                    if (fromSlot.length() > kMaxSlotNameLength || toSlot.length() > kMaxSlotNameLength)
+                    {
+                        LOG_WARN("Skipping connection with excessively long slot names");
+                        continue;
+                    }
+
                     // Validate that both nodes exist before adding connection
                     if (nodes.find(from) != nodes.end() && nodes.find(to) != nodes.end())
                     {
-                        AddConnection(from, to);
+                        AddConnection(from, fromSlot, to, toSlot);
                     }
                     else
                     {
@@ -478,6 +517,22 @@ namespace VisionCraft::Nodes
                     NodeId id = posJson["id"];
                     float x = posJson["x"];
                     float y = posJson["y"];
+
+                    // Validate position values (reject NaN, Inf, and unreasonable coordinates)
+                    if (!std::isfinite(x) || !std::isfinite(y))
+                    {
+                        LOG_WARN("Skipping node {} with invalid position ({}, {})", id, x, y);
+                        continue;
+                    }
+
+                    // Reject extremely large coordinates (likely corrupted data)
+                    constexpr float kMaxCoordinate = 1000000.0f;
+                    if (std::abs(x) > kMaxCoordinate || std::abs(y) > kMaxCoordinate)
+                    {
+                        LOG_WARN("Skipping node {} with unreasonable position ({}, {})", id, x, y);
+                        continue;
+                    }
+
                     nodePositions[id] = { x, y };
                 }
             }

@@ -25,12 +25,14 @@ namespace VisionCraft::Nodes
     using ExecutionProgressCallback = std::function<void(int current, int total, const std::string &nodeName)>;
 
     /**
-     * @brief Connection between two nodes.
+     * @brief Connection between two node slots.
      */
     struct Connection
     {
-        NodeId from; ///< Source node ID
-        NodeId to;   ///< Destination node ID
+        NodeId from;          ///< Source node ID
+        std::string fromSlot; ///< Source slot name
+        NodeId to;            ///< Destination node ID
+        std::string toSlot;   ///< Destination slot name
     };
 
     /**
@@ -85,30 +87,35 @@ namespace VisionCraft::Nodes
         [[nodiscard]] std::vector<NodeId> GetNodeIds() const;
 
         /**
-         * @brief Adds connection between nodes.
+         * @brief Adds connection between node slots.
          * @param from Source node ID
+         * @param fromSlot Source slot name
          * @param to Destination node ID
+         * @param toSlot Destination slot name
          */
-        void AddConnection(NodeId from, NodeId to);
+        void AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
 
         /**
-         * @brief Removes connection between nodes.
+         * @brief Removes connection between node slots.
          * @param from Source node ID
+         * @param fromSlot Source slot name
          * @param to Destination node ID
+         * @param toSlot Destination slot name
          * @return True if removed
          */
-        [[nodiscard]] bool RemoveConnection(NodeId from, NodeId to);
+        [[nodiscard]] bool
+            RemoveConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
 
         /**
-         * @brief Returns all connections as a read-only view.
+         * @brief Returns a copy of all connections.
          *
-         * Uses C++20 std::span for a lightweight, non-owning view of the connections.
-         * This is more flexible than returning a const reference as it works with any
-         * contiguous sequence.
+         * Returns a vector copy instead of a span/reference to ensure thread safety.
+         * The returned vector is a snapshot at the time of the call and won't be
+         * invalidated by concurrent modifications to the graph.
          *
-         * @return Span of connections
+         * @return Vector containing copies of all connections
          */
-        [[nodiscard]] std::span<const Connection> GetConnections() const;
+        [[nodiscard]] std::vector<Connection> GetConnections() const;
 
         /**
          * @brief Removes all nodes and connections.
@@ -167,8 +174,13 @@ namespace VisionCraft::Nodes
          * @brief Passes data between nodes using slot system.
          * @param fromNode Source node
          * @param toNode Destination node
+         * @param fromSlotName Source slot name
+         * @param toSlotName Destination slot name
          */
-        static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
+        static void PassDataBetweenNodes(Node *fromNode,
+            Node *toNode,
+            const std::string &fromSlotName,
+            const std::string &toSlotName);
 
         std::unordered_map<NodeId, NodePtr> nodes; ///< Node storage
         std::vector<Connection> connections;       ///< Connections

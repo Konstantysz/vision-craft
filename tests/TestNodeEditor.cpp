@@ -157,12 +157,14 @@ TEST_F(NodeEditorTest, AddSingleConnection)
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
 
-    editor.AddConnection(1, 2);
+    editor.AddConnection(1, "Output", 2, "Input");
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
+    EXPECT_EQ(connections[0].fromSlot, "Output");
     EXPECT_EQ(connections[0].to, 2);
+    EXPECT_EQ(connections[0].toSlot, "Input");
 }
 
 TEST_F(NodeEditorTest, AddMultipleConnections)
@@ -175,11 +177,11 @@ TEST_F(NodeEditorTest, AddMultipleConnections)
     editor.AddNode(std::move(node2));
     editor.AddNode(std::move(node3));
 
-    editor.AddConnection(1, 2);
-    editor.AddConnection(2, 3);
-    editor.AddConnection(1, 3);
+    editor.AddConnection(1, "Output", 2, "Input");
+    editor.AddConnection(2, "Output", 3, "Input");
+    editor.AddConnection(1, "Output", 3, "Input");
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 3);
 
     // Verify all connections exist
@@ -209,13 +211,13 @@ TEST_F(NodeEditorTest, RemoveExistingConnection)
     editor.AddNode(std::move(node2));
     editor.AddNode(std::move(node3));
 
-    editor.AddConnection(1, 2);
-    editor.AddConnection(2, 3);
-    editor.AddConnection(1, 3);
+    editor.AddConnection(1, "Output", 2, "Input");
+    editor.AddConnection(2, "Output", 3, "Input");
+    editor.AddConnection(1, "Output", 3, "Input");
 
-    EXPECT_TRUE(editor.RemoveConnection(1, 2));
+    EXPECT_TRUE(editor.RemoveConnection(1, "Output", 2, "Input"));
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 2);
 
     // Verify 1->2 is removed but others remain
@@ -243,16 +245,18 @@ TEST_F(NodeEditorTest, RemoveNonExistentConnection)
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
 
-    editor.AddConnection(1, 2);
+    editor.AddConnection(1, "Output", 2, "Input");
 
-    EXPECT_FALSE(editor.RemoveConnection(2, 1)); // Reverse direction
-    EXPECT_FALSE(editor.RemoveConnection(1, 3)); // Non-existent target
-    EXPECT_FALSE(editor.RemoveConnection(3, 2)); // Non-existent source
+    EXPECT_FALSE(editor.RemoveConnection(2, "Output", 1, "Input")); // Reverse direction
+    EXPECT_FALSE(editor.RemoveConnection(1, "Output", 3, "Input")); // Non-existent target
+    EXPECT_FALSE(editor.RemoveConnection(3, "Output", 2, "Input")); // Non-existent source
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
+    EXPECT_EQ(connections[0].fromSlot, "Output");
     EXPECT_EQ(connections[0].to, 2);
+    EXPECT_EQ(connections[0].toSlot, "Input");
 }
 
 // ============================================================================
@@ -270,17 +274,19 @@ TEST_F(NodeEditorTest, RemoveNodeCleansUpConnections)
     editor.AddNode(std::move(node3));
 
     // Create connections involving node 2
-    editor.AddConnection(1, 2); // 1 -> 2
-    editor.AddConnection(2, 3); // 2 -> 3
-    editor.AddConnection(1, 3); // 1 -> 3 (should remain)
+    editor.AddConnection(1, "Output", 2, "Input"); // 1 -> 2
+    editor.AddConnection(2, "Output", 3, "Input"); // 2 -> 3
+    editor.AddConnection(1, "Output", 3, "Input"); // 1 -> 3 (should remain)
 
     // Remove node 2
     EXPECT_TRUE(editor.RemoveNode(2));
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
+    EXPECT_EQ(connections[0].fromSlot, "Output");
     EXPECT_EQ(connections[0].to, 3);
+    EXPECT_EQ(connections[0].toSlot, "Input");
 }
 
 TEST_F(NodeEditorTest, RemoveNodeWithNoConnections)
@@ -294,15 +300,17 @@ TEST_F(NodeEditorTest, RemoveNodeWithNoConnections)
     editor.AddNode(std::move(node3));
 
     // Only connect nodes 1 and 3
-    editor.AddConnection(1, 3);
+    editor.AddConnection(1, "Output", 3, "Input");
 
     // Remove node 2 (no connections)
     EXPECT_TRUE(editor.RemoveNode(2));
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
+    EXPECT_EQ(connections[0].fromSlot, "Output");
     EXPECT_EQ(connections[0].to, 3);
+    EXPECT_EQ(connections[0].toSlot, "Input");
 
     const auto nodeIds = editor.GetNodeIds();
     EXPECT_EQ(nodeIds.size(), 2);
@@ -327,7 +335,7 @@ TEST_F(NodeEditorTest, ClearWithNodesAndConnections)
 
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
-    editor.AddConnection(1, 2);
+    editor.AddConnection(1, "Output", 2, "Input");
 
     // Verify setup
     EXPECT_EQ(editor.GetNodeIds().size(), 2);
@@ -365,10 +373,10 @@ TEST_F(NodeEditorTest, DuplicateConnections)
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
 
-    editor.AddConnection(1, 2);
-    editor.AddConnection(1, 2); // Duplicate
+    editor.AddConnection(1, "Output", 2, "Input");
+    editor.AddConnection(1, "Output", 2, "Input"); // Duplicate
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 2); // Both connections are stored (no deduplication)
 }
 
@@ -377,12 +385,14 @@ TEST_F(NodeEditorTest, SelfConnection)
     auto node = std::make_unique<TestNode>(1, "SelfConnected");
     editor.AddNode(std::move(node));
 
-    editor.AddConnection(1, 1); // Self connection
+    editor.AddConnection(1, "Output", 1, "Input"); // Self connection
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 1);
     EXPECT_EQ(connections[0].from, 1);
+    EXPECT_EQ(connections[0].fromSlot, "Output");
     EXPECT_EQ(connections[0].to, 1);
+    EXPECT_EQ(connections[0].toSlot, "Input");
 }
 
 TEST_F(NodeEditorTest, ConnectionsToNonExistentNodes)
@@ -391,11 +401,11 @@ TEST_F(NodeEditorTest, ConnectionsToNonExistentNodes)
     editor.AddNode(std::move(node));
 
     // Add connections to/from non-existent nodes
-    editor.AddConnection(1, 999);   // To non-existent
-    editor.AddConnection(888, 1);   // From non-existent
-    editor.AddConnection(777, 666); // Both non-existent
+    editor.AddConnection(1, "Output", 999, "Input");   // To non-existent
+    editor.AddConnection(888, "Output", 1, "Input");   // From non-existent
+    editor.AddConnection(777, "Output", 666, "Input"); // Both non-existent
 
-    const auto &connections = editor.GetConnections();
+    const auto connections = editor.GetConnections();
     EXPECT_EQ(connections.size(), 3); // All connections are stored regardless
 }
 
@@ -414,8 +424,8 @@ TEST_F(NodeEditorTest, RealNodeTypes)
     editor.AddNode(std::move(cannyNode));
 
     // Create a processing chain
-    editor.AddConnection(1, 2); // Input -> Threshold
-    editor.AddConnection(2, 3); // Threshold -> Canny
+    editor.AddConnection(1, "Output", 2, "Input"); // Input -> Threshold
+    editor.AddConnection(2, "Output", 3, "Input"); // Threshold -> Canny
 
     EXPECT_EQ(editor.GetNodeIds().size(), 3);
     EXPECT_EQ(editor.GetConnections().size(), 2);
@@ -490,7 +500,7 @@ TEST_F(NodeEditorTest, ExecuteGraphWithSlots)
 
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
-    editor.AddConnection(1, 2);
+    editor.AddConnection(1, "Output", 2, "Input");
 
     bool success = editor.Execute();
     EXPECT_TRUE(success);
@@ -515,9 +525,9 @@ TEST_F(NodeEditorTest, ExecuteGraphCycleDetection)
     editor.AddNode(std::move(node3));
 
     // Create a cycle: 1 -> 2 -> 3 -> 1
-    editor.AddConnection(1, 2);
-    editor.AddConnection(2, 3);
-    editor.AddConnection(3, 1);
+    editor.AddConnection(1, "Output", 2, "Input");
+    editor.AddConnection(2, "Output", 3, "Input");
+    editor.AddConnection(3, "Output", 1, "Input");
 
     bool success = editor.Execute();
     EXPECT_FALSE(success); // Should fail due to cycle
@@ -528,7 +538,7 @@ TEST_F(NodeEditorTest, ExecuteGraphSelfCycle)
     auto node = std::make_unique<SlotTestNode>(1, "Node");
 
     editor.AddNode(std::move(node));
-    editor.AddConnection(1, 1); // Self-connection
+    editor.AddConnection(1, "Output", 1, "Input"); // Self-connection
 
     bool success = editor.Execute();
     EXPECT_FALSE(success); // Should fail due to cycle
@@ -555,10 +565,10 @@ TEST_F(NodeEditorTest, ExecuteGraphMultipleBranches)
 
     // Create diamond pattern: source -> branch1 -> merge
     //                          source -> branch2 -> merge
-    editor.AddConnection(1, 2);
-    editor.AddConnection(1, 3);
-    editor.AddConnection(2, 4);
-    editor.AddConnection(3, 4);
+    editor.AddConnection(1, "Output", 2, "Input");
+    editor.AddConnection(1, "Output", 3, "Input");
+    editor.AddConnection(2, "Output", 4, "Input");
+    editor.AddConnection(3, "Output", 4, "Input");
 
     bool success = editor.Execute();
     EXPECT_TRUE(success);
@@ -696,7 +706,7 @@ TEST_F(NodeEditorTest, ExecuteGraphWithNodeError)
 
     editor.AddNode(std::move(node1));
     editor.AddNode(std::move(node2));
-    editor.AddConnection(1, 2);
+    editor.AddConnection(1, "Output", 2, "Input");
 
     bool success = editor.Execute();
     EXPECT_FALSE(success); // Should fail when node throws

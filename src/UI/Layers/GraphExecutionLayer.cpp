@@ -61,13 +61,12 @@ namespace VisionCraft::UI::Layers
             ImGui::Separator();
             ImGui::Text("Executing Graph...");
 
-            // Thread-safe progress reading
-            int current, total;
+            // Thread-safe progress reading - atomics are lock-free
+            int current = currentNode.load(std::memory_order_relaxed);
+            int total = totalNodes.load(std::memory_order_relaxed);
             std::string name;
             {
-                std::lock_guard<std::mutex> lock(progressMutex);
-                current = currentNode;
-                total = totalNodes;
+                std::lock_guard<std::mutex> lock(nameMutex);
                 name = currentNodeName;
             }
 
@@ -122,15 +121,22 @@ namespace VisionCraft::UI::Layers
 
         isExecuting = true;
         showResultsWindow = true;
-        currentNode = 0;
-        totalNodes = 0;
-        currentNodeName = "Initializing...";
+        currentNode.store(0, std::memory_order_relaxed);
+        totalNodes.store(0, std::memory_order_relaxed);
+        {
+            std::lock_guard<std::mutex> lock(nameMutex);
+            currentNodeName = "Initializing...";
+        }
 
         executionFuture = nodeEditor.ExecuteAsync([this](int current, int total, const std::string &name) {
-            std::lock_guard<std::mutex> lock(progressMutex);
-            currentNode = current;
-            totalNodes = total;
-            currentNodeName = name;
+            // Use atomics for numeric values to avoid mutex overhead
+            currentNode.store(current, std::memory_order_relaxed);
+            totalNodes.store(total, std::memory_order_relaxed);
+            // Only lock for string update
+            {
+                std::lock_guard<std::mutex> lock(nameMutex);
+                currentNodeName = name;
+            }
         });
     }
 

@@ -79,12 +79,13 @@ namespace VisionCraft::Vision::IO
          */
         [[nodiscard]] float CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const override;
 
-    private:
         /**
          * @brief Updates OpenGL texture from current image.
+         * @note Must be called on the main thread (OpenGL context thread).
          */
         void UpdateTexture();
 
+    private:
         cv::Mat inputImage;     ///< Input image from connected node
         cv::Mat outputImage;    ///< Output image (same as input)
         Kappa::Texture texture; ///< RAII-managed OpenGL texture for display

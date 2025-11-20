@@ -60,6 +60,14 @@ namespace VisionCraft::UI::Rendering::Strategies
             return;
         }
 
+        // Update texture on main thread if image was loaded but texture doesn't exist yet
+        // This happens after async graph execution where images are loaded but textures can't be created
+        if (!imageNode.GetOutputImage().empty() && imageNode.GetTextureId() == 0)
+        {
+            // SAFETY: This is running on the main thread (rendering), so OpenGL calls are safe
+            imageNode.UpdateTexture();
+        }
+
         if (!imageNode.HasValidImage() || imageNode.GetTextureId() == 0)
         {
             return;

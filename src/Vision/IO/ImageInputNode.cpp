@@ -109,7 +109,8 @@ namespace VisionCraft::Vision::IO
                 return;
             }
 
-            UpdateTexture();
+            // Note: Texture update is deferred to the main thread (rendering)
+            // OpenGL operations cannot be performed from worker threads
             lastLoadedPath = filepath;
 
             LOG_INFO("ImageInputNode {}: Successfully loaded image from '{}' ({}x{}, {} channels)",
@@ -140,9 +141,10 @@ namespace VisionCraft::Vision::IO
         }
 
         // Safety check: ensure we have valid image data
-        if (outputImage.data == nullptr || outputImage.cols <= 0 || outputImage.rows <= 0)
+        // Note: empty() already checks data, cols, and rows, so this is comprehensive
+        if (outputImage.cols <= 0 || outputImage.rows <= 0)
         {
-            LOG_ERROR("ImageInputNode {}: Invalid image data, cannot create texture", GetName());
+            LOG_ERROR("ImageInputNode {}: Invalid image dimensions, cannot create texture", GetName());
             texture.Reset();
             return;
         }
@@ -150,18 +152,10 @@ namespace VisionCraft::Vision::IO
         cv::Mat rgbImage;
         try
         {
-            // Verify outputImage is valid before conversion
-            if (!outputImage.data)
-            {
-                LOG_ERROR("ImageInputNode {}: outputImage.data is null before cvtColor", GetName());
-                texture.Reset();
-                return;
-            }
-
             cv::cvtColor(outputImage, rgbImage, cv::COLOR_BGR2RGB);
 
             // Verify conversion succeeded
-            if (rgbImage.empty() || !rgbImage.data)
+            if (rgbImage.empty())
             {
                 LOG_ERROR("ImageInputNode {}: RGB conversion produced invalid image", GetName());
                 texture.Reset();

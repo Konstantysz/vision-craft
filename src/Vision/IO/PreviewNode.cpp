@@ -24,7 +24,8 @@ namespace VisionCraft::Vision::IO
 
         inputImage = *inputData;
         outputImage = inputImage; // Shallow copy - cv::Mat uses reference counting
-        UpdateTexture();
+        // Note: Texture update is deferred to the main thread (rendering)
+        // OpenGL operations cannot be performed from worker threads
         SetOutputSlotData("Output", outputImage);
 
         LOG_INFO("PreviewNode {}: Processing image ({}x{}, {} channels)",

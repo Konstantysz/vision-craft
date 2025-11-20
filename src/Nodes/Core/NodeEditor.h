@@ -2,9 +2,14 @@
 #include "Nodes/Core/Node.h"
 
 #include <nlohmann/json.hpp>
+#include <atomic>
 #include <filesystem>
+#include <functional>
+#include <future>
+#include <mutex>
 #include <optional>
 #include <span>
+#include <stop_token>
 #include <unordered_map>
 #include <vector>
 
@@ -12,12 +17,22 @@ namespace VisionCraft::Nodes
 {
 
     /**
-     * @brief Connection between two nodes.
+     * @brief Callback for execution progress updates.
+     * @param current Current node index (1-based)
+     * @param total Total number of nodes
+     * @param nodeName Name of the node being processed
+     */
+    using ExecutionProgressCallback = std::function<void(int current, int total, const std::string &nodeName)>;
+
+    /**
+     * @brief Connection between two node slots.
      */
     struct Connection
     {
-        NodeId from; ///< Source node ID
-        NodeId to;   ///< Destination node ID
+        NodeId from;          ///< Source node ID
+        std::string fromSlot; ///< Source slot name
+        NodeId to;            ///< Destination node ID
+        std::string toSlot;   ///< Destination slot name
     };
 
     /**
@@ -30,6 +45,12 @@ namespace VisionCraft::Nodes
          * @brief Construct a new NodeEditor object.
          */
         NodeEditor();
+
+        /**
+         * @brief Destroy the NodeEditor object.
+         * @note Ensures cancellation and wait for async execution to complete.
+         */
+        ~NodeEditor();
 
         /**
          * @brief Adds node to editor.
@@ -66,30 +87,35 @@ namespace VisionCraft::Nodes
         [[nodiscard]] std::vector<NodeId> GetNodeIds() const;
 
         /**
-         * @brief Adds connection between nodes.
+         * @brief Adds connection between node slots.
          * @param from Source node ID
+         * @param fromSlot Source slot name
          * @param to Destination node ID
+         * @param toSlot Destination slot name
          */
-        void AddConnection(NodeId from, NodeId to);
+        void AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
 
         /**
-         * @brief Removes connection between nodes.
+         * @brief Removes connection between node slots.
          * @param from Source node ID
+         * @param fromSlot Source slot name
          * @param to Destination node ID
+         * @param toSlot Destination slot name
          * @return True if removed
          */
-        [[nodiscard]] bool RemoveConnection(NodeId from, NodeId to);
+        [[nodiscard]] bool
+            RemoveConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
 
         /**
-         * @brief Returns all connections as a read-only view.
+         * @brief Returns a copy of all connections.
          *
-         * Uses C++20 std::span for a lightweight, non-owning view of the connections.
-         * This is more flexible than returning a const reference as it works with any
-         * contiguous sequence.
+         * Returns a vector copy instead of a span/reference to ensure thread safety.
+         * The returned vector is a snapshot at the time of the call and won't be
+         * invalidated by concurrent modifications to the graph.
          *
-         * @return Span of connections
+         * @return Vector containing copies of all connections
          */
-        [[nodiscard]] std::span<const Connection> GetConnections() const;
+        [[nodiscard]] std::vector<Connection> GetConnections() const;
 
         /**
          * @brief Removes all nodes and connections.
@@ -98,10 +124,26 @@ namespace VisionCraft::Nodes
 
         /**
          * @brief Executes node graph in dependency order.
-         * @return True if succeeded, false if cycle detected
+         * @param progressCallback Optional callback for progress updates
+         * @param stopToken Token to check for cancellation requests
+         * @return True if succeeded, false if cycle detected or cancelled
          * @note Performs topological sort, passes data between nodes, and calls Process() in order.
          */
-        bool Execute();
+        bool Execute(const ExecutionProgressCallback &progressCallback = nullptr, std::stop_token stopToken = {});
+
+        /**
+         * @brief Executes node graph asynchronously in background thread.
+         * @param progressCallback Optional callback for progress updates
+         * @return Future that will contain execution result
+         * @note Use this to prevent UI blocking. Check future.valid() and future.wait_for() to poll status.
+         */
+        std::shared_future<bool> ExecuteAsync(const ExecutionProgressCallback &progressCallback = nullptr);
+
+        /**
+         * @brief Requests cancellation of current execution.
+         * @note This is thread-safe and can be called from any thread.
+         */
+        void CancelExecution();
 
         /**
          * @brief Serializes graph to JSON file.
@@ -132,11 +174,21 @@ namespace VisionCraft::Nodes
          * @brief Passes data between nodes using slot system.
          * @param fromNode Source node
          * @param toNode Destination node
+         * @param fromSlotName Source slot name
+         * @param toSlotName Destination slot name
          */
-        static void PassDataBetweenNodes(Node *fromNode, Node *toNode);
+        static void PassDataBetweenNodes(Node *fromNode,
+            Node *toNode,
+            const std::string &fromSlotName,
+            const std::string &toSlotName);
+
         std::unordered_map<NodeId, NodePtr> nodes; ///< Node storage
         std::vector<Connection> connections;       ///< Connections
         NodeId nextId;                             ///< Next available ID
+
+        mutable std::recursive_mutex graphMutex;   ///< Mutex for thread safety
+        std::stop_source stopSource;               ///< Source for cancellation requests
+        std::shared_future<bool> currentExecution; ///< Handle to current async execution
     };
 
 } // namespace VisionCraft::Nodes

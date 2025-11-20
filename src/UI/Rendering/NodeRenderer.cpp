@@ -124,8 +124,8 @@ namespace VisionCraft::UI::Rendering
 
         const auto layout = CalculateColumnLayout(nodeSize, inputPins.size(), outputPins.size());
         auto *drawList = ImGui::GetWindowDrawList();
-        const auto paramHeight = Constants::Parameter::kHeight * canvas_.GetZoomLevel();
-        const auto paramSpacing = Constants::Parameter::kSpacing * canvas_.GetZoomLevel();
+        // drawList was already declared above
+        // paramHeight and paramSpacing were unused
         const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
         for (size_t i = 0; i < inputPins.size(); ++i)
         {
@@ -323,8 +323,9 @@ namespace VisionCraft::UI::Rendering
         return result;
     }
 
-    NodeRenderer::ColumnLayout
-        NodeRenderer::CalculateColumnLayout(const ImVec2 &nodeSize, size_t inputPinCount, size_t outputPinCount) const
+    NodeRenderer::ColumnLayout NodeRenderer::CalculateColumnLayout(const ImVec2 &nodeSize,
+        [[maybe_unused]] size_t inputPinCount,
+        [[maybe_unused]] size_t outputPinCount) const
     {
         ColumnLayout layout;
 
@@ -624,12 +625,12 @@ namespace VisionCraft::UI::Rendering
             return std::make_unique<Rendering::Strategies::DefaultNodeRenderingStrategy>();
         }
 
-        if (const auto *imageNode = dynamic_cast<const Vision::IO::ImageInputNode *>(node))
+        if (dynamic_cast<const Vision::IO::ImageInputNode *>(node))
         {
             return std::make_unique<Rendering::Strategies::ImageInputNodeRenderingStrategy>();
         }
 
-        if (const auto *previewNode = dynamic_cast<const Vision::IO::PreviewNode *>(node))
+        if (dynamic_cast<const Vision::IO::PreviewNode *>(node))
         {
             return std::make_unique<Rendering::Strategies::PreviewNodeRenderingStrategy>();
         }

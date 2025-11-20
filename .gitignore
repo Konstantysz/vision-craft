@@ -4,6 +4,7 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 .vscode
+.serena
 CMakeUserPresets.json
 build/
 vcpkg_installed/
@@ -13,6 +14,9 @@ test_data/
 
 # Claude Code configuration (personal assistant context)
 .claude/
+
+# MCP configuration (contains API keys and personal settings)
+.mcp.json
 
 # Application state files (user-specific)
 window_state.json

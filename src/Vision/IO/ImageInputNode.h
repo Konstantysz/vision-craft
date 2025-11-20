@@ -86,17 +86,18 @@ namespace VisionCraft::Vision::IO
          */
         [[nodiscard]] bool HasError() const;
 
+        /**
+         * @brief Updates OpenGL texture from loaded image.
+         * @note Must be called on the main thread (OpenGL context thread).
+         */
+        void UpdateTexture();
+
     private:
         /**
          * @brief Loads image from file path.
          * @param filepath Image file path
          */
         void LoadImageFromPath(const std::string &filepath);
-
-        /**
-         * @brief Updates OpenGL texture from loaded image.
-         */
-        void UpdateTexture();
 
 
         cv::Mat outputImage;        ///< Loaded image data

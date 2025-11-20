@@ -13,6 +13,15 @@ namespace VisionCraft::UI::Rendering::Strategies
         float zoomLevel)
     {
         auto &previewNode = static_cast<Vision::IO::PreviewNode &>(node);
+
+        // Update texture on main thread if image was loaded but texture doesn't exist yet
+        // This happens after async graph execution where images are loaded but textures can't be created
+        if (!previewNode.GetOutputImage().empty() && previewNode.GetTextureId() == 0)
+        {
+            // SAFETY: This is running on the main thread (rendering), so OpenGL calls are safe
+            previewNode.UpdateTexture();
+        }
+
         if (!previewNode.HasValidImage() || previewNode.GetTextureId() == 0)
         {
             return;

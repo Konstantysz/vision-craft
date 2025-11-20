@@ -4,6 +4,9 @@
 #include "Nodes/Core/Node.h"
 #include "Nodes/Core/NodeEditor.h"
 
+#include <atomic>
+#include <future>
+#include <mutex>
 #include <vector>
 
 namespace VisionCraft::UI::Layers
@@ -48,8 +51,22 @@ namespace VisionCraft::UI::Layers
          */
         void ExecuteGraph();
 
-        Nodes::NodeEditor &nodeEditor;  ///< Reference to the shared node editor instance
-        bool isExecuting = false;       ///< Whether the graph is currently executing
-        bool showResultsWindow = false; ///< Whether to display the results window
+        Nodes::NodeEditor &nodeEditor; ///< Reference to the shared node editor instance
+
+        // Execution state
+        std::shared_future<bool> executionFuture;
+        std::atomic<bool> isExecuting = false; ///< Whether the graph is currently executing
+        bool showResultsWindow = false;        ///< Whether to display the results window
+
+        // Progress tracking - using atomics to avoid mutex overhead
+        std::atomic<int> currentNode = 0;
+        std::atomic<int> totalNodes = 0;
+        std::mutex nameMutex; ///< Only for currentNodeName (strings can't be atomic)
+        std::string currentNodeName;
+
+        /**
+         * @brief Requests cancellation of current execution.
+         */
+        void CancelExecution();
     };
 } // namespace VisionCraft::UI::Layers

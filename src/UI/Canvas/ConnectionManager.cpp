@@ -157,7 +157,7 @@ namespace VisionCraft::UI::Canvas
         // Direct connection creation (from command execution or when callback is disabled)
         RemoveConnectionToInput(inputPin);
         connections.push_back(newConnection);
-        nodeEditor.AddConnection(outputPin.nodeId, inputPin.nodeId);
+        nodeEditor.AddConnection(outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName);
 
         return true;
     }
@@ -229,7 +229,7 @@ namespace VisionCraft::UI::Canvas
         const CanvasController &canvas) const
     {
         Widgets::PinId closestPin = { Constants::Special::kInvalidNodeId, "" };
-        float closestDistanceSquared = std::numeric_limits<float>::max();
+        // closestDistanceSquared was unused
 
         const auto nodeIds = nodeEditor.GetNodeIds();
         for (const auto nodeId : nodeIds)
@@ -241,9 +241,9 @@ namespace VisionCraft::UI::Canvas
             }
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+            // dimensions variable was unused here
             const auto &nodePos = nodePositions.at(nodeId);
-            const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+            // nodeWorldPos was unused
 
             const auto pinInNode = FindPinAtPositionInNode(mousePos, nodeId, nodeEditor, nodePositions, canvas);
             if (pinInNode.nodeId != Constants::Special::kInvalidNodeId)
@@ -440,7 +440,49 @@ namespace VisionCraft::UI::Canvas
                     { "Type", Widgets::PinDataType::String, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
             { "Preview",
-                { { "Input", Widgets::PinDataType::Image, true }, { "Output", Widgets::PinDataType::Image, false } } }
+                { { "Input", Widgets::PinDataType::Image, true }, { "Output", Widgets::PinDataType::Image, false } } },
+            { "Sobel Edge Detection",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "dx", Widgets::PinDataType::Int, true },
+                    { "dy", Widgets::PinDataType::Int, true },
+                    { "ksize", Widgets::PinDataType::Int, true },
+                    { "scale", Widgets::PinDataType::Float, true },
+                    { "delta", Widgets::PinDataType::Float, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Convert Color",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Conversion", Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Split Channels",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Channel 1", Widgets::PinDataType::Image, false },
+                    { "Channel 2", Widgets::PinDataType::Image, false },
+                    { "Channel 3", Widgets::PinDataType::Image, false },
+                    { "Channel 4", Widgets::PinDataType::Image, false } } },
+            { "Merge Channels",
+                { { "Channel 1", Widgets::PinDataType::Image, true },
+                    { "Channel 2", Widgets::PinDataType::Image, true },
+                    { "Channel 3", Widgets::PinDataType::Image, true },
+                    { "Channel 4", Widgets::PinDataType::Image, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Median Blur",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "ksize", Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Morphology",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Operation", Widgets::PinDataType::Int, true },
+                    { "ksize", Widgets::PinDataType::Int, true },
+                    { "iterations", Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinDataType::Image, false } } },
+            { "Resize",
+                { { "Input", Widgets::PinDataType::Image, true },
+                    { "Width", Widgets::PinDataType::Int, true },
+                    { "Height", Widgets::PinDataType::Int, true },
+                    { "ScaleX", Widgets::PinDataType::Float, true },
+                    { "ScaleY", Widgets::PinDataType::Float, true },
+                    { "Interpolation", Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinDataType::Image, false } } }
         };
 
         auto it = nodePinDefinitions.find(nodeName);

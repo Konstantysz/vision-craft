@@ -20,6 +20,24 @@ namespace VisionCraft::UI::Layers
 
     void GraphExecutionLayer::OnUpdate([[maybe_unused]] float deltaTime)
     {
+        if (isExecuting && executionFuture.valid())
+        {
+            // Check if execution is finished (timeout of 0 means just check status)
+            if (executionFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+            {
+                bool success = executionFuture.get();
+                isExecuting = false;
+
+                if (success)
+                {
+                    LOG_INFO("Async graph execution completed successfully");
+                }
+                else
+                {
+                    LOG_ERROR("Async graph execution failed or was cancelled");
+                }
+            }
+        }
     }
 
     void GraphExecutionLayer::OnRender()
@@ -40,8 +58,39 @@ namespace VisionCraft::UI::Layers
 
         if (isExecuting)
         {
-            // TODO: Show execution progress
-            ImGui::Text("Executing...");
+            ImGui::Separator();
+            ImGui::Text("Executing Graph...");
+
+            // Thread-safe progress reading - atomics are lock-free
+            int current = currentNode.load(std::memory_order_relaxed);
+            int total = totalNodes.load(std::memory_order_relaxed);
+            std::string name;
+            {
+                std::lock_guard<std::mutex> lock(nameMutex);
+                name = currentNodeName;
+            }
+
+            if (total > 0)
+            {
+                float progress = static_cast<float>(current) / static_cast<float>(total);
+                char overlay[64];
+                snprintf(overlay, sizeof(overlay), "%d/%d: %s", current, total, name.c_str());
+                ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), overlay);
+            }
+            else
+            {
+                ImGui::ProgressBar(0.0f, ImVec2(0.0f, 0.0f), "Preparing...");
+            }
+
+            if (ImGui::Button("Cancel Execution"))
+            {
+                CancelExecution();
+            }
+        }
+        else
+        {
+            // Only show status if not executing
+            ImGui::Text("Ready");
         }
 
         ImGui::End();
@@ -63,16 +112,40 @@ namespace VisionCraft::UI::Layers
     void GraphExecutionLayer::ExecuteGraph()
     {
         LOG_INFO("Graph execution triggered via EventBus!");
+
+        if (isExecuting)
+        {
+            LOG_WARN("Graph is already executing");
+            return;
+        }
+
         isExecuting = true;
         showResultsWindow = true;
-
-        const bool success = nodeEditor.Execute();
-
-        isExecuting = false;
-
-        if (!success)
+        currentNode.store(0, std::memory_order_relaxed);
+        totalNodes.store(0, std::memory_order_relaxed);
         {
-            LOG_ERROR("Graph execution failed");
+            std::lock_guard<std::mutex> lock(nameMutex);
+            currentNodeName = "Initializing...";
+        }
+
+        executionFuture = nodeEditor.ExecuteAsync([this](int current, int total, const std::string &name) {
+            // Use atomics for numeric values to avoid mutex overhead
+            currentNode.store(current, std::memory_order_relaxed);
+            totalNodes.store(total, std::memory_order_relaxed);
+            // Only lock for string update
+            {
+                std::lock_guard<std::mutex> lock(nameMutex);
+                currentNodeName = name;
+            }
+        });
+    }
+
+    void GraphExecutionLayer::CancelExecution()
+    {
+        if (isExecuting)
+        {
+            LOG_INFO("Cancelling graph execution...");
+            nodeEditor.CancelExecution();
         }
     }
 } // namespace VisionCraft::UI::Layers

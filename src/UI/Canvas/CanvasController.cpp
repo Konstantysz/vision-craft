@@ -9,7 +9,9 @@ namespace VisionCraft::UI::Canvas
     {
     }
 
-    void CanvasController::HandleInput(Kappa::Event &event, const ImVec2 &mousePos, bool isWindowHovered)
+    void CanvasController::HandleInput([[maybe_unused]] Kappa::Event &event,
+        [[maybe_unused]] const ImVec2 &mousePos,
+        [[maybe_unused]] bool isWindowHovered)
     {
     }
 

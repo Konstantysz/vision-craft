@@ -229,7 +229,7 @@ namespace VisionCraft::UI::Canvas
         const CanvasController &canvas) const
     {
         Widgets::PinId closestPin = { Constants::Special::kInvalidNodeId, "" };
-        float closestDistanceSquared = std::numeric_limits<float>::max();
+        // closestDistanceSquared was unused
 
         const auto nodeIds = nodeEditor.GetNodeIds();
         for (const auto nodeId : nodeIds)
@@ -243,7 +243,7 @@ namespace VisionCraft::UI::Canvas
             const auto pins = GetNodePins(node->GetName());
             // dimensions variable was unused here
             const auto &nodePos = nodePositions.at(nodeId);
-            const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
+            // nodeWorldPos was unused
 
             const auto pinInNode = FindPinAtPositionInNode(mousePos, nodeId, nodeEditor, nodePositions, canvas);
             if (pinInNode.nodeId != Constants::Special::kInvalidNodeId)

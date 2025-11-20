@@ -4,11 +4,11 @@
 
 namespace VisionCraft::UI::Layers
 {
-    void PropertyPanelLayer::OnEvent(Kappa::Event &event)
+    void PropertyPanelLayer::OnEvent([[maybe_unused]] Kappa::Event &event)
     {
     }
 
-    void PropertyPanelLayer::OnUpdate(float deltaTime)
+    void PropertyPanelLayer::OnUpdate([[maybe_unused]] float deltaTime)
     {
     }
 

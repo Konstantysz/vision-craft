@@ -235,7 +235,7 @@ namespace VisionCraft::UI::Canvas
     }
 
     std::vector<InputAction> InputHandler::HandleMouseDrag(const ImVec2 &mousePos,
-        const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
+        [[maybe_unused]] const std::unordered_map<Nodes::NodeId, Widgets::NodePosition> &nodePositions,
         const UpdateBoxSelectionCallback &updateBoxSelection)
     {
         std::vector<InputAction> actions;

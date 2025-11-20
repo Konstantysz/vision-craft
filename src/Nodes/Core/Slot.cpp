@@ -6,9 +6,9 @@ namespace VisionCraft::Nodes
     {
     }
 
-    void Slot::SetData(NodeData data)
+    void Slot::SetData(NodeData newData)
     {
-        this->data = std::move(data);
+        this->data = std::move(newData);
     }
 
     bool Slot::HasData() const
@@ -26,9 +26,9 @@ namespace VisionCraft::Nodes
         return data.index();
     }
 
-    void Slot::SetDefaultValue(NodeData defaultValue)
+    void Slot::SetDefaultValue(NodeData newDefaultValue)
     {
-        this->defaultValue = std::move(defaultValue);
+        this->defaultValue = std::move(newDefaultValue);
     }
 
     bool Slot::HasDefaultValue() const

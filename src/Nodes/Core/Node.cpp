@@ -16,7 +16,7 @@ namespace VisionCraft::Nodes
         return name;
     }
 
-    float Node::CalculateExtraHeight(float nodeContentWidth, float zoomLevel) const
+    float Node::CalculateExtraHeight([[maybe_unused]] float nodeContentWidth, [[maybe_unused]] float zoomLevel) const
     {
         return 0.0f;
     }

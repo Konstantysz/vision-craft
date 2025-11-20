@@ -100,7 +100,7 @@ namespace VisionCraft::UI::Layers
         }
     }
 
-    void NodeEditorLayer::OnUpdate(float deltaTime)
+    void NodeEditorLayer::OnUpdate([[maybe_unused]] float deltaTime)
     {
     }
 

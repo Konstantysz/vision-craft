@@ -16,11 +16,11 @@ namespace VisionCraft::UI::Layers
             [this](const Events::FileOpenedEvent &event) { recentFilesManager.AddFile(event.GetFilePath()); });
     }
 
-    void DockSpaceLayer::OnEvent(Kappa::Event &event)
+    void DockSpaceLayer::OnEvent([[maybe_unused]] Kappa::Event &event)
     {
     }
 
-    void DockSpaceLayer::OnUpdate(float deltaTime)
+    void DockSpaceLayer::OnUpdate([[maybe_unused]] float deltaTime)
     {
     }
 

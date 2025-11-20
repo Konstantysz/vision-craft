@@ -99,7 +99,7 @@ namespace VisionCraft::Editor::State
 
     ImVec2 ClipboardManager::GetPasteOffset() const
     {
-        return ImVec2(PASTE_OFFSET_X * pasteCount, PASTE_OFFSET_Y * pasteCount);
+        return ImVec2(PASTE_OFFSET_X * static_cast<float>(pasteCount), PASTE_OFFSET_Y * static_cast<float>(pasteCount));
     }
 
     void ClipboardManager::IncrementPasteCount()

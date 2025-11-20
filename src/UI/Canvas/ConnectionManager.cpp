@@ -241,7 +241,7 @@ namespace VisionCraft::UI::Canvas
             }
 
             const auto pins = GetNodePins(node->GetName());
-            const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
+            // dimensions variable was unused here
             const auto &nodePos = nodePositions.at(nodeId);
             const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 

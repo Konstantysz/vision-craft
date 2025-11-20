@@ -2,7 +2,7 @@
 
 namespace VisionCraft::Nodes
 {
-    Node::Node(NodeId id, std::string name) : id(id), name(std::move(name))
+    Node::Node(NodeId id, std::string name) : name(std::move(name)), id(id)
     {
     }
 

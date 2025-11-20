@@ -218,7 +218,7 @@ namespace VisionCraft::UI::Layers
                         nodeId,
                         [this](Nodes::NodeId id) -> Nodes::Node * { return nodeEditor.GetNode(id); },
                         [this](Nodes::NodeId id) {
-                            nodeEditor.RemoveNode(id);
+                            (void)nodeEditor.RemoveNode(id);
                             nodePositions.erase(id);
                             if (selectionManager.IsNodeSelected(id))
                             {
@@ -492,7 +492,7 @@ namespace VisionCraft::UI::Layers
                     nodeId,
                     [this](Nodes::NodeId id) -> Nodes::Node * { return nodeEditor.GetNode(id); },
                     [this](Nodes::NodeId id) {
-                        nodeEditor.RemoveNode(id);
+                        (void)nodeEditor.RemoveNode(id);
                         nodePositions.erase(id);
                         if (selectionManager.IsNodeSelected(id))
                         {

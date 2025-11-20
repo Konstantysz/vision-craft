@@ -54,7 +54,7 @@ namespace VisionCraft::UI::Layers
         Nodes::NodeEditor &nodeEditor; ///< Reference to the shared node editor instance
 
         // Execution state
-        std::future<bool> executionFuture;
+        std::shared_future<bool> executionFuture;
         std::atomic<bool> isExecuting = false; ///< Whether the graph is currently executing
         bool showResultsWindow = false;        ///< Whether to display the results window
 

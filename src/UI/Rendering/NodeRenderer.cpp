@@ -124,8 +124,8 @@ namespace VisionCraft::UI::Rendering
 
         const auto layout = CalculateColumnLayout(nodeSize, inputPins.size(), outputPins.size());
         auto *drawList = ImGui::GetWindowDrawList();
-        const auto paramHeight = Constants::Parameter::kHeight * canvas_.GetZoomLevel();
-        const auto paramSpacing = Constants::Parameter::kSpacing * canvas_.GetZoomLevel();
+        auto *drawList = ImGui::GetWindowDrawList();
+        // paramHeight and paramSpacing were unused
         const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
         for (size_t i = 0; i < inputPins.size(); ++i)
         {

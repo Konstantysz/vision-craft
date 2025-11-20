@@ -662,7 +662,7 @@ TEST_F(NodeEditorTest, ExecuteLongChain)
     // Connect nodes in a chain
     for (int i = 0; i < chainLength - 1; ++i)
     {
-        editor.AddConnection(i + 1, i + 2);
+        editor.AddConnection(i + 1, "Output", i + 2, "Input");
     }
 
     bool success = editor.Execute();
@@ -727,7 +727,7 @@ TEST_F(NodeEditorTest, ExecuteWithProgressCallback)
     // Connect linearly
     for (int i = 1; i < nodeCount; ++i)
     {
-        editor.AddConnection(i, i + 1);
+        editor.AddConnection(i, "Output", i + 1, "Input");
     }
 
     int callbackCount = 0;
@@ -755,7 +755,7 @@ TEST_F(NodeEditorTest, ExecuteCancellation)
     }
     for (int i = 1; i < nodeCount; ++i)
     {
-        editor.AddConnection(i, i + 1);
+        editor.AddConnection(i, "Output", i + 1, "Input");
     }
 
     // Execute with a callback that cancels after 3 nodes

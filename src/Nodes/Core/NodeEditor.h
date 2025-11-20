@@ -174,7 +174,7 @@ namespace VisionCraft::Nodes
         std::vector<Connection> connections;       ///< Connections
         NodeId nextId;                             ///< Next available ID
 
-        mutable std::mutex graphMutex;             ///< Mutex for thread safety
+        mutable std::recursive_mutex graphMutex;   ///< Mutex for thread safety
         std::stop_source stopSource;               ///< Source for cancellation requests
         std::shared_future<bool> currentExecution; ///< Handle to current async execution
     };

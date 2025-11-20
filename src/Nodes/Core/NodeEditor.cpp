@@ -132,6 +132,13 @@ namespace VisionCraft::Nodes
     bool NodeEditor::Execute(const ExecutionProgressCallback &progressCallback, std::stop_token stopToken)
     {
         std::unique_lock lock(graphMutex);
+
+        // If running synchronously (no external token), reset stopSource to allow fresh cancellation
+        if (!stopToken.stop_possible())
+        {
+            stopSource = std::stop_source();
+        }
+
         LOG_INFO("Executing graph with {} nodes", nodes.size());
 
         const auto executionOrder = TopologicalSort();
@@ -159,7 +166,7 @@ namespace VisionCraft::Nodes
 
         for (const auto nodeId : executionOrder)
         {
-            if (stopToken.stop_requested())
+            if (stopToken.stop_requested() || stopSource.stop_requested())
             {
                 LOG_WARN("Graph execution cancelled by user");
                 return false;
@@ -225,18 +232,7 @@ namespace VisionCraft::Nodes
         currentExecution = std::async(
             std::launch::async, [this, progressCallback, stopToken]() { return Execute(progressCallback, stopToken); });
 
-        // We need to return a std::future to match the interface, but we stored a shared_future.
-        // The interface in header says std::future<bool> ExecuteAsync(...).
-        // If we want to keep the interface, we can't return the same future we stored.
-        // But we can't convert shared_future back to future.
-        // So we MUST change the return type in the header to std::shared_future<bool> OR return void.
-        // Let's change the header return type to std::shared_future<bool> as well to be consistent.
-        // For now, I will return a dummy future and rely on the header change I will make next.
-        // Wait, I can't change the header return type in this tool call.
-        // I will assume I change the header return type to std::shared_future<bool>.
-
-        return std::async(
-            std::launch::deferred, []() { return false; }); // Dummy to satisfy compiler until I fix header
+        return currentExecution;
     }
 
     void NodeEditor::CancelExecution()

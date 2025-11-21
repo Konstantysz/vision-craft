@@ -27,6 +27,29 @@ VisionCraft is built using a domain-driven architecture with clear separation of
 - **UI**: Presentation layer (rendering, canvas, widgets, application layers)
 - **App**: Application composition and entry point
 
+## ⚡ Execution Flow Architecture
+
+VisionCraft uses a hybrid execution model that separates **control flow** from **data flow**:
+
+### 1. Execution Flow (White Arrows)
+- Defines the **order of operations** (what executes when).
+- Represented by white arrow pins and connections.
+- Enforces a strict **1:1 connection rule** (one output to one input) to prevent ambiguity.
+- Supports branching and linear sequences.
+- **Entry Points**: Nodes with execution outputs but no execution inputs (e.g., `Image Input`) start the flow.
+
+### 2. Data Flow (Colored Wires)
+- Defines **data dependencies** (what data goes where).
+- Represented by colored pins (Green=Image, Cyan=Int, etc.).
+- Allows **1:N connections** (one output can feed multiple inputs).
+- Data is passed automatically before a node executes.
+
+### 3. Execution Model
+- **Compilation Phase**: The graph is compiled into a linear `ExecutionPlan` via topological sort of the execution flow.
+- **Optimization**: Connection lookups are precomputed into indices for O(1) access during execution.
+- **Lookahead Advancement**: The instruction pointer advances *before* node execution, enabling robust error handling and cancellation.
+- **Thread Safety**: The execution engine is fully thread-safe, supporting async background execution with cancellation and progress reporting.
+
 ## 📋 Prerequisites
 
 ### 🌐 Common Requirements

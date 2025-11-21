@@ -1,7 +1,6 @@
 #include "UI/Widgets/FileDialogManager.h"
 
-#include <cstring>
-
+#include <ImGuiFileDialog.h>
 #include <imgui.h>
 
 namespace VisionCraft::UI::Widgets
@@ -10,41 +9,39 @@ namespace VisionCraft::UI::Widgets
     {
         FileDialogResult result;
 
-        if (!showSaveDialog)
+        // Open the dialog if requested
+        if (shouldOpenSaveDialog && !ImGuiFileDialog::Instance()->IsOpened("SaveGraphDlgKey"))
         {
-            return result;
+            IGFD::FileDialogConfig config;
+            config.path = ".";
+            config.flags = ImGuiFileDialogFlags_Modal | ImGuiFileDialogFlags_ConfirmOverwrite;
+
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "SaveGraphDlgKey", "Save Graph", "Graph Files{.json,.JSON}", config);
+            shouldOpenSaveDialog = false;
         }
 
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        // Display and handle the dialog
+        ImVec2 minSize = ImVec2(800, 500);
+        ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
 
-        if (ImGui::BeginPopupModal("Save Graph", &showSaveDialog, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGuiFileDialog::Instance()->Display("SaveGraphDlgKey", ImGuiWindowFlags_NoCollapse, minSize, maxSize))
         {
-            ImGui::Text("Enter filename:");
-            ImGui::InputText("##filepath", filePathBuffer, sizeof(filePathBuffer));
-
-            if (ImGui::Button("Save", ImVec2(120, 0)))
+            if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string filepath = filePathBuffer;
-                if (!filepath.empty())
+                std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
+                if (!selectedPath.empty())
                 {
                     result.action = FileDialogResult::Action::Save;
-                    result.filepath = EnsureJsonExtension(filepath);
-                    showSaveDialog = false;
-                    ClearBuffer();
+                    result.filepath = EnsureJsonExtension(selectedPath);
                 }
             }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            else
             {
                 result.action = FileDialogResult::Action::Cancel;
-                showSaveDialog = false;
-                ClearBuffer();
             }
 
-            ImGui::EndPopup();
+            ImGuiFileDialog::Instance()->Close();
         }
 
         return result;
@@ -54,41 +51,39 @@ namespace VisionCraft::UI::Widgets
     {
         FileDialogResult result;
 
-        if (!showLoadDialog)
+        // Open the dialog if requested
+        if (shouldOpenLoadDialog && !ImGuiFileDialog::Instance()->IsOpened("LoadGraphDlgKey"))
         {
-            return result;
+            IGFD::FileDialogConfig config;
+            config.path = ".";
+            config.flags = ImGuiFileDialogFlags_Modal;
+
+            ImGuiFileDialog::Instance()->OpenDialog(
+                "LoadGraphDlgKey", "Load Graph", "Graph Files{.json,.JSON}", config);
+            shouldOpenLoadDialog = false;
         }
 
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        // Display and handle the dialog
+        ImVec2 minSize = ImVec2(800, 500);
+        ImVec2 maxSize = ImVec2(FLT_MAX, FLT_MAX);
 
-        if (ImGui::BeginPopupModal("Load Graph", &showLoadDialog, ImGuiWindowFlags_AlwaysAutoResize))
+        if (ImGuiFileDialog::Instance()->Display("LoadGraphDlgKey", ImGuiWindowFlags_NoCollapse, minSize, maxSize))
         {
-            ImGui::Text("Enter filename:");
-            ImGui::InputText("##filepath", filePathBuffer, sizeof(filePathBuffer));
-
-            if (ImGui::Button("Load", ImVec2(120, 0)))
+            if (ImGuiFileDialog::Instance()->IsOk())
             {
-                std::string filepath = filePathBuffer;
-                if (!filepath.empty())
+                std::string selectedPath = ImGuiFileDialog::Instance()->GetFilePathName();
+                if (!selectedPath.empty())
                 {
                     result.action = FileDialogResult::Action::Load;
-                    result.filepath = EnsureJsonExtension(filepath);
-                    showLoadDialog = false;
-                    ClearBuffer();
+                    result.filepath = selectedPath;
                 }
             }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Cancel", ImVec2(120, 0)))
+            else
             {
                 result.action = FileDialogResult::Action::Cancel;
-                showLoadDialog = false;
-                ClearBuffer();
             }
 
-            ImGui::EndPopup();
+            ImGuiFileDialog::Instance()->Close();
         }
 
         return result;
@@ -96,37 +91,30 @@ namespace VisionCraft::UI::Widgets
 
     void FileDialogManager::OpenSaveDialog()
     {
-        showSaveDialog = true;
-        ImGui::OpenPopup("Save Graph");
+        shouldOpenSaveDialog = true;
     }
 
     void FileDialogManager::OpenLoadDialog()
     {
-        showLoadDialog = true;
-        ImGui::OpenPopup("Load Graph");
+        shouldOpenLoadDialog = true;
     }
 
     bool FileDialogManager::IsSaveDialogOpen() const
     {
-        return showSaveDialog;
+        return ImGuiFileDialog::Instance()->IsOpened("SaveGraphDlgKey");
     }
 
     bool FileDialogManager::IsLoadDialogOpen() const
     {
-        return showLoadDialog;
+        return ImGuiFileDialog::Instance()->IsOpened("LoadGraphDlgKey");
     }
 
     std::string FileDialogManager::EnsureJsonExtension(const std::string &filepath)
     {
-        if (filepath.ends_with(".json"))
+        if (filepath.ends_with(".json") || filepath.ends_with(".JSON"))
         {
             return filepath;
         }
         return filepath + ".json";
-    }
-
-    void FileDialogManager::ClearBuffer()
-    {
-        std::memset(filePathBuffer, 0, sizeof(filePathBuffer));
     }
 } // namespace VisionCraft::UI::Widgets

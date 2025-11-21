@@ -26,8 +26,8 @@ namespace VisionCraft::UI::Widgets
     /**
      * @brief Manages save/load file dialogs for graph operations.
      *
-     * Separates file I/O UI concerns from layer logic.
-     * Handles file path input, validation, and dialog state.
+     * Uses ImGuiFileDialog for a full-featured file browser with directory navigation.
+     * Handles file path selection, validation, and dialog state.
      */
     class FileDialogManager
     {
@@ -67,9 +67,8 @@ namespace VisionCraft::UI::Widgets
         [[nodiscard]] bool IsLoadDialogOpen() const;
 
     private:
-        bool showSaveDialog = false;
-        bool showLoadDialog = false;
-        char filePathBuffer[512] = "";
+        bool shouldOpenSaveDialog = false;
+        bool shouldOpenLoadDialog = false;
 
         /**
          * @brief Ensures filepath has .json extension.
@@ -77,10 +76,5 @@ namespace VisionCraft::UI::Widgets
          * @return Filepath with .json extension
          */
         [[nodiscard]] static std::string EnsureJsonExtension(const std::string &filepath);
-
-        /**
-         * @brief Clears file path buffer.
-         */
-        void ClearBuffer();
     };
 } // namespace VisionCraft::UI::Widgets

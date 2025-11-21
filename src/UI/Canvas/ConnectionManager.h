@@ -197,6 +197,16 @@ namespace VisionCraft::UI::Canvas
          */
         void SetConnectionCreatedCallback(ConnectionCreatedCallback callback);
 
+        /**
+         * @brief Rebuilds UI connections from NodeEditor data.
+         * @param nodeEditor Node editor containing connection data
+         *
+         * This method synchronizes the ConnectionManager's UI connection list
+         * with the connections stored in the NodeEditor. Call this after loading
+         * a graph to ensure the UI reflects the loaded connections.
+         */
+        void RebuildConnectionsFromNodeEditor(const Nodes::NodeEditor &nodeEditor);
+
     private:
         /**
          * @brief Removes connection to input pin.

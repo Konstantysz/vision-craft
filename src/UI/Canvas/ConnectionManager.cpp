@@ -613,4 +613,22 @@ namespace VisionCraft::UI::Canvas
     {
         onConnectionCreated = std::move(callback);
     }
+
+    void ConnectionManager::RebuildConnectionsFromNodeEditor(const Nodes::NodeEditor &nodeEditor)
+    {
+        // Clear existing UI connections
+        connections.clear();
+
+        // Rebuild from NodeEditor's connection data
+        const auto editorConnections = nodeEditor.GetConnections();
+        for (const auto &editorConn : editorConnections)
+        {
+            Widgets::NodeConnection uiConnection;
+            uiConnection.outputPin = { editorConn.from, editorConn.fromSlot };
+            uiConnection.inputPin = { editorConn.to, editorConn.toSlot };
+            connections.push_back(uiConnection);
+        }
+
+        LOG_INFO("Rebuilt {} UI connections from NodeEditor", connections.size());
+    }
 } // namespace VisionCraft::UI::Canvas

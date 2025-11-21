@@ -1,6 +1,10 @@
 #include "UI/Canvas/InputHandler.h"
 
+#include "UI/Events/LoadGraphEvent.h"
+#include "UI/Events/NewGraphEvent.h"
+#include "UI/Events/SaveGraphEvent.h"
 #include "UI/Widgets/NodeEditorConstants.h"
+#include "Application.h"
 
 namespace VisionCraft::UI::Canvas
 {
@@ -83,6 +87,39 @@ namespace VisionCraft::UI::Canvas
             InputAction action;
             action.type = InputActionType::OpenSearchPalette;
             action.searchPalettePos = mousePos;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+N (New Graph)
+        if (io.KeyCtrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_N))
+        {
+            Events::NewGraphEvent event;
+            Kappa::Application::Get().GetEventBus().Publish(event);
+            InputAction action;
+            action.type = InputActionType::None;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+O (Open/Load Graph)
+        if (io.KeyCtrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_O))
+        {
+            Events::LoadGraphEvent event;
+            Kappa::Application::Get().GetEventBus().Publish(event);
+            InputAction action;
+            action.type = InputActionType::None;
+            actions.push_back(action);
+            return actions;
+        }
+
+        // Handle Ctrl+S (Save Graph)
+        if (io.KeyCtrl && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_S))
+        {
+            Events::SaveGraphEvent event;
+            Kappa::Application::Get().GetEventBus().Publish(event);
+            InputAction action;
+            action.type = InputActionType::None;
             actions.push_back(action);
             return actions;
         }

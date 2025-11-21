@@ -78,26 +78,20 @@ namespace VisionCraft::UI::Layers
 
             commandHistory.ExecuteCommand(std::move(command));
         });
+
+        // Subscribe to save/load events from the EventBus
+        auto &eventBus = Kappa::Application::Get().GetEventBus();
+        eventBus.Subscribe<Events::SaveGraphEvent>([this](const Events::SaveGraphEvent &) { HandleSaveGraph(); });
+        eventBus.Subscribe<Events::LoadGraphEvent>([this](const Events::LoadGraphEvent &) { HandleLoadGraph(); });
+        eventBus.Subscribe<Events::LoadGraphFromFileEvent>(
+            [this](const Events::LoadGraphFromFileEvent &event) { HandleLoadGraphFromFile(event.GetFilePath()); });
+        eventBus.Subscribe<Events::NewGraphEvent>([this](const Events::NewGraphEvent &) { HandleNewGraph(); });
     }
 
-    void NodeEditorLayer::OnEvent(Kappa::Event &event)
+    void NodeEditorLayer::OnEvent([[maybe_unused]] Kappa::Event &event)
     {
-        if (dynamic_cast<Events::SaveGraphEvent *>(&event))
-        {
-            HandleSaveGraph();
-        }
-        else if (dynamic_cast<Events::LoadGraphEvent *>(&event))
-        {
-            HandleLoadGraph();
-        }
-        else if (auto *loadFileEvent = dynamic_cast<Events::LoadGraphFromFileEvent *>(&event))
-        {
-            HandleLoadGraphFromFile(loadFileEvent->GetFilePath());
-        }
-        else if (dynamic_cast<Events::NewGraphEvent *>(&event))
-        {
-            HandleNewGraph();
-        }
+        // Event handling now done through EventBus subscriptions in constructor
+        // This method is kept for compatibility with the Layer interface
     }
 
     void NodeEditorLayer::OnUpdate([[maybe_unused]] float deltaTime)
@@ -773,8 +767,10 @@ namespace VisionCraft::UI::Layers
 
     void NodeEditorLayer::HandleSaveGraph()
     {
+        LOG_INFO("HandleSaveGraph called - currentFilePath: '{}'", currentFilePath);
         if (currentFilePath.empty())
         {
+            LOG_INFO("Opening save dialog (no current file path)");
             fileDialogManager.OpenSaveDialog();
         }
         else
@@ -815,6 +811,9 @@ namespace VisionCraft::UI::Layers
             {
                 nodePositions[id] = Widgets::NodePosition{ pos.first, pos.second };
             }
+
+            // Rebuild UI connections from loaded NodeEditor data
+            connectionManager.RebuildConnectionsFromNodeEditor(nodeEditor);
 
             currentFilePath = filePath;
             selectionManager.ClearSelection();
@@ -891,6 +890,9 @@ namespace VisionCraft::UI::Layers
                 {
                     nodePositions[id] = Widgets::NodePosition{ pos.first, pos.second };
                 }
+
+                // Rebuild UI connections from loaded NodeEditor data
+                connectionManager.RebuildConnectionsFromNodeEditor(nodeEditor);
 
                 currentFilePath = result.filepath;
                 selectionManager.ClearSelection();

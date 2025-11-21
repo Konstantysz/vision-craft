@@ -91,19 +91,20 @@ namespace VisionCraft::UI::Layers
             if (ImGui::MenuItem("New", "Ctrl+N"))
             {
                 Events::NewGraphEvent event;
-                OnEvent(event);
+                Kappa::Application::Get().GetEventBus().Publish(event);
             }
 
             if (ImGui::MenuItem("Open...", "Ctrl+O"))
             {
                 Events::LoadGraphEvent event;
-                OnEvent(event);
+                Kappa::Application::Get().GetEventBus().Publish(event);
             }
 
             if (ImGui::MenuItem("Save", "Ctrl+S"))
             {
                 Events::SaveGraphEvent event;
-                OnEvent(event);
+                auto &eventBus = Kappa::Application::Get().GetEventBus();
+                eventBus.Publish(event);
             }
 
             ImGui::Separator();

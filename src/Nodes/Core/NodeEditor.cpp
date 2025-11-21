@@ -82,11 +82,15 @@ namespace VisionCraft::Nodes
         return std::vector<NodeId>(keys.begin(), keys.end());
     }
 
-    void NodeEditor::AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)
+    void NodeEditor::AddConnection(NodeId from,
+        const std::string &fromSlot,
+        NodeId to,
+        const std::string &toSlot,
+        ConnectionType type)
     {
         std::scoped_lock lock(graphMutex);
         // C++20 designated initializers for clarity
-        connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot });
+        connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot, .type = type });
         InvalidateExecutionPlan(); // Graph structure changed
     }
 
@@ -312,12 +316,16 @@ namespace VisionCraft::Nodes
             if (conn.type == ConnectionType::Execution)
             {
                 executionConnections.push_back(conn);
+                LOG_DEBUG("Execution connection: {} ({}) -> {} ({})", conn.from, conn.fromSlot, conn.to, conn.toSlot);
             }
             else
             {
                 dataConnections.push_back(conn);
+                LOG_DEBUG("Data connection: {} ({}) -> {} ({})", conn.from, conn.fromSlot, conn.to, conn.toSlot);
             }
         }
+
+        LOG_INFO("Total connections: {} execution, {} data", executionConnections.size(), dataConnections.size());
 
         // Determine which nodes have execution pins
         std::unordered_set<NodeId> nodesWithExecutionPins;
@@ -327,8 +335,11 @@ namespace VisionCraft::Nodes
             if (node && (!node->GetExecutionInputPins().empty() || !node->GetExecutionOutputPins().empty()))
             {
                 nodesWithExecutionPins.insert(nodeId);
+                LOG_DEBUG("Node {} (type: {}) has execution pins", nodeId, node->GetType());
             }
         }
+
+        LOG_INFO("Nodes with execution pins: {}", nodesWithExecutionPins.size());
 
         std::vector<NodeId> executionOrder;
 
@@ -354,22 +365,28 @@ namespace VisionCraft::Nodes
             }
 
             // Find entry points: nodes with execution outputs but no execution inputs
-            // (these are typically "BeginPlay" or "Event" type nodes)
+            // Entry points are starter nodes (e.g., ImageInput with only output execution pin)
             std::queue<NodeId> queue;
             for (const auto nodeId : nodeIds)
             {
-                if (nodesWithExecutionPins.count(nodeId) && execInDegree[nodeId] == 0)
+                const auto *node = GetNode(nodeId);
+                if (!node)
+                    continue;
+
+                // Entry point must have:
+                // 1. Execution output pin(s)
+                // 2. NO execution input pin (it's a starter)
+                const bool hasExecutionOutput = !node->GetExecutionOutputPins().empty();
+                const bool hasExecutionInput = !node->GetExecutionInputPins().empty();
+
+                if (hasExecutionOutput && !hasExecutionInput)
                 {
-                    const auto *node = GetNode(nodeId);
-                    if (node && !node->GetExecutionOutputPins().empty())
-                    {
-                        queue.push(nodeId);
-                        LOG_DEBUG("Entry point node found: {} (type: {})", nodeId, node->GetType());
-                    }
+                    queue.push(nodeId);
+                    LOG_DEBUG("Entry point node found: {} (type: {})", nodeId, node->GetType());
                 }
             }
 
-            // Kahn's algorithm for execution flow topological sort
+            // Traverse execution flow graph (simple linear traversal, 1:1 connections prevent cycles)
             while (!queue.empty())
             {
                 const auto currentNode = queue.front();
@@ -386,73 +403,38 @@ namespace VisionCraft::Nodes
                 }
             }
 
-            // Check for cycles in execution flow
+            // Verify all nodes with execution pins are in execution order
+            std::unordered_set<NodeId> nodesInExecutionOrder(executionOrder.begin(), executionOrder.end());
+
             for (const auto nodeId : nodesWithExecutionPins)
             {
-                if (execInDegree[nodeId] > 0)
+                if (nodesInExecutionOrder.count(nodeId) == 0)
                 {
-                    LOG_ERROR("Cycle detected in execution flow! Node {} is part of a cycle.", nodeId);
+                    const auto *node = GetNode(nodeId);
+                    LOG_ERROR(
+                        "Node {} (type: {}) has execution pins but is not connected to execution flow. "
+                        "Please connect its execution pins (white arrows).",
+                        nodeId,
+                        node ? node->GetType() : "unknown");
                     return {};
                 }
             }
 
-            // Add nodes without execution pins using data dependency order
-            // (backward compatibility for pure data-flow nodes)
-            std::unordered_set<NodeId> nodesInExecutionOrder(executionOrder.begin(), executionOrder.end());
-
-            std::unordered_map<NodeId, std::vector<NodeId>> dataAdjList;
-            std::unordered_map<NodeId, int> dataInDegree;
-
-            for (const auto nodeId : nodeIds)
-            {
-                if (nodesInExecutionOrder.count(nodeId) == 0)
-                {
-                    dataInDegree[nodeId] = 0;
-                    dataAdjList[nodeId] = {};
-                }
-            }
-
-            for (const auto &conn : dataConnections)
-            {
-                if (nodesInExecutionOrder.count(conn.from) == 0 && nodesInExecutionOrder.count(conn.to) == 0)
-                {
-                    dataAdjList[conn.from].push_back(conn.to);
-                    dataInDegree[conn.to]++;
-                }
-            }
-
-            std::queue<NodeId> dataQueue;
-            for (const auto &[nodeId, degree] : dataInDegree)
-            {
-                if (degree == 0)
-                {
-                    dataQueue.push(nodeId);
-                }
-            }
-
-            while (!dataQueue.empty())
-            {
-                const auto currentNode = dataQueue.front();
-                dataQueue.pop();
-                executionOrder.push_back(currentNode);
-
-                for (const auto neighbor : dataAdjList[currentNode])
-                {
-                    dataInDegree[neighbor]--;
-                    if (dataInDegree[neighbor] == 0)
-                    {
-                        dataQueue.push(neighbor);
-                    }
-                }
-            }
-
-            LOG_INFO("Execution flow order: {} nodes in execution flow, {} pure data-flow nodes",
-                nodesInExecutionOrder.size(),
-                executionOrder.size() - nodesInExecutionOrder.size());
+            LOG_INFO("Execution flow order: {} nodes", executionOrder.size());
         }
         else
         {
-            // No execution connections - fall back to pure data dependency order
+            // No execution connections - check if any nodes have execution pins
+            if (!nodesWithExecutionPins.empty())
+            {
+                LOG_ERROR(
+                    "Graph contains {} nodes with execution pins but no execution connections. "
+                    "Please connect execution pins (white arrows) to define execution flow.",
+                    nodesWithExecutionPins.size());
+                return {};
+            }
+
+            // No execution pins at all - fall back to pure data dependency order (legacy graphs)
             LOG_INFO("No execution connections found, using data dependency order (legacy mode)");
             executionOrder = TopologicalSort();
             if (executionOrder.empty() && !nodes.empty())

@@ -155,9 +155,34 @@ namespace VisionCraft::UI::Canvas
         }
 
         // Direct connection creation (from command execution or when callback is disabled)
+
+        // Determine connection type based on pin type (execution vs data)
+        const auto *outputNode = nodeEditor.GetNode(outputPin.nodeId);
+        Nodes::ConnectionType connectionType = Nodes::ConnectionType::Data;
+        bool isExecutionConnection = false;
+
+        if (outputNode)
+        {
+            // Check if this is an execution pin
+            if (outputNode->HasExecutionOutputPin(outputPin.pinName))
+            {
+                connectionType = Nodes::ConnectionType::Execution;
+                isExecutionConnection = true;
+            }
+        }
+
+        // For execution pins: remove BOTH existing connections (1:1 rule)
+        // For data pins: remove only connection to input (1:N rule - one input, many outputs)
+        if (isExecutionConnection)
+        {
+            // Remove any existing connection FROM this execution output pin (1:1)
+            RemoveConnectionFromOutput(outputPin);
+        }
         RemoveConnectionToInput(inputPin);
+
         connections.push_back(newConnection);
-        nodeEditor.AddConnection(outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName);
+        nodeEditor.AddConnection(
+            outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName, connectionType);
 
         return true;
     }
@@ -648,6 +673,15 @@ namespace VisionCraft::UI::Canvas
         connections.erase(std::remove_if(connections.begin(),
                               connections.end(),
                               [&inputPin](const Widgets::NodeConnection &conn) { return conn.inputPin == inputPin; }),
+            connections.end());
+    }
+
+    void ConnectionManager::RemoveConnectionFromOutput(const Widgets::PinId &outputPin)
+    {
+        connections.erase(
+            std::remove_if(connections.begin(),
+                connections.end(),
+                [&outputPin](const Widgets::NodeConnection &conn) { return conn.outputPin == outputPin; }),
             connections.end());
     }
 

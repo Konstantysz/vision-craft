@@ -205,6 +205,12 @@ namespace VisionCraft::UI::Canvas
         void RemoveConnectionToInput(const UI::Widgets::PinId &inputPin);
 
         /**
+         * @brief Removes connection from output pin (for 1:1 execution connections).
+         * @param outputPin Output pin to disconnect
+         */
+        void RemoveConnectionFromOutput(const UI::Widgets::PinId &outputPin);
+
+        /**
          * @brief Renders single connection.
          * @param connection Connection to render
          * @param nodeEditor Nodes::Node editor backend

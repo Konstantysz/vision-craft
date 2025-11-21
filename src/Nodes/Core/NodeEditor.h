@@ -106,8 +106,13 @@ namespace VisionCraft::Nodes
          * @param fromSlot Source slot name
          * @param to Destination node ID
          * @param toSlot Destination slot name
+         * @param type Connection type (Execution or Data)
          */
-        void AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
+        void AddConnection(NodeId from,
+            const std::string &fromSlot,
+            NodeId to,
+            const std::string &toSlot,
+            ConnectionType type = ConnectionType::Data);
 
         /**
          * @brief Removes connection between node slots.

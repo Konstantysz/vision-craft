@@ -54,6 +54,43 @@ namespace VisionCraft::UI::Widgets
     };
 
     /**
+     * @brief Structure holding pins separated by type and direction.
+     */
+    struct SeparatedPins
+    {
+        std::vector<NodePin> executionInputPins;
+        std::vector<NodePin> executionOutputPins;
+        std::vector<NodePin> dataInputPins;
+        std::vector<NodePin> dataOutputPins;
+    };
+
+    /**
+     * @brief Helper to separate pins by type and direction.
+     */
+    inline SeparatedPins SeparatePinsByType(const std::vector<NodePin> &pins)
+    {
+        SeparatedPins result;
+        for (const auto &pin : pins)
+        {
+            if (pin.pinType == PinType::Execution)
+            {
+                if (pin.isInput)
+                    result.executionInputPins.push_back(pin);
+                else
+                    result.executionOutputPins.push_back(pin);
+            }
+            else
+            {
+                if (pin.isInput)
+                    result.dataInputPins.push_back(pin);
+                else
+                    result.dataOutputPins.push_back(pin);
+            }
+        }
+        return result;
+    }
+
+    /**
      * @brief Structure containing pre-calculated node dimensions.
      */
     struct NodeDimensions

@@ -313,26 +313,8 @@ namespace VisionCraft::UI::Canvas
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
         // Separate pins into execution and data pins
-        std::vector<Widgets::NodePin> executionInputPins, executionOutputPins;
-        std::vector<Widgets::NodePin> dataInputPins, dataOutputPins;
-
-        for (const auto &pin : pins)
-        {
-            if (pin.pinType == Widgets::PinType::Execution)
-            {
-                if (pin.isInput)
-                    executionInputPins.push_back(pin);
-                else
-                    executionOutputPins.push_back(pin);
-            }
-            else
-            {
-                if (pin.isInput)
-                    dataInputPins.push_back(pin);
-                else
-                    dataOutputPins.push_back(pin);
-            }
-        }
+        const auto [executionInputPins, executionOutputPins, dataInputPins, dataOutputPins] =
+            Widgets::SeparatePinsByType(pins);
 
         const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
         const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
@@ -452,26 +434,8 @@ namespace VisionCraft::UI::Canvas
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
 
         // Separate pins into execution and data pins
-        std::vector<Widgets::NodePin> executionInputPins, executionOutputPins;
-        std::vector<Widgets::NodePin> dataInputPins, dataOutputPins;
-
-        for (const auto &pin : pins)
-        {
-            if (pin.pinType == Widgets::PinType::Execution)
-            {
-                if (pin.isInput)
-                    executionInputPins.push_back(pin);
-                else
-                    executionOutputPins.push_back(pin);
-            }
-            else
-            {
-                if (pin.isInput)
-                    dataInputPins.push_back(pin);
-                else
-                    dataOutputPins.push_back(pin);
-            }
-        }
+        const auto [executionInputPins, executionOutputPins, dataInputPins, dataOutputPins] =
+            Widgets::SeparatePinsByType(pins);
 
         const bool hasExecutionPins = !executionInputPins.empty() || !executionOutputPins.empty();
         const auto executionRowHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();

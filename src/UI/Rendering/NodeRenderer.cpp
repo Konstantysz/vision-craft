@@ -37,26 +37,8 @@ namespace VisionCraft::UI::Rendering
         RenderNodeTitleText(node, worldPos);
 
         // Separate execution pins from data pins
-        std::vector<Widgets::NodePin> executionInputPins, executionOutputPins;
-        std::vector<Widgets::NodePin> dataInputPins, dataOutputPins;
-
-        for (const auto &pin : pins)
-        {
-            if (pin.pinType == Widgets::PinType::Execution)
-            {
-                if (pin.isInput)
-                    executionInputPins.push_back(pin);
-                else
-                    executionOutputPins.push_back(pin);
-            }
-            else
-            {
-                if (pin.isInput)
-                    dataInputPins.push_back(pin);
-                else
-                    dataOutputPins.push_back(pin);
-            }
-        }
+        const auto [executionInputPins, executionOutputPins, dataInputPins, dataOutputPins] =
+            Widgets::SeparatePinsByType(pins);
 
         // Debug logging
         LOG_DEBUG("Node {}: Total pins={}, ExecIn={}, ExecOut={}, DataIn={}, DataOut={}",

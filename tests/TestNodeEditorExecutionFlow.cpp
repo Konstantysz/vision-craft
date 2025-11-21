@@ -271,7 +271,7 @@ TEST_F(NodeEditorTest, ExecutionFlow_MixedGraph_LegacyNodesStillWork)
     EXPECT_TRUE(success);
 }
 
-TEST_F(NodeEditorTest, ExecutionFlow_CyclesPrevented_By1to1Enforcement)
+TEST_F(NodeEditorTest, ExecutionFlow_Cycles_NotPrevented_By1to1Enforcement_ButDetectedAtExecution)
 {
     // Even if we try to create a cycle, 1:1 enforcement prevents it
     auto node1 = std::make_unique<ExecutionFlowNode>(1, "Node1");
@@ -284,8 +284,7 @@ TEST_F(NodeEditorTest, ExecutionFlow_CyclesPrevented_By1to1Enforcement)
     editor.AddConnection(1, "Then", 2, "Execute", Nodes::ConnectionType::Execution);
     editor.AddConnection(2, "Then", 1, "Execute", Nodes::ConnectionType::Execution);
 
-    // The second connection should remove node 1's output connection
-    // So we end up with only 2 -> 1, not a cycle
+    // 1:1 enforcement is per-slot, so both connections are valid. Cycle detected at execution.
     auto connections = editor.GetConnections();
 
     int execConnections = 0;
@@ -297,8 +296,11 @@ TEST_F(NodeEditorTest, ExecutionFlow_CyclesPrevented_By1to1Enforcement)
         }
     }
 
-    // Should have only 1 execution connection (2 -> 1)
-    EXPECT_EQ(execConnections, 1);
+    // Should have 2 execution connections
+    EXPECT_EQ(execConnections, 2);
+
+    // But execution should fail due to cycle detection
+    EXPECT_FALSE(editor.Execute());
 }
 
 TEST_F(NodeEditorTest, ExecutionFlow_DefensiveCycleDetection)

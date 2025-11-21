@@ -207,8 +207,7 @@ namespace VisionCraft::Nodes
 
             if (progressCallback)
             {
-                // Report current step (using nextInstructionIndex - 1 because we already advanced)
-                progressCallback(static_cast<int>(frame.nextInstructionIndex - 1), totalNodes, node->GetName());
+                progressCallback(static_cast<int>(frame.nextInstructionIndex), totalNodes, node->GetName());
             }
 
             try

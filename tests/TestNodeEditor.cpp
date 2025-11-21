@@ -182,9 +182,8 @@ TEST_F(NodeEditorTest, AddMultipleConnections)
     editor.AddConnection(1, "Output", 3, "Input");
 
     const auto connections = editor.GetConnections();
-    EXPECT_EQ(connections.size(), 3);
+    EXPECT_EQ(connections.size(), 2); // 1->3 overwrites 2->3
 
-    // Verify all connections exist
     bool found1to2 = false, found2to3 = false, found1to3 = false;
     for (const auto &conn : connections)
     {
@@ -197,7 +196,7 @@ TEST_F(NodeEditorTest, AddMultipleConnections)
     }
 
     EXPECT_TRUE(found1to2);
-    EXPECT_TRUE(found2to3);
+    EXPECT_FALSE(found2to3); // Overwritten
     EXPECT_TRUE(found1to3);
 }
 
@@ -218,9 +217,8 @@ TEST_F(NodeEditorTest, RemoveExistingConnection)
     EXPECT_TRUE(editor.RemoveConnection(1, "Output", 2, "Input"));
 
     const auto connections = editor.GetConnections();
-    EXPECT_EQ(connections.size(), 2);
+    EXPECT_EQ(connections.size(), 1);
 
-    // Verify 1->2 is removed but others remain
     bool found1to2 = false, found2to3 = false, found1to3 = false;
     for (const auto &conn : connections)
     {
@@ -233,7 +231,7 @@ TEST_F(NodeEditorTest, RemoveExistingConnection)
     }
 
     EXPECT_FALSE(found1to2);
-    EXPECT_TRUE(found2to3);
+    EXPECT_FALSE(found2to3); // Was overwritten during setup
     EXPECT_TRUE(found1to3);
 }
 
@@ -377,7 +375,7 @@ TEST_F(NodeEditorTest, DuplicateConnections)
     editor.AddConnection(1, "Output", 2, "Input"); // Duplicate
 
     const auto connections = editor.GetConnections();
-    EXPECT_EQ(connections.size(), 2); // Both connections are stored (no deduplication)
+    EXPECT_EQ(connections.size(), 1); // Duplicate replaces existing
 }
 
 TEST_F(NodeEditorTest, SelfConnection)

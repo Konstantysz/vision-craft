@@ -28,7 +28,7 @@ namespace VisionCraft::UI::Rendering
         std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
     {
         const auto worldPos = canvas_.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-        const auto pins = connectionManager_.GetNodePins(node->GetName());
+        const auto pins = connectionManager_.GetNodePins(node);
         const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas_.GetZoomLevel(), node);
         const auto isSelected = (node->GetId() == selectedNodeId);
 
@@ -36,9 +36,47 @@ namespace VisionCraft::UI::Rendering
         RenderNodeTitleBar(worldPos, dimensions.size);
         RenderNodeTitleText(node, worldPos);
 
-        auto [inputPins, outputPins] = SeparateInputOutputPins(pins);
-        RenderPinsInColumn(node, inputPins, worldPos, dimensions, true, getPinInteractionState);
-        RenderPinsInColumn(node, outputPins, worldPos, dimensions, false, getPinInteractionState);
+        // Separate execution pins from data pins
+        std::vector<Widgets::NodePin> executionInputPins, executionOutputPins;
+        std::vector<Widgets::NodePin> dataInputPins, dataOutputPins;
+
+        for (const auto &pin : pins)
+        {
+            if (pin.pinType == Widgets::PinType::Execution)
+            {
+                if (pin.isInput)
+                    executionInputPins.push_back(pin);
+                else
+                    executionOutputPins.push_back(pin);
+            }
+            else
+            {
+                if (pin.isInput)
+                    dataInputPins.push_back(pin);
+                else
+                    dataOutputPins.push_back(pin);
+            }
+        }
+
+        // Debug logging
+        LOG_DEBUG("Node {}: Total pins={}, ExecIn={}, ExecOut={}, DataIn={}, DataOut={}",
+            node->GetName(),
+            pins.size(),
+            executionInputPins.size(),
+            executionOutputPins.size(),
+            dataInputPins.size(),
+            dataOutputPins.size());
+
+        // Check if we have execution pins (affects data pin positioning)
+        const bool hasExecutionPins = !executionInputPins.empty() || !executionOutputPins.empty();
+
+        // Render execution pins in their own row at the top
+        RenderExecutionPinRow(
+            node, executionInputPins, executionOutputPins, worldPos, dimensions, getPinInteractionState);
+
+        // Render data pins in columns (with offset if execution pins exist)
+        RenderPinsInColumn(node, dataInputPins, worldPos, dimensions, true, hasExecutionPins, getPinInteractionState);
+        RenderPinsInColumn(node, dataOutputPins, worldPos, dimensions, false, hasExecutionPins, getPinInteractionState);
 
         RenderCustomNodeContent(node, worldPos, dimensions.size);
         RenderFileBrowser();
@@ -163,6 +201,7 @@ namespace VisionCraft::UI::Rendering
         const ImVec2 &nodeWorldPos,
         const Widgets::NodeDimensions &dimensions,
         bool isInputColumn,
+        bool hasExecutionPins,
         std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
     {
         if (pins.empty())
@@ -179,7 +218,13 @@ namespace VisionCraft::UI::Rendering
         const auto pinRadius = Constants::Pin::kRadius * canvas_.GetZoomLevel();
         const auto textOffset = Constants::Pin::kTextOffset * canvas_.GetZoomLevel();
         const auto columnX = isInputColumn ? nodeWorldPos.x + padding : nodeWorldPos.x + dimensions.size.x - padding;
-        const auto startY = nodeWorldPos.y + titleHeight + padding;
+
+        // Calculate execution row height if execution pins exist (they render above data pins)
+        const auto executionRowHeight =
+            hasExecutionPins
+                ? (Constants::Pin::kCompactHeight + Constants::Pin::kCompactSpacing) * canvas_.GetZoomLevel()
+                : 0.0f;
+        const auto startY = nodeWorldPos.y + titleHeight + padding + executionRowHeight;
         float currentY = startY;
         for (size_t i = 0; i < pins.size(); ++i)
         {
@@ -219,6 +264,50 @@ namespace VisionCraft::UI::Rendering
         }
     }
 
+    void NodeRenderer::RenderExecutionPinRow(Nodes::Node *node,
+        const std::vector<Widgets::NodePin> &executionInputPins,
+        const std::vector<Widgets::NodePin> &executionOutputPins,
+        const ImVec2 &nodeWorldPos,
+        const Widgets::NodeDimensions &dimensions,
+        std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
+    {
+        // If no execution pins, skip rendering
+        if (executionInputPins.empty() && executionOutputPins.empty())
+        {
+            return;
+        }
+
+        const auto titleHeight = Constants::Node::kTitleHeight * canvas_.GetZoomLevel();
+        const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
+        const auto pinRadius = Constants::Pin::kRadius * canvas_.GetZoomLevel();
+        const auto executionRowHeight = Constants::Pin::kCompactHeight * canvas_.GetZoomLevel();
+
+        // Execution row is right below the title bar
+        const auto rowY = nodeWorldPos.y + titleHeight + padding + (executionRowHeight * 0.5f);
+
+        // Render execution input pins on the left
+        for (size_t i = 0; i < executionInputPins.size(); ++i)
+        {
+            const auto &pin = executionInputPins[i];
+            const auto pinPos = ImVec2(nodeWorldPos.x + padding, rowY);
+            const auto state = getPinInteractionState(node->GetId(), pin.name);
+
+            // Render pin without label for execution pins (they're iconic)
+            RenderPin(pin, pinPos, pinRadius, state);
+        }
+
+        // Render execution output pins on the right
+        for (size_t i = 0; i < executionOutputPins.size(); ++i)
+        {
+            const auto &pin = executionOutputPins[i];
+            const auto pinPos = ImVec2(nodeWorldPos.x + dimensions.size.x - padding, rowY);
+            const auto state = getPinInteractionState(node->GetId(), pin.name);
+
+            // Render pin without label for execution pins (they're iconic)
+            RenderPin(pin, pinPos, pinRadius, state);
+        }
+    }
+
     void NodeRenderer::RenderPinWithLabel(const Widgets::NodePin &pin,
         const ImVec2 &pinPos,
         const ImVec2 &labelPos,
@@ -242,31 +331,80 @@ namespace VisionCraft::UI::Rendering
         const PinInteractionState &state) const
     {
         auto *drawList = ImGui::GetWindowDrawList();
-        auto pinColor = GetDataTypeColor(pin.dataType);
-        auto borderColor = Constants::Colors::Pin::kBorder;
-        if (state.isActive)
-        {
-            borderColor = Constants::Colors::Pin::kActive;
-            drawList->AddCircleFilled(position,
-                radius + Constants::NodeRenderer::PinEffects::kActiveRadiusExpansion,
-                Constants::Colors::Pin::kActive);
-        }
-        else if (state.isHovered)
-        {
-            borderColor = Constants::Colors::Pin::kHover;
-            drawList->AddCircleFilled(position,
-                radius + Constants::NodeRenderer::PinEffects::kHoverRadiusExpansion,
-                Constants::Colors::Pin::kHover);
-        }
 
-        drawList->AddCircleFilled(position, radius, pinColor);
-        drawList->AddCircle(position, radius, borderColor, 0, Constants::Pin::kBorderThickness);
+        // Use white color for execution pins, data type color for data pins
+        auto pinColor = (pin.pinType == Widgets::PinType::Execution) ? Constants::Colors::Pin::kExecution
+                                                                     : GetDataTypeColor(pin.dataType);
+
+        auto borderColor = Constants::Colors::Pin::kBorder;
+
+        // Render execution pins as arrows (triangle pointing right)
+        if (pin.pinType == Widgets::PinType::Execution)
+        {
+            // Arrow size is slightly larger than circle radius
+            const float arrowSize = radius * 1.5f;
+
+            // Create arrow pointing right (direction of execution flow)
+            // Triangle vertices: right tip, top left, bottom left
+            const ImVec2 p1 = ImVec2(position.x + arrowSize * 0.5f, position.y); // Right tip (arrow point)
+            const ImVec2 p2 = ImVec2(position.x - arrowSize * 0.5f, position.y - arrowSize * 0.5f); // Top left
+            const ImVec2 p3 = ImVec2(position.x - arrowSize * 0.5f, position.y + arrowSize * 0.5f); // Bottom left
+
+            // Render hover/active effect as larger arrow
+            if (state.isActive)
+            {
+                borderColor = Constants::Colors::Pin::kActive;
+                const float expandedSize =
+                    arrowSize + Constants::NodeRenderer::PinEffects::kActiveRadiusExpansion * 2.0f;
+                const ImVec2 ep1 = ImVec2(position.x + expandedSize * 0.5f, position.y);
+                const ImVec2 ep2 = ImVec2(position.x - expandedSize * 0.5f, position.y - expandedSize * 0.5f);
+                const ImVec2 ep3 = ImVec2(position.x - expandedSize * 0.5f, position.y + expandedSize * 0.5f);
+                drawList->AddTriangleFilled(ep1, ep2, ep3, Constants::Colors::Pin::kActive);
+            }
+            else if (state.isHovered)
+            {
+                borderColor = Constants::Colors::Pin::kHover;
+                const float expandedSize =
+                    arrowSize + Constants::NodeRenderer::PinEffects::kHoverRadiusExpansion * 2.0f;
+                const ImVec2 ep1 = ImVec2(position.x + expandedSize * 0.5f, position.y);
+                const ImVec2 ep2 = ImVec2(position.x - expandedSize * 0.5f, position.y - expandedSize * 0.5f);
+                const ImVec2 ep3 = ImVec2(position.x - expandedSize * 0.5f, position.y + expandedSize * 0.5f);
+                drawList->AddTriangleFilled(ep1, ep2, ep3, Constants::Colors::Pin::kHover);
+            }
+
+            // Render main arrow
+            drawList->AddTriangleFilled(p1, p2, p3, pinColor);
+            drawList->AddTriangle(p1, p2, p3, borderColor, Constants::Pin::kBorderThickness);
+        }
+        else
+        {
+            // Render data pins as circles (original behavior)
+            if (state.isActive)
+            {
+                borderColor = Constants::Colors::Pin::kActive;
+                drawList->AddCircleFilled(position,
+                    radius + Constants::NodeRenderer::PinEffects::kActiveRadiusExpansion,
+                    Constants::Colors::Pin::kActive);
+            }
+            else if (state.isHovered)
+            {
+                borderColor = Constants::Colors::Pin::kHover;
+                drawList->AddCircleFilled(position,
+                    radius + Constants::NodeRenderer::PinEffects::kHoverRadiusExpansion,
+                    Constants::Colors::Pin::kHover);
+            }
+
+            drawList->AddCircleFilled(position, radius, pinColor);
+            drawList->AddCircle(position, radius, borderColor, 0, Constants::Pin::kBorderThickness);
+        }
     }
 
     ImU32 NodeRenderer::GetDataTypeColor(Widgets::PinDataType dataType) const
     {
         switch (dataType)
         {
+        case Widgets::PinDataType::Execution:
+            return Constants::Colors::Pin::kExecution;
         case Widgets::PinDataType::Image:
             return Constants::Colors::Pin::kImage;
         case Widgets::PinDataType::String:

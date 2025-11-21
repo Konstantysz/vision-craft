@@ -148,11 +148,11 @@ namespace VisionCraft::UI::Canvas
         [[nodiscard]] const UI::Widgets::ConnectionState &GetConnectionState() const;
 
         /**
-         * @brief Returns pins for node type.
-         * @param nodeType Nodes::Node type
+         * @brief Returns pins for node (including dynamic execution pins).
+         * @param node Nodes::Node pointer
          * @return Pins vector
          */
-        [[nodiscard]] static std::vector<UI::Widgets::NodePin> GetNodePins(const std::string &nodeType);
+        [[nodiscard]] static std::vector<UI::Widgets::NodePin> GetNodePins(const Nodes::Node *node);
 
         /**
          * @brief Checks if creating connection.

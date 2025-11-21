@@ -758,7 +758,7 @@ namespace VisionCraft::UI::Layers
             if (!node || nodePositions.find(nodeId) == nodePositions.end())
                 continue;
 
-            const auto pins = connectionManager.GetNodePins(node->GetName());
+            const auto pins = connectionManager.GetNodePins(node);
             const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
 
             if (IsMouseOverNode(mousePos, nodePositions.at(nodeId), dimensions.size))

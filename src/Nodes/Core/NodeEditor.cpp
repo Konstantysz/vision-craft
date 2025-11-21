@@ -326,6 +326,7 @@ namespace VisionCraft::Nodes
 
     std::vector<NodeEditor::ExecutionStep> NodeEditor::BuildExecutionPlan() const
     {
+        std::scoped_lock lock(graphMutex);
         LOG_INFO("Building execution plan (compilation phase - execution flow)");
 
         const auto nodeIds = GetNodeIds();

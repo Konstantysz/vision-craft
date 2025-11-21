@@ -29,7 +29,7 @@ namespace VisionCraft::Vision::IO
          */
         [[nodiscard]] std::string GetType() const override
         {
-            return "ImageInputNode";
+            return "ImageInput";
         }
 
         /**

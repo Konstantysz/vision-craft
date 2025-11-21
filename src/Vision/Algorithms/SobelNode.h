@@ -29,7 +29,7 @@ namespace VisionCraft::Vision::Algorithms
          */
         [[nodiscard]] std::string GetType() const override
         {
-            return "SobelNode";
+            return "Sobel";
         }
 
         /**

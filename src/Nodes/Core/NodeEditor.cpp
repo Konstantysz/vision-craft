@@ -356,7 +356,9 @@ namespace VisionCraft::Nodes
             }
         }
 
-        LOG_INFO("Total connections: {} execution, {} data", executionConnections.size(), dataConnections.size());
+        LOG_INFO("Total connections: {} execution, {} data",
+            executionConnections.size(),
+            connections.size() - executionConnections.size());
 
         // Determine which nodes have execution pins
         std::unordered_set<NodeId> nodesWithExecutionPins;

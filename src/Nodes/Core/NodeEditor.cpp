@@ -89,9 +89,36 @@ namespace VisionCraft::Nodes
         ConnectionType type)
     {
         std::scoped_lock lock(graphMutex);
-        // C++20 designated initializers for clarity
+
+        // Enforce 1:1 for execution connections to prevent cycles
+        if (type == ConnectionType::Execution)
+        {
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) {
+                                      return c.type == ConnectionType::Execution
+                                             && (c.from == from && c.fromSlot == fromSlot);
+                                  }),
+                connections.end());
+
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) {
+                                      return c.type == ConnectionType::Execution && (c.to == to && c.toSlot == toSlot);
+                                  }),
+                connections.end());
+        }
+        else
+        {
+            // Data connections: 1:N (one input, many outputs)
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) { return c.to == to && c.toSlot == toSlot; }),
+                connections.end());
+        }
+
         connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot, .type = type });
-        InvalidateExecutionPlan(); // Graph structure changed
+        InvalidateExecutionPlan();
     }
 
     bool NodeEditor::RemoveConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)

@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "Nodes/Core/Slot.h"
@@ -220,12 +221,12 @@ namespace VisionCraft::Nodes
         [[nodiscard]] std::vector<std::string> GetExecutionOutputPins() const;
 
     protected:
-        std::string name;                                  ///< Name of the node
-        NodeId id;                                         ///< Unique identifier of the node
-        std::unordered_map<std::string, Slot> inputSlots;  ///< Input data slots
-        std::unordered_map<std::string, Slot> outputSlots; ///< Output data slots
-        std::vector<std::string> executionInputPins;       ///< Execution input pins (white wires)
-        std::vector<std::string> executionOutputPins;      ///< Execution output pins (white wires)
+        std::string name;                                    ///< Name of the node
+        NodeId id;                                           ///< Unique identifier of the node
+        std::unordered_map<std::string, Slot> inputSlots;    ///< Input data slots
+        std::unordered_map<std::string, Slot> outputSlots;   ///< Output data slots
+        std::unordered_set<std::string> executionInputPins;  ///< Execution input pins (O(1) lookup)
+        std::unordered_set<std::string> executionOutputPins; ///< Execution output pins (O(1) lookup)
     };
 
     /**

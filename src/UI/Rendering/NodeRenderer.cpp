@@ -161,9 +161,7 @@ namespace VisionCraft::UI::Rendering
         }
 
         const auto layout = CalculateColumnLayout(nodeSize, inputPins.size(), outputPins.size());
-        auto *drawList = ImGui::GetWindowDrawList();
-        // drawList was already declared above
-        // paramHeight and paramSpacing were unused
+        // drawList removed as it was unused
         const auto padding = Constants::Node::kPadding * canvas_.GetZoomLevel();
         for (size_t i = 0; i < inputPins.size(); ++i)
         {
@@ -621,9 +619,9 @@ namespace VisionCraft::UI::Rendering
         float inputWidth)
     {
         std::string paramValue = node->GetInputValue<std::string>(pin.name).value_or("");
-        char buffer[256];
-        std::strncpy(buffer, paramValue.c_str(), sizeof(buffer) - 1);
-        buffer[sizeof(buffer) - 1] = '\0';
+        char buffer[256] = { 0 };
+        const size_t copyLength = std::min(paramValue.length(), sizeof(buffer) - 1);
+        std::memcpy(buffer, paramValue.c_str(), copyLength);
 
         ImGui::PushItemWidth(inputWidth);
         if (ImGui::InputText(widgetId.c_str(), buffer, sizeof(buffer)))
@@ -685,9 +683,9 @@ namespace VisionCraft::UI::Rendering
     {
         auto pathValue = node->GetInputValue<std::filesystem::path>(pin.name).value_or(std::filesystem::path{});
         std::string pathStr = pathValue.string();
-        char buffer[256];
-        std::strncpy(buffer, pathStr.c_str(), sizeof(buffer) - 1);
-        buffer[sizeof(buffer) - 1] = '\0';
+        char buffer[256] = { 0 };
+        const size_t copyLength = std::min(pathStr.length(), sizeof(buffer) - 1);
+        std::memcpy(buffer, pathStr.c_str(), copyLength);
 
         bool isImageInputFilepath =
             (pin.name == "FilePath" && dynamic_cast<Vision::IO::ImageInputNode *>(node) != nullptr);

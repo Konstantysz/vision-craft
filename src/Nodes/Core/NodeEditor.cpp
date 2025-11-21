@@ -207,14 +207,16 @@ namespace VisionCraft::Nodes
 
             if (progressCallback)
             {
-                progressCallback(static_cast<int>(frame.instructionIndex), totalNodes, node->GetName());
+                // Report current step (using nextInstructionIndex - 1 because we already advanced)
+                progressCallback(static_cast<int>(frame.nextInstructionIndex - 1), totalNodes, node->GetName());
             }
 
             try
             {
                 // Use precomputed incoming connections (no search overhead)
-                for (const auto &conn : step.incomingConnections)
+                for (const auto connIndex : step.incomingConnectionIndices)
                 {
+                    const auto &conn = connections[connIndex];
                     auto fromIt = nodes.find(conn.from);
                     if (fromIt != nodes.end())
                     {
@@ -337,10 +339,11 @@ namespace VisionCraft::Nodes
 
         // Separate execution and data connections
         std::vector<Connection> executionConnections;
-        std::vector<Connection> dataConnections;
+        std::unordered_map<NodeId, std::vector<size_t>> incomingDataConnections;
 
-        for (const auto &conn : connections)
+        for (size_t i = 0; i < connections.size(); ++i)
         {
+            const auto &conn = connections[i];
             if (conn.type == ConnectionType::Execution)
             {
                 executionConnections.push_back(conn);
@@ -348,7 +351,7 @@ namespace VisionCraft::Nodes
             }
             else
             {
-                dataConnections.push_back(conn);
+                incomingDataConnections[conn.to].push_back(i);
                 LOG_DEBUG("Data connection: {} ({}) -> {} ({})", conn.from, conn.fromSlot, conn.to, conn.toSlot);
             }
         }
@@ -492,12 +495,9 @@ namespace VisionCraft::Nodes
 
             // Precompute all incoming DATA connections for this node
             // (execution connections control flow, data connections pass parameters)
-            for (const auto &conn : dataConnections)
+            if (incomingDataConnections.count(nodeId))
             {
-                if (conn.to == nodeId)
-                {
-                    step.incomingConnections.push_back(conn);
-                }
+                step.incomingConnectionIndices = incomingDataConnections[nodeId];
             }
 
             plan.push_back(std::move(step));

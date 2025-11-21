@@ -192,8 +192,8 @@ namespace VisionCraft::Nodes
          */
         struct ExecutionStep
         {
-            NodeId nodeId;                               ///< Node to execute at this step
-            std::vector<Connection> incomingConnections; ///< Data to pass before execution
+            NodeId nodeId;                                 ///< Node to execute at this step
+            std::vector<size_t> incomingConnectionIndices; ///< Indices into connections vector
         };
 
         /**
@@ -205,7 +205,7 @@ namespace VisionCraft::Nodes
          */
         struct ExecutionFrame
         {
-            size_t instructionIndex = 0;                              ///< Current instruction pointer (step index)
+            size_t nextInstructionIndex = 0;                          ///< Next instruction pointer (step index)
             const ExecutionStep *currentStep = nullptr;               ///< Pointer to current step
             std::chrono::high_resolution_clock::time_point startTime; ///< Execution start time
 
@@ -227,10 +227,10 @@ namespace VisionCraft::Nodes
              */
             void AdvanceToNext(const std::vector<ExecutionStep> &plan)
             {
-                if (instructionIndex < plan.size())
+                if (nextInstructionIndex < plan.size())
                 {
-                    currentStep = &plan[instructionIndex];
-                    ++instructionIndex; // Lookahead advancement!
+                    currentStep = &plan[nextInstructionIndex];
+                    ++nextInstructionIndex; // Lookahead advancement!
                 }
                 else
                 {
@@ -245,7 +245,7 @@ namespace VisionCraft::Nodes
              */
             [[nodiscard]] bool IsFinished(const std::vector<ExecutionStep> &plan) const
             {
-                return instructionIndex >= plan.size();
+                return nextInstructionIndex >= plan.size();
             }
 
             /**

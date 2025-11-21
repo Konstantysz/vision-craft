@@ -188,11 +188,24 @@ Thread safety: `NodeEditor` uses `std::recursive_mutex graphMutex` for all graph
 - OpenCV `cv::Mat` uses reference counting (zero-copy in slots)
 
 ### Connection Rules
-
 - Output pin → Input pin only (enforced by `ConnectionManager::IsConnectionValid()`)
 - Input pins limited to ONE connection (enforced by `RemoveConnectionToInput()`)
 - Output pins can have MULTIPLE connections
 - Type checking: Pin data types must match (or be compatible)
+- **Execution Flow Rules**:
+  - **1:1 Enforcement**: Execution pins (white arrows) strictly enforce 1:1 connections (one output to one input) at the core layer (`NodeEditor::AddConnection`).
+  - **Cycle Prevention**: Execution flow must be acyclic. `BuildExecutionPlan` performs cycle detection.
+
+### Execution Flow Architecture
+- **Hybrid Model**: Separates control flow (execution pins) from data flow (data pins).
+- **Execution Pins**: White arrows (`PinType::Execution`). Define order of operations.
+- **Data Pins**: Colored circles (`PinType::Data`). Define data dependencies.
+- **Execution Plan**:
+  - `BuildExecutionPlan()` compiles the graph into a linear `std::vector<ExecutionStep>`.
+  - Uses topological sort on execution connections.
+  - Precomputes incoming data connection indices for O(1) access during execution.
+- **Lookahead Advancement**: `ExecutionFrame` advances `nextInstructionIndex` *before* executing the current node.
+- **Pin Separation**: Use `Widgets::SeparatePinsByType()` helper to separate execution/data pins in UI code.
 
 ### Serialization
 

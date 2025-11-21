@@ -25,7 +25,7 @@ namespace VisionCraft::UI::Widgets
 
         ImGui::DockBuilderDockWindow("Execution", dock_id_top);
         ImGui::DockBuilderDockWindow("Properties", dock_id_right);
-        ImGui::DockBuilderDockWindow("Nodes::Node Editor", dock_main_id);
+        ImGui::DockBuilderDockWindow("Node Editor", dock_main_id);
 
         ImGui::DockBuilderFinish(dockspace_id);
 

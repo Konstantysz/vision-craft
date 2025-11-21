@@ -135,7 +135,7 @@ namespace VisionCraft::Nodes
 
         LOG_INFO("Executing graph with {} nodes", nodes.size());
 
-        // Blueprint-inspired execution: Use cached execution plan (compilation phase)
+        // Use cached execution plan (compilation phase)
         if (!executionPlanValid)
         {
             cachedExecutionPlan = BuildExecutionPlan();
@@ -149,12 +149,12 @@ namespace VisionCraft::Nodes
 
         LOG_INFO("Executing {} steps from cached plan", cachedExecutionPlan.size());
 
-        // Create execution frame (Blueprint FFrame equivalent)
+        // Create execution frame
         ExecutionFrame frame;
         frame.startTime = std::chrono::high_resolution_clock::now();
         const int totalNodes = static_cast<int>(cachedExecutionPlan.size());
 
-        // Execute using frame with lookahead advancement (Blueprint pattern)
+        // Execute using frame with lookahead advancement
         while (!frame.IsFinished(cachedExecutionPlan))
         {
             if (stopToken.stop_requested() || stopSource.stop_requested())
@@ -164,7 +164,6 @@ namespace VisionCraft::Nodes
             }
 
             // LOOKAHEAD ADVANCEMENT: Advance instruction pointer BEFORE execution
-            // This is the signature Blueprint pattern - "Next()" is called first!
             frame.AdvanceToNext(cachedExecutionPlan);
 
             const auto &step = *frame.currentStep;
@@ -296,7 +295,7 @@ namespace VisionCraft::Nodes
 
     std::vector<NodeEditor::ExecutionStep> NodeEditor::BuildExecutionPlan() const
     {
-        LOG_INFO("Building execution plan (compilation phase - Blueprint execution flow)");
+        LOG_INFO("Building execution plan (compilation phase - execution flow)");
 
         const auto nodeIds = GetNodeIds();
         if (nodeIds.empty())

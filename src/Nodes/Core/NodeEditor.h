@@ -25,7 +25,7 @@ namespace VisionCraft::Nodes
     using ExecutionProgressCallback = std::function<void(int current, int total, const std::string &nodeName)>;
 
     /**
-     * @brief Type of connection between nodes (Blueprint-inspired).
+     * @brief Type of connection between nodes.
      */
     enum class ConnectionType
     {
@@ -36,7 +36,7 @@ namespace VisionCraft::Nodes
     /**
      * @brief Connection between two node slots.
      *
-     * Supports both execution flow connections (Blueprint white wires) and data
+     * Supports both execution flow connections (white wires) and data
      * connections (colored wires). Execution connections control which nodes execute
      * and in what order, while data connections transfer information between nodes.
      */
@@ -179,7 +179,7 @@ namespace VisionCraft::Nodes
 
     private:
         /**
-         * @brief Execution step in cached execution plan (Blueprint-inspired bytecode foundation).
+         * @brief Execution step in cached execution plan.
          *
          * Represents a single "instruction" in the execution plan, containing a node to execute
          * and the data connections that feed into it. This structure enables cache-friendly
@@ -192,11 +192,11 @@ namespace VisionCraft::Nodes
         };
 
         /**
-         * @brief Execution frame tracking current execution state (Blueprint FFrame equivalent).
+         * @brief Execution frame tracking current execution state.
          *
          * Manages the "instruction pointer" (current step index) for graph execution,
-         * implementing Blueprint's signature lookahead advancement pattern where the
-         * instruction pointer advances BEFORE node execution, not after.
+         * implementing lookahead advancement pattern where the instruction pointer
+         * advances BEFORE node execution, not after.
          */
         struct ExecutionFrame
         {
@@ -213,11 +213,10 @@ namespace VisionCraft::Nodes
             } stats;
 
             /**
-             * @brief Advances instruction pointer to next step (Blueprint lookahead pattern).
+             * @brief Advances instruction pointer to next step (lookahead pattern).
              *
-             * This is the core of Blueprint's white execution wire system: the instruction
-             * pointer advances BEFORE the node executes, not after. This "lookahead
-             * advancement" is what enables efficient bytecode-style execution.
+             * The instruction pointer advances BEFORE the node executes, not after.
+             * This "lookahead advancement" enables efficient bytecode-style execution.
              *
              * @param plan Execution plan to advance through
              */
@@ -226,7 +225,7 @@ namespace VisionCraft::Nodes
                 if (instructionIndex < plan.size())
                 {
                     currentStep = &plan[instructionIndex];
-                    ++instructionIndex; // Lookahead advancement - Blueprint pattern!
+                    ++instructionIndex; // Lookahead advancement!
                 }
                 else
                 {
@@ -266,7 +265,7 @@ namespace VisionCraft::Nodes
          *
          * Performs topological sort and precomputes incoming connections for each node,
          * enabling fast repeated execution without reanalysis. This is the "compilation"
-         * phase in the Blueprint-inspired execution model.
+         * phase in the execution model.
          *
          * @return Vector of execution steps in dependency order
          */

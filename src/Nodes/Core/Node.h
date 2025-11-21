@@ -172,7 +172,7 @@ namespace VisionCraft::Nodes
         [[nodiscard]] bool HasOutputSlot(const std::string &slotName) const;
 
         /**
-         * @brief Creates execution input pin (Blueprint white wire input).
+         * @brief Creates execution input pin (white wire input).
          *
          * Execution pins control the flow of execution through the graph. An execution
          * input pin means "this node can be executed from another node". Multiple nodes
@@ -183,7 +183,7 @@ namespace VisionCraft::Nodes
         void CreateExecutionInputPin(const std::string &pinName);
 
         /**
-         * @brief Creates execution output pin (Blueprint white wire output).
+         * @brief Creates execution output pin (white wire output).
          *
          * Execution pins control the flow of execution through the graph. An execution
          * output pin means "this node can trigger execution of other nodes". This pin
@@ -224,8 +224,8 @@ namespace VisionCraft::Nodes
         NodeId id;                                         ///< Unique identifier of the node
         std::unordered_map<std::string, Slot> inputSlots;  ///< Input data slots
         std::unordered_map<std::string, Slot> outputSlots; ///< Output data slots
-        std::vector<std::string> executionInputPins;       ///< Execution input pins (Blueprint white wires)
-        std::vector<std::string> executionOutputPins;      ///< Execution output pins (Blueprint white wires)
+        std::vector<std::string> executionInputPins;       ///< Execution input pins (white wires)
+        std::vector<std::string> executionOutputPins;      ///< Execution output pins (white wires)
     };
 
     /**

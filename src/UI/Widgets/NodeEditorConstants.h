@@ -185,7 +185,6 @@ namespace VisionCraft::Constants
     /**
      * @brief Color definitions for all node editor elements.
      *
-     * Colors follow UE Blueprints conventions where applicable.
      * Format: IM_COL32(red, green, blue, alpha) with values 0-255.
      */
     namespace Colors
@@ -222,9 +221,9 @@ namespace VisionCraft::Constants
             /// @brief Text color for pin labels
             constexpr ImU32 kLabel = IM_COL32(200, 200, 200, 255);
 
-            // Data type colors following UE Blueprints convention
+            // Data type colors
 
-            /// @brief Color for execution flow pins (white) - Blueprint white wire
+            /// @brief Color for execution flow pins (white wire)
             constexpr ImU32 kExecution = IM_COL32(255, 255, 255, 255);
 
             /// @brief Color for Image data type pins (green)

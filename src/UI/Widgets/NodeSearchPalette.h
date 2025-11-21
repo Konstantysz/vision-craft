@@ -22,7 +22,7 @@ namespace VisionCraft::UI::Widgets
      * @brief Searchable node creation palette widget.
      *
      * Provides a fuzzy-searchable dialog for quick node creation,
-     * similar to Blender's Shift+A or Unreal Engine's right-click search.
+     * similar to Blender's Shift+A menu or quick search dialogs in other node editors.
      * Tracks recently used nodes and displays them first in search results.
      */
     class NodeSearchPalette

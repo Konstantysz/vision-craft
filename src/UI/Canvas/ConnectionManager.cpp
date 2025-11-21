@@ -410,13 +410,13 @@ namespace VisionCraft::UI::Canvas
         return connectionState;
     }
 
-    std::vector<Widgets::NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
+    std::vector<Widgets::NodePin> ConnectionManager::GetNodePins(const std::string &nodeType)
     {
         static const std::unordered_map<std::string, std::vector<Widgets::NodePin>> nodePinDefinitions = {
-            { "Image Input",
+            { "ImageInput",
                 { { "FilePath", Widgets::PinDataType::Path, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
-            { "Image Output",
+            { "ImageOutput",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "SavePath", Widgets::PinDataType::Path, true },
                     { "AutoSave", Widgets::PinDataType::Bool, true },
@@ -426,7 +426,7 @@ namespace VisionCraft::UI::Canvas
                     { "Method", Widgets::PinDataType::String, true },
                     { "PreserveAlpha", Widgets::PinDataType::Bool, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
-            { "Canny Edge",
+            { "CannyEdge",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "LowThreshold", Widgets::PinDataType::Float, true },
                     { "HighThreshold", Widgets::PinDataType::Float, true },
@@ -441,7 +441,7 @@ namespace VisionCraft::UI::Canvas
                     { "Output", Widgets::PinDataType::Image, false } } },
             { "Preview",
                 { { "Input", Widgets::PinDataType::Image, true }, { "Output", Widgets::PinDataType::Image, false } } },
-            { "Sobel Edge Detection",
+            { "Sobel",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "dx", Widgets::PinDataType::Int, true },
                     { "dy", Widgets::PinDataType::Int, true },
@@ -449,23 +449,23 @@ namespace VisionCraft::UI::Canvas
                     { "scale", Widgets::PinDataType::Float, true },
                     { "delta", Widgets::PinDataType::Float, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
-            { "Convert Color",
+            { "CvtColor",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "Conversion", Widgets::PinDataType::Int, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
-            { "Split Channels",
+            { "SplitChannels",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "Channel 1", Widgets::PinDataType::Image, false },
                     { "Channel 2", Widgets::PinDataType::Image, false },
                     { "Channel 3", Widgets::PinDataType::Image, false },
                     { "Channel 4", Widgets::PinDataType::Image, false } } },
-            { "Merge Channels",
+            { "MergeChannels",
                 { { "Channel 1", Widgets::PinDataType::Image, true },
                     { "Channel 2", Widgets::PinDataType::Image, true },
                     { "Channel 3", Widgets::PinDataType::Image, true },
                     { "Channel 4", Widgets::PinDataType::Image, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
-            { "Median Blur",
+            { "MedianBlur",
                 { { "Input", Widgets::PinDataType::Image, true },
                     { "ksize", Widgets::PinDataType::Int, true },
                     { "Output", Widgets::PinDataType::Image, false } } },
@@ -485,7 +485,7 @@ namespace VisionCraft::UI::Canvas
                     { "Output", Widgets::PinDataType::Image, false } } }
         };
 
-        auto it = nodePinDefinitions.find(nodeName);
+        auto it = nodePinDefinitions.find(nodeType);
         if (it != nodePinDefinitions.end())
         {
             return it->second;

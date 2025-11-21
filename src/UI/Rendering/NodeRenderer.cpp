@@ -28,7 +28,7 @@ namespace VisionCraft::UI::Rendering
         std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState)
     {
         const auto worldPos = canvas_.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
-        const auto pins = connectionManager_.GetNodePins(node->GetName());
+        const auto pins = connectionManager_.GetNodePins(node->GetType());
         const auto dimensions = NodeRenderer::CalculateNodeDimensions(pins, canvas_.GetZoomLevel(), node);
         const auto isSelected = (node->GetId() == selectedNodeId);
 

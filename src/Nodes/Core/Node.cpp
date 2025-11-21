@@ -81,6 +81,44 @@ namespace VisionCraft::Nodes
         return outputSlots.find(slotName) != outputSlots.end();
     }
 
+    void Node::CreateExecutionInputPin(const std::string &pinName)
+    {
+        // Only add if not already present
+        if (std::find(executionInputPins.begin(), executionInputPins.end(), pinName) == executionInputPins.end())
+        {
+            executionInputPins.push_back(pinName);
+        }
+    }
+
+    void Node::CreateExecutionOutputPin(const std::string &pinName)
+    {
+        // Only add if not already present
+        if (std::find(executionOutputPins.begin(), executionOutputPins.end(), pinName) == executionOutputPins.end())
+        {
+            executionOutputPins.push_back(pinName);
+        }
+    }
+
+    bool Node::HasExecutionInputPin(const std::string &pinName) const
+    {
+        return std::find(executionInputPins.begin(), executionInputPins.end(), pinName) != executionInputPins.end();
+    }
+
+    bool Node::HasExecutionOutputPin(const std::string &pinName) const
+    {
+        return std::find(executionOutputPins.begin(), executionOutputPins.end(), pinName) != executionOutputPins.end();
+    }
+
+    std::vector<std::string> Node::GetExecutionInputPins() const
+    {
+        return executionInputPins;
+    }
+
+    std::vector<std::string> Node::GetExecutionOutputPins() const
+    {
+        return executionOutputPins;
+    }
+
     template<typename T> Slot &Node::CreateInputSlot(const std::string &slotName, T defaultValue)
     {
         NodeData nodeData = std::move(defaultValue);

@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::IO
 {
     ImageOutputNode::ImageOutputNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("SavePath", std::filesystem::path{});
         CreateInputSlot("AutoSave", false);

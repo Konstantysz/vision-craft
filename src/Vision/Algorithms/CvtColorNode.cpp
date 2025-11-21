@@ -8,6 +8,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     CvtColorNode::CvtColorNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("Conversion", static_cast<int>(ColorConversion::BGR2GRAY));
         CreateOutputSlot("Output");

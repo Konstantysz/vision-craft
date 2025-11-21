@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     MergeChannelsNode::MergeChannelsNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         for (const auto &slotName : kChannelSlots)
         {
             CreateInputSlot(slotName);

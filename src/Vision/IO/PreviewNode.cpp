@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::IO
 {
     PreviewNode::PreviewNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateOutputSlot("Output");
     }

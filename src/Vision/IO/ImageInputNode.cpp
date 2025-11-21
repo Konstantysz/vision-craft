@@ -35,6 +35,10 @@ namespace VisionCraft::Vision::IO
 
     ImageInputNode::ImageInputNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("FilePath", std::filesystem::path{});
         CreateOutputSlot("Output");
         filePathBuffer[0] = '\0';

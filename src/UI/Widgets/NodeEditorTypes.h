@@ -16,16 +16,31 @@ namespace VisionCraft::UI::Widgets
     };
 
     /**
+     * @brief Type of pin connection (Blueprint-inspired).
+     *
+     * Execution pins (white wires) control flow of execution, while data pins
+     * (colored wires) transfer data between nodes. This mirrors Unreal Engine's
+     * Blueprint system where white wires define "what executes next" and colored
+     * wires define "what data flows where".
+     */
+    enum class PinType
+    {
+        Execution, // White wire - controls execution flow (Blueprint pattern)
+        Data       // Colored wire - transfers data between nodes
+    };
+
+    /**
      * @brief Enum for different data types in the node editor.
      */
     enum class PinDataType
     {
-        Image,  // cv::Mat - Green
-        String, // std::string - Magenta
-        Float,  // double - Light Blue
-        Int,    // int - Cyan
-        Bool,   // bool - Red
-        Path    // std::filesystem::path - Orange
+        Execution, // Execution flow - White (for execution pins)
+        Image,     // cv::Mat - Green
+        String,    // std::string - Magenta
+        Float,     // double - Light Blue
+        Int,       // int - Cyan
+        Bool,      // bool - Red
+        Path       // std::filesystem::path - Orange
     };
 
     /**
@@ -34,7 +49,8 @@ namespace VisionCraft::UI::Widgets
     struct NodePin
     {
         std::string name;
-        PinDataType dataType;
+        PinType pinType;      // NEW: Execution or Data pin
+        PinDataType dataType; // Only relevant for Data pins
         bool isInput;
     };
 

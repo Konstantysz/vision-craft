@@ -224,6 +224,9 @@ namespace VisionCraft::Constants
 
             // Data type colors following UE Blueprints convention
 
+            /// @brief Color for execution flow pins (white) - Blueprint white wire
+            constexpr ImU32 kExecution = IM_COL32(255, 255, 255, 255);
+
             /// @brief Color for Image data type pins (green)
             constexpr ImU32 kImage = IM_COL32(100, 200, 100, 255);
 

@@ -431,6 +431,15 @@ namespace VisionCraft::Nodes
                 }
             }
 
+            // Defensive: verify no cycles (should never fail if 1:1 enforcement works correctly)
+            if (executionOrder.size() != nodesWithExecutionPins.size())
+            {
+                LOG_ERROR("Execution flow cycle or disconnection detected: expected {} nodes but got {} in order",
+                    nodesWithExecutionPins.size(),
+                    executionOrder.size());
+                return {};
+            }
+
             // Verify all nodes with execution pins are in execution order
             std::unordered_set<NodeId> nodesInExecutionOrder(executionOrder.begin(), executionOrder.end());
 

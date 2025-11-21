@@ -19,7 +19,7 @@ public:
     {
     }
 
-    std::string GetType() const
+    std::string GetType() const override
     {
         return "TestNode";
     }
@@ -688,7 +688,7 @@ public:
         CreateOutputSlot("Output");
     }
 
-    std::string GetType() const
+    std::string GetType() const override
     {
         return "ErrorThrowingNode";
     }

@@ -152,7 +152,7 @@ namespace VisionCraft::Nodes
         // Create execution frame
         ExecutionFrame frame;
         frame.startTime = std::chrono::high_resolution_clock::now();
-        const int totalNodes = static_cast<int>(cachedExecutionPlan.size());
+        int totalNodes = static_cast<int>(cachedExecutionPlan.size());
 
         // Execute using frame with lookahead advancement
         while (!frame.IsFinished(cachedExecutionPlan))

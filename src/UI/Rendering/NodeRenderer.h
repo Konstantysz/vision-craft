@@ -76,6 +76,23 @@ namespace VisionCraft::UI::Rendering
             const ImVec2 &nodeWorldPos,
             const Widgets::NodeDimensions &dimensions,
             bool isInputColumn,
+            bool hasExecutionPins,
+            std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState);
+
+        /**
+         * @brief Renders execution pins in a horizontal row at the top of the node.
+         * @param node Node
+         * @param executionInputPins Execution input pins
+         * @param executionOutputPins Execution output pins
+         * @param nodeWorldPos Node world position
+         * @param dimensions Node dimensions
+         * @param getPinInteractionState Pin interaction state function
+         */
+        void RenderExecutionPinRow(Nodes::Node *node,
+            const std::vector<Widgets::NodePin> &executionInputPins,
+            const std::vector<Widgets::NodePin> &executionOutputPins,
+            const ImVec2 &nodeWorldPos,
+            const Widgets::NodeDimensions &dimensions,
             std::function<PinInteractionState(Nodes::NodeId, const std::string &)> getPinInteractionState);
 
     private:

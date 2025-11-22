@@ -3,10 +3,12 @@
 #include "Vision/Factory/NodeFactory.h"
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <queue>
 #include <ranges>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace VisionCraft::Nodes
 {
@@ -34,6 +36,7 @@ namespace VisionCraft::Nodes
         }
 
         nodes[id] = std::move(node);
+        InvalidateExecutionPlan(); // Graph structure changed
 
         return id;
     }
@@ -53,6 +56,7 @@ namespace VisionCraft::Nodes
                               [id](const Connection &c) { return c.from == id || c.to == id; }),
             connections.end());
 
+        InvalidateExecutionPlan(); // Graph structure changed
         return true;
     }
 
@@ -78,11 +82,43 @@ namespace VisionCraft::Nodes
         return std::vector<NodeId>(keys.begin(), keys.end());
     }
 
-    void NodeEditor::AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)
+    void NodeEditor::AddConnection(NodeId from,
+        const std::string &fromSlot,
+        NodeId to,
+        const std::string &toSlot,
+        ConnectionType type)
     {
         std::scoped_lock lock(graphMutex);
-        // C++20 designated initializers for clarity
-        connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot });
+
+        // Enforce 1:1 for execution connections to prevent cycles
+        if (type == ConnectionType::Execution)
+        {
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) {
+                                      return c.type == ConnectionType::Execution
+                                             && (c.from == from && c.fromSlot == fromSlot);
+                                  }),
+                connections.end());
+
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) {
+                                      return c.type == ConnectionType::Execution && (c.to == to && c.toSlot == toSlot);
+                                  }),
+                connections.end());
+        }
+        else
+        {
+            // Data connections: 1:N (one input, many outputs)
+            connections.erase(std::remove_if(connections.begin(),
+                                  connections.end(),
+                                  [&](const Connection &c) { return c.to == to && c.toSlot == toSlot; }),
+                connections.end());
+        }
+
+        connections.push_back({ .from = from, .fromSlot = fromSlot, .to = to, .toSlot = toSlot, .type = type });
+        InvalidateExecutionPlan();
     }
 
     bool NodeEditor::RemoveConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot)
@@ -98,6 +134,7 @@ namespace VisionCraft::Nodes
         }
 
         connections.erase(it, connections.end());
+        InvalidateExecutionPlan(); // Graph structure changed
 
         return true;
     }
@@ -114,6 +151,7 @@ namespace VisionCraft::Nodes
         nodes.clear();
         connections.clear();
         nextId = 1;
+        InvalidateExecutionPlan(); // Graph structure changed
     }
 
     bool NodeEditor::Execute(const ExecutionProgressCallback &progressCallback, std::stop_token stopToken)
@@ -128,30 +166,27 @@ namespace VisionCraft::Nodes
 
         LOG_INFO("Executing graph with {} nodes", nodes.size());
 
-        const auto executionOrder = TopologicalSort();
-        if (executionOrder.empty() && !nodes.empty())
+        // Use cached execution plan (compilation phase)
+        if (!executionPlanValid)
         {
-            LOG_ERROR("Failed to determine execution order (cycle detected)");
-            return false;
+            cachedExecutionPlan = BuildExecutionPlan();
+            if (cachedExecutionPlan.empty() && !nodes.empty())
+            {
+                LOG_ERROR("Failed to build execution plan (cycle detected)");
+                return false;
+            }
+            executionPlanValid = true;
         }
 
-        LOG_INFO("Execution order determined: {} nodes", executionOrder.size());
+        LOG_INFO("Executing {} steps from cached plan", cachedExecutionPlan.size());
 
-        int currentNodeIndex = 0;
-        int totalNodes = static_cast<int>(executionOrder.size());
+        // Create execution frame
+        ExecutionFrame frame;
+        frame.startTime = std::chrono::high_resolution_clock::now();
+        int totalNodes = static_cast<int>(cachedExecutionPlan.size());
 
-        // Unlock during execution to allow other operations (though modification is still dangerous if not careful,
-        // but we need to allow at least cancellation or status checks).
-        // However, if we unlock, nodes might be removed.
-        // For strict safety, we should keep the lock OR work on a copy of the graph.
-        // Working on a copy is safer but more expensive.
-        // Given the requirement for "strict review", we should probably lock.
-        // But if we lock, we can't cancel easily if cancel requires a lock (it doesn't anymore with stop_source).
-        // But we can't query status.
-        // Let's keep the lock for now to prevent segfaults from concurrent modification.
-        // Ideally, we would clone the execution plan and nodes.
-
-        for (const auto nodeId : executionOrder)
+        // Execute using frame with lookahead advancement
+        while (!frame.IsFinished(cachedExecutionPlan))
         {
             if (stopToken.stop_requested() || stopSource.stop_requested())
             {
@@ -159,47 +194,54 @@ namespace VisionCraft::Nodes
                 return false;
             }
 
-            auto *node =
-                GetNode(nodeId); // This locks recursively if we use scoped_lock in GetNode.
-                                 // Since we already hold the lock, we should use a private GetNodeNoLock or just access
-                                 // map directly. But wait, we are inside the class, we can access `nodes` directly.
+            // LOOKAHEAD ADVANCEMENT: Advance instruction pointer BEFORE execution
+            frame.AdvanceToNext(cachedExecutionPlan);
 
-            auto it = nodes.find(nodeId);
+            const auto &step = *frame.currentStep;
+
+            // Direct node lookup (no function call overhead)
+            auto it = nodes.find(step.nodeId);
             if (it == nodes.end())
                 continue;
-            node = it->second.get();
+            Node *node = it->second.get();
 
-            currentNodeIndex++;
             if (progressCallback)
             {
-                progressCallback(currentNodeIndex, totalNodes, node->GetName());
+                progressCallback(static_cast<int>(frame.nextInstructionIndex), totalNodes, node->GetName());
             }
 
             try
             {
-                for (const auto &conn : connections)
+                // Use precomputed incoming connections (no search overhead)
+                for (const auto connIndex : step.incomingConnectionIndices)
                 {
-                    if (conn.to == nodeId)
+                    const auto &conn = connections[connIndex];
+                    auto fromIt = nodes.find(conn.from);
+                    if (fromIt != nodes.end())
                     {
-                        auto fromIt = nodes.find(conn.from);
-                        if (fromIt != nodes.end())
-                        {
-                            PassDataBetweenNodes(fromIt->second.get(), node, conn.fromSlot, conn.toSlot);
-                        }
+                        PassDataBetweenNodes(fromIt->second.get(), node, conn.fromSlot, conn.toSlot);
+                        frame.stats.dataPassOperations++;
                     }
                 }
 
-                LOG_INFO("Processing node: {} (ID: {})", node->GetName(), nodeId);
+                LOG_INFO("Processing node: {} (ID: {})", node->GetName(), step.nodeId);
+
+                // Time the node execution for profiling
+                auto nodeStartTime = std::chrono::high_resolution_clock::now();
                 node->Process();
+                auto nodeEndTime = std::chrono::high_resolution_clock::now();
+
+                auto nodeDuration = std::chrono::duration_cast<std::chrono::microseconds>(nodeEndTime - nodeStartTime);
+                frame.RecordNodeExecution(nodeDuration);
             }
             catch (const std::exception &e)
             {
-                LOG_ERROR("Node {} (ID: {}) failed during execution: {}", node->GetName(), nodeId, e.what());
+                LOG_ERROR("Node {} (ID: {}) failed during execution: {}", node->GetName(), step.nodeId, e.what());
                 return false;
             }
             catch (...)
             {
-                LOG_ERROR("Node {} (ID: {}) failed with unknown exception", node->GetName(), nodeId);
+                LOG_ERROR("Node {} (ID: {}) failed with unknown exception", node->GetName(), step.nodeId);
                 return false;
             }
         }
@@ -281,6 +323,195 @@ namespace VisionCraft::Nodes
         }
 
         return executionOrder;
+    }
+
+    std::vector<NodeEditor::ExecutionStep> NodeEditor::BuildExecutionPlan() const
+    {
+        std::scoped_lock lock(graphMutex);
+        LOG_INFO("Building execution plan (compilation phase - execution flow)");
+
+        const auto nodeIds = GetNodeIds();
+        if (nodeIds.empty())
+        {
+            return {};
+        }
+
+        // Separate execution and data connections
+        std::vector<Connection> executionConnections;
+        std::unordered_map<NodeId, std::vector<size_t>> incomingDataConnections;
+
+        for (size_t i = 0; i < connections.size(); ++i)
+        {
+            const auto &conn = connections[i];
+            if (conn.type == ConnectionType::Execution)
+            {
+                executionConnections.push_back(conn);
+                LOG_DEBUG("Execution connection: {} ({}) -> {} ({})", conn.from, conn.fromSlot, conn.to, conn.toSlot);
+            }
+            else
+            {
+                incomingDataConnections[conn.to].push_back(i);
+                LOG_DEBUG("Data connection: {} ({}) -> {} ({})", conn.from, conn.fromSlot, conn.to, conn.toSlot);
+            }
+        }
+
+        LOG_INFO("Total connections: {} execution, {} data",
+            executionConnections.size(),
+            connections.size() - executionConnections.size());
+
+        // Determine which nodes have execution pins
+        std::unordered_set<NodeId> nodesWithExecutionPins;
+        for (const auto nodeId : nodeIds)
+        {
+            const auto *node = GetNode(nodeId);
+            if (node && (!node->GetExecutionInputPins().empty() || !node->GetExecutionOutputPins().empty()))
+            {
+                nodesWithExecutionPins.insert(nodeId);
+                LOG_DEBUG("Node {} (type: {}) has execution pins", nodeId, node->GetType());
+            }
+        }
+
+        LOG_INFO("Nodes with execution pins: {}", nodesWithExecutionPins.size());
+
+        std::vector<NodeId> executionOrder;
+
+        // If there are execution connections, follow execution flow
+        if (!executionConnections.empty())
+        {
+            LOG_INFO("Building execution order from {} execution flow connections", executionConnections.size());
+
+            // Build adjacency list for execution connections only
+            std::unordered_map<NodeId, std::vector<NodeId>> execAdjList;
+            std::unordered_map<NodeId, int> execInDegree;
+
+            for (const auto nodeId : nodeIds)
+            {
+                execInDegree[nodeId] = 0;
+                execAdjList[nodeId] = {};
+            }
+
+            for (const auto &conn : executionConnections)
+            {
+                execAdjList[conn.from].push_back(conn.to);
+                execInDegree[conn.to]++;
+            }
+
+            // Find entry points: nodes with execution outputs but no execution inputs
+            // Entry points are starter nodes (e.g., ImageInput with only output execution pin)
+            std::queue<NodeId> queue;
+            for (const auto nodeId : nodeIds)
+            {
+                const auto *node = GetNode(nodeId);
+                if (!node)
+                    continue;
+
+                // Entry point must have:
+                // 1. Execution output pin(s)
+                // 2. NO execution input pin (it's a starter)
+                const bool hasExecutionOutput = !node->GetExecutionOutputPins().empty();
+                const bool hasExecutionInput = !node->GetExecutionInputPins().empty();
+
+                if (hasExecutionOutput && !hasExecutionInput)
+                {
+                    queue.push(nodeId);
+                    LOG_DEBUG("Entry point node found: {} (type: {})", nodeId, node->GetType());
+                }
+            }
+
+            // Traverse execution flow graph (simple linear traversal, 1:1 connections prevent cycles)
+            while (!queue.empty())
+            {
+                const auto currentNode = queue.front();
+                queue.pop();
+                executionOrder.push_back(currentNode);
+
+                for (const auto neighbor : execAdjList[currentNode])
+                {
+                    execInDegree[neighbor]--;
+                    if (execInDegree[neighbor] == 0)
+                    {
+                        queue.push(neighbor);
+                    }
+                }
+            }
+
+            // Defensive: verify no cycles (should never fail if 1:1 enforcement works correctly)
+            if (executionOrder.size() != nodesWithExecutionPins.size())
+            {
+                LOG_ERROR("Execution flow cycle or disconnection detected: expected {} nodes but got {} in order",
+                    nodesWithExecutionPins.size(),
+                    executionOrder.size());
+                return {};
+            }
+
+            // Verify all nodes with execution pins are in execution order
+            std::unordered_set<NodeId> nodesInExecutionOrder(executionOrder.begin(), executionOrder.end());
+
+            for (const auto nodeId : nodesWithExecutionPins)
+            {
+                if (nodesInExecutionOrder.count(nodeId) == 0)
+                {
+                    const auto *node = GetNode(nodeId);
+                    LOG_ERROR(
+                        "Node {} (type: {}) has execution pins but is not connected to execution flow. "
+                        "Please connect its execution pins (white arrows).",
+                        nodeId,
+                        node ? node->GetType() : "unknown");
+                    return {};
+                }
+            }
+
+            LOG_INFO("Execution flow order: {} nodes", executionOrder.size());
+        }
+        else
+        {
+            // No execution connections - check if any nodes have execution pins
+            if (!nodesWithExecutionPins.empty())
+            {
+                LOG_ERROR(
+                    "Graph contains {} nodes with execution pins but no execution connections. "
+                    "Please connect execution pins (white arrows) to define execution flow.",
+                    nodesWithExecutionPins.size());
+                return {};
+            }
+
+            // No execution pins at all - fall back to pure data dependency order (legacy graphs)
+            LOG_INFO("No execution connections found, using data dependency order (legacy mode)");
+            executionOrder = TopologicalSort();
+            if (executionOrder.empty() && !nodes.empty())
+            {
+                LOG_ERROR("Failed to build execution plan (cycle detected in data dependencies)");
+                return {};
+            }
+        }
+
+        // Build execution steps with precomputed incoming data connections
+        std::vector<ExecutionStep> plan;
+        plan.reserve(executionOrder.size());
+
+        for (const auto nodeId : executionOrder)
+        {
+            ExecutionStep step;
+            step.nodeId = nodeId;
+
+            // Precompute all incoming DATA connections for this node
+            // (execution connections control flow, data connections pass parameters)
+            if (incomingDataConnections.count(nodeId))
+            {
+                step.incomingConnectionIndices = incomingDataConnections[nodeId];
+            }
+
+            plan.push_back(std::move(step));
+        }
+
+        LOG_INFO("Execution plan compiled: {} steps", plan.size());
+        return plan;
+    }
+
+    void NodeEditor::InvalidateExecutionPlan()
+    {
+        executionPlanValid = false;
+        LOG_DEBUG("Execution plan invalidated (graph structure changed)");
     }
 
     void NodeEditor::PassDataBetweenNodes(Node *fromNode,

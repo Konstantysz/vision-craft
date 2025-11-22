@@ -25,14 +25,28 @@ namespace VisionCraft::Nodes
     using ExecutionProgressCallback = std::function<void(int current, int total, const std::string &nodeName)>;
 
     /**
+     * @brief Type of connection between nodes.
+     */
+    enum class ConnectionType
+    {
+        Execution, ///< Execution flow connection (white wire) - defines execution order
+        Data       ///< Data connection (colored wire) - transfers data between slots
+    };
+
+    /**
      * @brief Connection between two node slots.
+     *
+     * Supports both execution flow connections (white wires) and data
+     * connections (colored wires). Execution connections control which nodes execute
+     * and in what order, while data connections transfer information between nodes.
      */
     struct Connection
     {
-        NodeId from;          ///< Source node ID
-        std::string fromSlot; ///< Source slot name
-        NodeId to;            ///< Destination node ID
-        std::string toSlot;   ///< Destination slot name
+        NodeId from;                                ///< Source node ID
+        std::string fromSlot;                       ///< Source slot name
+        NodeId to;                                  ///< Destination node ID
+        std::string toSlot;                         ///< Destination slot name
+        ConnectionType type = ConnectionType::Data; ///< NEW: Connection type (execution or data)
     };
 
     /**
@@ -92,8 +106,13 @@ namespace VisionCraft::Nodes
          * @param fromSlot Source slot name
          * @param to Destination node ID
          * @param toSlot Destination slot name
+         * @param type Connection type (Execution or Data)
          */
-        void AddConnection(NodeId from, const std::string &fromSlot, NodeId to, const std::string &toSlot);
+        void AddConnection(NodeId from,
+            const std::string &fromSlot,
+            NodeId to,
+            const std::string &toSlot,
+            ConnectionType type = ConnectionType::Data);
 
         /**
          * @brief Removes connection between node slots.
@@ -165,10 +184,105 @@ namespace VisionCraft::Nodes
 
     private:
         /**
+         * @brief Execution step in cached execution plan.
+         *
+         * Represents a single "instruction" in the execution plan, containing a node to execute
+         * and the data connections that feed into it. This structure enables cache-friendly
+         * linear execution without recomputing topological sort or searching connections.
+         */
+        struct ExecutionStep
+        {
+            NodeId nodeId;                                 ///< Node to execute at this step
+            std::vector<size_t> incomingConnectionIndices; ///< Indices into connections vector
+        };
+
+        /**
+         * @brief Execution frame tracking current execution state.
+         *
+         * Manages the "instruction pointer" (current step index) for graph execution,
+         * implementing lookahead advancement pattern where the instruction pointer
+         * advances BEFORE node execution, not after.
+         */
+        struct ExecutionFrame
+        {
+            size_t nextInstructionIndex = 0;                          ///< Next instruction pointer (step index)
+            const ExecutionStep *currentStep = nullptr;               ///< Pointer to current step
+            std::chrono::high_resolution_clock::time_point startTime; ///< Execution start time
+
+            // Execution statistics for profiling
+            struct Statistics
+            {
+                std::vector<std::chrono::microseconds> nodeExecutionTimes; ///< Per-node execution times
+                size_t nodesExecuted = 0;                                  ///< Total nodes executed
+                size_t dataPassOperations = 0;                             ///< Total data transfer operations
+            } stats;
+
+            /**
+             * @brief Advances instruction pointer to next step (lookahead pattern).
+             *
+             * The instruction pointer advances BEFORE the node executes, not after.
+             * This "lookahead advancement" enables efficient bytecode-style execution.
+             *
+             * @param plan Execution plan to advance through
+             */
+            void AdvanceToNext(const std::vector<ExecutionStep> &plan)
+            {
+                if (nextInstructionIndex < plan.size())
+                {
+                    currentStep = &plan[nextInstructionIndex];
+                    ++nextInstructionIndex; // Lookahead advancement!
+                }
+                else
+                {
+                    currentStep = nullptr;
+                }
+            }
+
+            /**
+             * @brief Checks if execution is finished.
+             * @param plan Execution plan being executed
+             * @return True if all steps executed
+             */
+            [[nodiscard]] bool IsFinished(const std::vector<ExecutionStep> &plan) const
+            {
+                return nextInstructionIndex >= plan.size();
+            }
+
+            /**
+             * @brief Records execution time for a node (for profiling).
+             * @param duration Time taken to execute node
+             */
+            void RecordNodeExecution(std::chrono::microseconds duration)
+            {
+                stats.nodeExecutionTimes.push_back(duration);
+                stats.nodesExecuted++;
+            }
+        };
+
+        /**
          * @brief Performs topological sort on node graph.
          * @return Node IDs in execution order, or empty if cycle detected
          */
         [[nodiscard]] std::vector<NodeId> TopologicalSort() const;
+
+        /**
+         * @brief Builds cached execution plan from current graph topology.
+         *
+         * Performs topological sort and precomputes incoming connections for each node,
+         * enabling fast repeated execution without reanalysis. This is the "compilation"
+         * phase in the execution model.
+         *
+         * @return Vector of execution steps in dependency order
+         */
+        [[nodiscard]] std::vector<ExecutionStep> BuildExecutionPlan() const;
+
+        /**
+         * @brief Invalidates cached execution plan, forcing recompilation on next execute.
+         *
+         * Called automatically when graph structure changes (add/remove nodes/connections).
+         * This implements the invalidation phase of the cache-aside pattern.
+         */
+        void InvalidateExecutionPlan();
 
         /**
          * @brief Passes data between nodes using slot system.
@@ -186,9 +300,11 @@ namespace VisionCraft::Nodes
         std::vector<Connection> connections;       ///< Connections
         NodeId nextId;                             ///< Next available ID
 
-        mutable std::recursive_mutex graphMutex;   ///< Mutex for thread safety
-        std::stop_source stopSource;               ///< Source for cancellation requests
-        std::shared_future<bool> currentExecution; ///< Handle to current async execution
+        mutable std::recursive_mutex graphMutex;                ///< Mutex for thread safety
+        std::stop_source stopSource;                            ///< Source for cancellation requests
+        std::shared_future<bool> currentExecution;              ///< Handle to current async execution
+        mutable std::vector<ExecutionStep> cachedExecutionPlan; ///< Cached execution plan (mutable for lazy init)
+        mutable bool executionPlanValid = false;                ///< Cache validity flag
     };
 
 } // namespace VisionCraft::Nodes

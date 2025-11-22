@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.26)
 add_executable(TestVisionCraftNodes
     TestNodes.cpp
     TestNodeEditor.cpp
+    TestNodeEditorExecutionFlow.cpp
     TestSlot.cpp
     TestNodeImplementations.cpp
     TestNodeData.cpp

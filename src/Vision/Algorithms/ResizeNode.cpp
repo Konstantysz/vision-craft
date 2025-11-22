@@ -9,6 +9,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     ResizeNode::ResizeNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("Width", 0);  // 0 means use scale
         CreateInputSlot("Height", 0); // 0 means use scale

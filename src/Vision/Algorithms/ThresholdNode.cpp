@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     ThresholdNode::ThresholdNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("Threshold", 127.0);
         CreateInputSlot("MaxValue", 255.0);

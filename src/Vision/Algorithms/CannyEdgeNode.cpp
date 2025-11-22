@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     CannyEdgeNode::CannyEdgeNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("LowThreshold", 50.0);
         CreateInputSlot("HighThreshold", 150.0);

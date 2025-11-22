@@ -55,8 +55,8 @@ namespace VisionCraft::UI::Canvas
 
                     if (startNode && endNode)
                     {
-                        const auto startPins = GetNodePins(startNode->GetName());
-                        const auto endPins = GetNodePins(endNode->GetName());
+                        const auto startPins = GetNodePins(startNode);
+                        const auto endPins = GetNodePins(endNode);
                         auto startIsOutput = false;
                         auto endIsInput = false;
 
@@ -155,9 +155,34 @@ namespace VisionCraft::UI::Canvas
         }
 
         // Direct connection creation (from command execution or when callback is disabled)
+
+        // Determine connection type based on pin type (execution vs data)
+        const auto *outputNode = nodeEditor.GetNode(outputPin.nodeId);
+        Nodes::ConnectionType connectionType = Nodes::ConnectionType::Data;
+        bool isExecutionConnection = false;
+
+        if (outputNode)
+        {
+            // Check if this is an execution pin
+            if (outputNode->HasExecutionOutputPin(outputPin.pinName))
+            {
+                connectionType = Nodes::ConnectionType::Execution;
+                isExecutionConnection = true;
+            }
+        }
+
+        // For execution pins: remove BOTH existing connections (1:1 rule)
+        // For data pins: remove only connection to input (1:N rule - one input, many outputs)
+        if (isExecutionConnection)
+        {
+            // Remove any existing connection FROM this execution output pin (1:1)
+            RemoveConnectionFromOutput(outputPin);
+        }
         RemoveConnectionToInput(inputPin);
+
         connections.push_back(newConnection);
-        nodeEditor.AddConnection(outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName);
+        nodeEditor.AddConnection(
+            outputPin.nodeId, outputPin.pinName, inputPin.nodeId, inputPin.pinName, connectionType);
 
         return true;
     }
@@ -178,8 +203,8 @@ namespace VisionCraft::UI::Canvas
             return false;
         }
 
-        const auto outputPins = GetNodePins(outputNode->GetName());
-        const auto inputPins = GetNodePins(inputNode->GetName());
+        const auto outputPins = GetNodePins(outputNode);
+        const auto inputPins = GetNodePins(inputNode);
         const auto outputPinIt = std::find_if(outputPins.begin(), outputPins.end(), [&outputPin](const auto &pin) {
             return pin.name == outputPin.pinName;
         });
@@ -193,14 +218,27 @@ namespace VisionCraft::UI::Canvas
 
         const auto &actualOutputPin = *outputPinIt;
         const auto &actualInputPin = *inputPinIt;
+
+        // Verify pin directions (output -> input only)
         if (actualOutputPin.isInput || !actualInputPin.isInput)
         {
             return false;
         }
 
-        if (actualOutputPin.dataType != actualInputPin.dataType)
+        // Pin types must match (execution <-> execution, data <-> data)
+        if (actualOutputPin.pinType != actualInputPin.pinType)
         {
             return false;
+        }
+
+        // For data pins, data types must match
+        // For execution pins, data type check is not needed
+        if (actualOutputPin.pinType == Widgets::PinType::Data)
+        {
+            if (actualOutputPin.dataType != actualInputPin.dataType)
+            {
+                return false;
+            }
         }
 
         return true;
@@ -220,7 +258,9 @@ namespace VisionCraft::UI::Canvas
 
     bool ConnectionManager::PinNeedsInputWidget(Nodes::NodeId nodeId, const Widgets::NodePin &pin) const
     {
-        return pin.isInput && pin.dataType != Widgets::PinDataType::Image && !IsPinConnected({ nodeId, pin.name });
+        return pin.isInput && pin.pinType != Widgets::PinType::Execution // Execution pins never need input widgets
+               && pin.dataType != Widgets::PinDataType::Image            // Image pins don't have widgets either
+               && !IsPinConnected({ nodeId, pin.name });
     }
 
     Widgets::PinId ConnectionManager::FindPinAtPosition(const ImVec2 &mousePos,
@@ -240,7 +280,7 @@ namespace VisionCraft::UI::Canvas
                 continue;
             }
 
-            const auto pins = GetNodePins(node->GetName());
+            const auto pins = GetNodePins(node);
             // dimensions variable was unused here
             const auto &nodePos = nodePositions.at(nodeId);
             // nodeWorldPos was unused
@@ -267,16 +307,14 @@ namespace VisionCraft::UI::Canvas
             return { Constants::Special::kInvalidNodeId, "" };
         }
 
-        const auto pins = GetNodePins(node->GetName());
+        const auto pins = GetNodePins(node);
         const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
 
-        std::vector<Widgets::NodePin> inputPins, outputPins;
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+        // Separate pins into execution and data pins
+        const auto [executionInputPins, executionOutputPins, dataInputPins, dataOutputPins] =
+            Widgets::SeparatePinsByType(pins);
 
         const auto titleHeight = Constants::Node::kTitleHeight * canvas.GetZoomLevel();
         const auto compactPinHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
@@ -286,14 +324,47 @@ namespace VisionCraft::UI::Canvas
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
         const auto pinRadius = Constants::Pin::kRadius * canvas.GetZoomLevel();
 
-        // Check input pins using dynamic spacing
+        const bool hasExecutionPins = !executionInputPins.empty() || !executionOutputPins.empty();
+        const auto executionRowHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
+
+        // Check execution input pins (horizontal row at top left)
+        if (hasExecutionPins)
+        {
+            const auto executionRowY = nodeWorldPos.y + titleHeight + padding + (executionRowHeight * 0.5f);
+
+            for (const auto &pin : executionInputPins)
+            {
+                const auto pinPos = ImVec2(nodeWorldPos.x + padding, executionRowY);
+                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+                if (distanceSquared <= pinRadius * pinRadius)
+                {
+                    return { nodeId, pin.name };
+                }
+            }
+
+            // Check execution output pins (horizontal row at top right)
+            for (const auto &pin : executionOutputPins)
+            {
+                const auto pinPos = ImVec2(nodeWorldPos.x + dimensions.size.x - padding, executionRowY);
+                const auto distance = ImVec2(mousePos.x - pinPos.x, mousePos.y - pinPos.y);
+                const auto distanceSquared = distance.x * distance.x + distance.y * distance.y;
+                if (distanceSquared <= pinRadius * pinRadius)
+                {
+                    return { nodeId, pin.name };
+                }
+            }
+        }
+
+        // Check data input pins using dynamic spacing (column below execution row)
         const auto leftColumnX = nodeWorldPos.x + padding;
-        const auto startY = nodeWorldPos.y + titleHeight + padding;
+        const auto executionRowOffset = hasExecutionPins ? (executionRowHeight + compactSpacing) : 0.0f;
+        const auto startY = nodeWorldPos.y + titleHeight + padding + executionRowOffset;
         float currentY = startY;
 
-        for (std::size_t i = 0; i < inputPins.size(); ++i)
+        for (std::size_t i = 0; i < dataInputPins.size(); ++i)
         {
-            const auto &pin = inputPins[i];
+            const auto &pin = dataInputPins[i];
             const bool needsInputWidget = PinNeedsInputWidget(nodeId, pin);
             const auto currentPinHeight = needsInputWidget ? extendedPinHeight : compactPinHeight;
             const auto currentSpacing = needsInputWidget ? normalSpacing : compactSpacing;
@@ -309,12 +380,13 @@ namespace VisionCraft::UI::Canvas
             currentY += currentPinHeight + currentSpacing;
         }
 
+        // Check data output pins (column below execution row)
         const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
         currentY = startY;
 
-        for (std::size_t i = 0; i < outputPins.size(); ++i)
+        for (std::size_t i = 0; i < dataOutputPins.size(); ++i)
         {
-            const auto &pin = outputPins[i];
+            const auto &pin = dataOutputPins[i];
             const auto currentPinHeight = compactPinHeight;
             const auto currentSpacing = compactSpacing;
 
@@ -349,7 +421,7 @@ namespace VisionCraft::UI::Canvas
             return ImVec2(0, 0);
         }
 
-        const auto pins = GetNodePins(node->GetName());
+        const auto pins = GetNodePins(node);
         const auto dimensions = Rendering::NodeRenderer::CalculateNodeDimensions(pins, canvas.GetZoomLevel(), node);
         const auto &nodePos = nodePositions.at(pinId.nodeId);
         const auto nodeWorldPos = canvas.WorldToScreen(ImVec2(nodePos.x, nodePos.y));
@@ -361,18 +433,44 @@ namespace VisionCraft::UI::Canvas
         const auto normalSpacing = Constants::Pin::kSpacing * canvas.GetZoomLevel();
         const auto padding = Constants::Node::kPadding * canvas.GetZoomLevel();
 
-        std::vector<Widgets::NodePin> inputPins, outputPins;
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });
-        std::copy_if(
-            pins.begin(), pins.end(), std::back_inserter(outputPins), [](const auto &pin) { return !pin.isInput; });
+        // Separate pins into execution and data pins
+        const auto [executionInputPins, executionOutputPins, dataInputPins, dataOutputPins] =
+            Widgets::SeparatePinsByType(pins);
+
+        const bool hasExecutionPins = !executionInputPins.empty() || !executionOutputPins.empty();
+        const auto executionRowHeight = Constants::Pin::kCompactHeight * canvas.GetZoomLevel();
+
+        // Check if requested pin is an execution input pin (horizontal row at top left)
+        if (hasExecutionPins)
+        {
+            const auto executionRowY = nodeWorldPos.y + titleHeight + padding + (executionRowHeight * 0.5f);
+
+            for (const auto &pin : executionInputPins)
+            {
+                if (pin.name == pinId.pinName)
+                {
+                    return ImVec2(nodeWorldPos.x + padding, executionRowY);
+                }
+            }
+
+            // Check if requested pin is an execution output pin (horizontal row at top right)
+            for (const auto &pin : executionOutputPins)
+            {
+                if (pin.name == pinId.pinName)
+                {
+                    return ImVec2(nodeWorldPos.x + dimensions.size.x - padding, executionRowY);
+                }
+            }
+        }
 
         const auto leftColumnX = nodeWorldPos.x + padding;
         const auto rightColumnX = nodeWorldPos.x + dimensions.size.x - padding;
-        const auto startY = nodeWorldPos.y + titleHeight + padding;
+        const auto executionRowOffset = hasExecutionPins ? (executionRowHeight + compactSpacing) : 0.0f;
+        const auto startY = nodeWorldPos.y + titleHeight + padding + executionRowOffset;
 
+        // Check data input pins
         float currentY = startY;
-        for (const auto &pin : inputPins)
+        for (const auto &pin : dataInputPins)
         {
             if (pin.name == pinId.pinName)
             {
@@ -387,8 +485,9 @@ namespace VisionCraft::UI::Canvas
             currentY += currentPinHeight + currentSpacing;
         }
 
+        // Check data output pins
         currentY = startY;
-        for (const auto &pin : outputPins)
+        for (const auto &pin : dataOutputPins)
         {
             if (pin.name == pinId.pinName)
             {
@@ -410,88 +509,117 @@ namespace VisionCraft::UI::Canvas
         return connectionState;
     }
 
-    std::vector<Widgets::NodePin> ConnectionManager::GetNodePins(const std::string &nodeName)
+    std::vector<Widgets::NodePin> ConnectionManager::GetNodePins(const Nodes::Node *node)
     {
+        if (!node)
+        {
+            return {};
+        }
+
+        const std::string &nodeName = node->GetName();
+
         static const std::unordered_map<std::string, std::vector<Widgets::NodePin>> nodePinDefinitions = {
             { "Image Input",
-                { { "FilePath", Widgets::PinDataType::Path, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "FilePath", Widgets::PinType::Data, Widgets::PinDataType::Path, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Image Output",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "SavePath", Widgets::PinDataType::Path, true },
-                    { "AutoSave", Widgets::PinDataType::Bool, true },
-                    { "Format", Widgets::PinDataType::String, true } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "SavePath", Widgets::PinType::Data, Widgets::PinDataType::Path, true },
+                    { "AutoSave", Widgets::PinType::Data, Widgets::PinDataType::Bool, true },
+                    { "Format", Widgets::PinType::Data, Widgets::PinDataType::String, true } } },
             { "Grayscale",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Method", Widgets::PinDataType::String, true },
-                    { "PreserveAlpha", Widgets::PinDataType::Bool, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Method", Widgets::PinType::Data, Widgets::PinDataType::String, true },
+                    { "PreserveAlpha", Widgets::PinType::Data, Widgets::PinDataType::Bool, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Canny Edge",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "LowThreshold", Widgets::PinDataType::Float, true },
-                    { "HighThreshold", Widgets::PinDataType::Float, true },
-                    { "ApertureSize", Widgets::PinDataType::Int, true },
-                    { "L2Gradient", Widgets::PinDataType::Bool, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "LowThreshold", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "HighThreshold", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "ApertureSize", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "L2Gradient", Widgets::PinType::Data, Widgets::PinDataType::Bool, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Threshold",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Threshold", Widgets::PinDataType::Float, true },
-                    { "MaxValue", Widgets::PinDataType::Float, true },
-                    { "Type", Widgets::PinDataType::String, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Threshold", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "MaxValue", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "Type", Widgets::PinType::Data, Widgets::PinDataType::String, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Preview",
-                { { "Input", Widgets::PinDataType::Image, true }, { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Sobel Edge Detection",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "dx", Widgets::PinDataType::Int, true },
-                    { "dy", Widgets::PinDataType::Int, true },
-                    { "ksize", Widgets::PinDataType::Int, true },
-                    { "scale", Widgets::PinDataType::Float, true },
-                    { "delta", Widgets::PinDataType::Float, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "dx", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "dy", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "ksize", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "scale", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "delta", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Convert Color",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Conversion", Widgets::PinDataType::Int, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Conversion", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Split Channels",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Channel 1", Widgets::PinDataType::Image, false },
-                    { "Channel 2", Widgets::PinDataType::Image, false },
-                    { "Channel 3", Widgets::PinDataType::Image, false },
-                    { "Channel 4", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Channel 1", Widgets::PinType::Data, Widgets::PinDataType::Image, false },
+                    { "Channel 2", Widgets::PinType::Data, Widgets::PinDataType::Image, false },
+                    { "Channel 3", Widgets::PinType::Data, Widgets::PinDataType::Image, false },
+                    { "Channel 4", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Merge Channels",
-                { { "Channel 1", Widgets::PinDataType::Image, true },
-                    { "Channel 2", Widgets::PinDataType::Image, true },
-                    { "Channel 3", Widgets::PinDataType::Image, true },
-                    { "Channel 4", Widgets::PinDataType::Image, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Channel 1", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Channel 2", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Channel 3", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Channel 4", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Median Blur",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "ksize", Widgets::PinDataType::Int, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "ksize", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Morphology",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Operation", Widgets::PinDataType::Int, true },
-                    { "ksize", Widgets::PinDataType::Int, true },
-                    { "iterations", Widgets::PinDataType::Int, true },
-                    { "Output", Widgets::PinDataType::Image, false } } },
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Operation", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "ksize", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "iterations", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
             { "Resize",
-                { { "Input", Widgets::PinDataType::Image, true },
-                    { "Width", Widgets::PinDataType::Int, true },
-                    { "Height", Widgets::PinDataType::Int, true },
-                    { "ScaleX", Widgets::PinDataType::Float, true },
-                    { "ScaleY", Widgets::PinDataType::Float, true },
-                    { "Interpolation", Widgets::PinDataType::Int, true },
-                    { "Output", Widgets::PinDataType::Image, false } } }
+                { { "Input", Widgets::PinType::Data, Widgets::PinDataType::Image, true },
+                    { "Width", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "Height", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "ScaleX", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "ScaleY", Widgets::PinType::Data, Widgets::PinDataType::Float, true },
+                    { "Interpolation", Widgets::PinType::Data, Widgets::PinDataType::Int, true },
+                    { "Output", Widgets::PinType::Data, Widgets::PinDataType::Image, false } } },
+            // Execution flow nodes - pins are dynamically queried from Node, but we still need entries for proper
+            // rendering
+            { "BeginPlay", {} },
+            { "Sequence", {} }
         };
 
+        std::vector<Widgets::NodePin> pins;
+
+        // Add execution input pins first (at the top)
+        const auto executionInputPins = node->GetExecutionInputPins();
+        for (const auto &pinName : executionInputPins)
+        {
+            pins.push_back({ pinName, Widgets::PinType::Execution, Widgets::PinDataType::Execution, true });
+        }
+
+        // Add data pins from static definitions
         auto it = nodePinDefinitions.find(nodeName);
         if (it != nodePinDefinitions.end())
         {
-            return it->second;
+            pins.insert(pins.end(), it->second.begin(), it->second.end());
         }
 
-        return {};
+        // Add execution output pins last (at the bottom)
+        const auto executionOutputPins = node->GetExecutionOutputPins();
+        for (const auto &pinName : executionOutputPins)
+        {
+            pins.push_back({ pinName, Widgets::PinType::Execution, Widgets::PinDataType::Execution, false });
+        }
+
+        return pins;
     }
 
     bool ConnectionManager::IsCreatingConnection() const
@@ -509,6 +637,15 @@ namespace VisionCraft::UI::Canvas
         connections.erase(std::remove_if(connections.begin(),
                               connections.end(),
                               [&inputPin](const Widgets::NodeConnection &conn) { return conn.inputPin == inputPin; }),
+            connections.end());
+    }
+
+    void ConnectionManager::RemoveConnectionFromOutput(const Widgets::PinId &outputPin)
+    {
+        connections.erase(
+            std::remove_if(connections.begin(),
+                connections.end(),
+                [&outputPin](const Widgets::NodeConnection &conn) { return conn.outputPin == outputPin; }),
             connections.end());
     }
 

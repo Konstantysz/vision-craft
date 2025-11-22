@@ -23,7 +23,7 @@ namespace VisionCraft::UI::Rendering::Strategies
             const float titleHeight = Constants::Node::kTitleHeight * zoomLevel;
             const float padding = Constants::Node::kPadding * zoomLevel;
 
-            const auto pins = Canvas::ConnectionManager::GetNodePins(node.GetName());
+            const auto pins = Canvas::ConnectionManager::GetNodePins(&node);
             std::vector<Widgets::NodePin> inputPins, outputPins;
             std::copy_if(
                 pins.begin(), pins.end(), std::back_inserter(inputPins), [](const auto &pin) { return pin.isInput; });

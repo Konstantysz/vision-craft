@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "Nodes/Core/Slot.h"
@@ -171,11 +172,61 @@ namespace VisionCraft::Nodes
          */
         [[nodiscard]] bool HasOutputSlot(const std::string &slotName) const;
 
+        /**
+         * @brief Creates execution input pin (white wire input).
+         *
+         * Execution pins control the flow of execution through the graph. An execution
+         * input pin means "this node can be executed from another node". Multiple nodes
+         * can have execution connections TO this pin, but typically only one is active.
+         *
+         * @param pinName Name of the execution pin (e.g., "Execute", "In")
+         */
+        void CreateExecutionInputPin(const std::string &pinName);
+
+        /**
+         * @brief Creates execution output pin (white wire output).
+         *
+         * Execution pins control the flow of execution through the graph. An execution
+         * output pin means "this node can trigger execution of other nodes". This pin
+         * can connect to multiple downstream nodes' execution inputs.
+         *
+         * @param pinName Name of the execution pin (e.g., "Then", "Out", "True", "False")
+         */
+        void CreateExecutionOutputPin(const std::string &pinName);
+
+        /**
+         * @brief Checks if node has execution input pin.
+         * @param pinName Pin name
+         * @return True if exists
+         */
+        [[nodiscard]] bool HasExecutionInputPin(const std::string &pinName) const;
+
+        /**
+         * @brief Checks if node has execution output pin.
+         * @param pinName Pin name
+         * @return True if exists
+         */
+        [[nodiscard]] bool HasExecutionOutputPin(const std::string &pinName) const;
+
+        /**
+         * @brief Returns all execution input pin names.
+         * @return Vector of pin names
+         */
+        [[nodiscard]] std::vector<std::string> GetExecutionInputPins() const;
+
+        /**
+         * @brief Returns all execution output pin names.
+         * @return Vector of pin names
+         */
+        [[nodiscard]] std::vector<std::string> GetExecutionOutputPins() const;
+
     protected:
-        std::string name;                                  ///< Name of the node
-        NodeId id;                                         ///< Unique identifier of the node
-        std::unordered_map<std::string, Slot> inputSlots;  ///< Input data slots
-        std::unordered_map<std::string, Slot> outputSlots; ///< Output data slots
+        std::string name;                                    ///< Name of the node
+        NodeId id;                                           ///< Unique identifier of the node
+        std::unordered_map<std::string, Slot> inputSlots;    ///< Input data slots
+        std::unordered_map<std::string, Slot> outputSlots;   ///< Output data slots
+        std::unordered_set<std::string> executionInputPins;  ///< Execution input pins (O(1) lookup)
+        std::unordered_set<std::string> executionOutputPins; ///< Execution output pins (O(1) lookup)
     };
 
     /**

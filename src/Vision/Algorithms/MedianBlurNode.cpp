@@ -6,6 +6,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     MedianBlurNode::MedianBlurNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("ksize", 3);
         CreateOutputSlot("Output");

@@ -5,6 +5,11 @@ namespace VisionCraft::Vision::Algorithms
 {
     GrayscaleNode::GrayscaleNode(Nodes::NodeId id, const std::string &name) : Node(id, name)
     {
+        // Execution pins
+        CreateExecutionInputPin("Execute");
+        CreateExecutionOutputPin("Then");
+
+        // Data pins
         CreateInputSlot("Input");
         CreateInputSlot("Method", std::string{ "BGR2GRAY" });
         CreateInputSlot("PreserveAlpha", false);
